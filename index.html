@@ -3646,6 +3646,24 @@ function addrFallbacks(ko){
   return out;
 }
 
+// 名稱放寬：去掉住宿／商店通稱、韓文空格（地圖資料常只收錄核心名稱）
+const GENERIC = {
+  ko: /\s*(리조트|호텔|콘도|펜션|레지던스|게스트\s?하우스|호스텔|모텔|리조텔|스파|본점|지점)$/,
+  zh: /\s*(渡假村|度假村|渡假中心|度假中心|大飯店|飯店|酒店|旅館|民宿|會館|本店|分店)$/,
+  en: /\s*\b(resort|hotel|condo|hostel|guest ?house|motel|residence|inn|spa)\b\.?$/i,
+};
+function nameFallbacks(terms){
+  const out = [], add = x => { x = (x || '').trim(); if (x.length >= 2 && !out.includes(x)) out.push(x); };
+  for (const l of ['ko','en','zh']) {
+    const t = terms[l]; if (!t) continue;
+    let core = t, prev;
+    do { prev = core; core = core.replace(GENERIC[l], '').trim(); } while (core !== prev);
+    if (l === 'ko') { add(t.replace(/\s+/g, '')); add(core); add(core.replace(/\s+/g, '')); }
+    else add(core);
+  }
+  return out;
+}
+
 let searchId = 0;
 function renderTrBar(terms, from, note){
   const bar = $('trbar'); if (!bar) return;
@@ -3728,14 +3746,23 @@ async function search(raw){
       if (count) break;
     }
   }
+  // 3) 店名／景點名找不到 → 去掉「리조트、飯店、Resort」等通稱與空格，找同名的周邊地點
+  if (!count && !isAddr) {
+    const tried = new Set(order);
+    for (const x of nameFallbacks(terms).filter(x => !tried.has(x))) {
+      tried.add(x);
+      if (await run(x, '📍 相關：' + esc(x)) === false) return;
+      if (count) break;
+    }
+  }
 
   if (id !== searchId) return;
   // 一律附上 Kakao/Naver 精確查詢連結（韓國地址它們最準）
   const ex = encodeURIComponent(ko || q);
-  const links = `<div class="r exact">${count ? (isAddr ? '<small>要找精確門牌，用韓國地圖最準：</small>' : '') : '<small>找不到結果。可以直接用韓國地圖查：</small>'}
+  const links = `<div class="r exact">${count ? (isAddr ? '<small>要找精確門牌，用韓國地圖最準：</small>' : '<small>地圖資料沒有完全相符的地點，用韓國地圖查最準：</small>') : '<small>找不到結果。可以直接用韓國地圖查：</small>'}
     <div class="btns" style="margin-top:6px"><a class="kakao" href="https://map.kakao.com/link/search/${ex}" target="_blank" rel="noopener">在 Kakao 地圖搜尋</a>
     <a class="naver" href="https://map.naver.com/p/search/${ex}" target="_blank" rel="noopener">在 Naver 地圖搜尋</a></div></div>`;
-  if (count) { status.remove(); if (isAddr) list.insertAdjacentHTML('beforeend', links); }
+  if (count) { status.remove(); if (isAddr || list.querySelector('.near')) list.insertAdjacentHTML('beforeend', links); }
   else { status.outerHTML = (failed === tries ? '<div class="r"><small>搜尋失敗，請檢查網路</small></div>' : '') + links; }
 }
 $('trBtn').onclick = () => { const q = $('q').value.trim(); if (q) translateOnly(q); };
@@ -3799,7 +3826,7 @@ function renderSheet(){
     <h2>${esc(p.name)}${distTag(p.lat,p.lng)}</h2>
     <div class="names">${['ko','zh','en'].filter(l => p[l]).map(l =>
       `<span class="tr" data-t="${esc(p[l])}">${FLAG[l]} ${esc(p[l])}${p._auto?.[l] ? '<i>翻譯</i>' : ''}</span>`).join('')}</div>
-    ${p.near ? `<div class="addr" style="color:#b06000">⚠️ 找不到確切地址，這是附近的位置。目的地：${esc(p.near)}</div>` : ''}
+    ${p.near ? `<div class="addr" style="color:#b06000">⚠️ 地圖資料裡沒有「${esc(p.near)}」本身，這是附近／名稱相關的位置。請按下方「查確切地址」用 Kakao／Naver 找準確位置。</div>` : ''}
     <div class="addr">${p.koAddr ? '🇰🇷 '+esc(p.koAddr) : (p.addr ? esc(p.addr) : '')}</div>
     ${placeDetails(p)}
     <div class="btns">
