@@ -16,29 +16,6 @@
 
 > 只開 `index.html` 也能用，但**離線地圖、同步連結、手機定位**要放到 https 網站上才會啟用。
 
-## 部署到 GitHub Pages（免費，約 5 分鐘）
-
-### 方法 A：用網頁上傳（不用指令）
-
-1. 登入 [GitHub](https://github.com)，右上角 **＋ → New repository**。
-2. Repository name 填 `korea-map`（或任何名字），選 **Public**，按 **Create repository**。
-3. 在新 repo 頁面點 **uploading an existing file**，把這個資料夾裡的**所有檔案**拖進去（包含 `.nojekyll`；如果看不到隱藏檔可略過，不影響使用），按 **Commit changes**。
-4. 到 repo 的 **Settings → Pages**：
-   - Source 選 **Deploy from a branch**
-   - Branch 選 **main**、資料夾 **/ (root)**，按 **Save**。
-5. 等 1～2 分鐘，網址會是：`https://你的帳號.github.io/korea-map/`
-
-### 方法 B：用 git 指令
-
-```bash
-cd korea-map
-git init && git add -A && git commit -m "韓國旅遊地圖"
-git branch -M main
-git remote add origin https://github.com/你的帳號/korea-map.git
-git push -u origin main
-# 然後照上面第 4 步開啟 Pages
-```
-
 ## 裝到手機
 
 - **iPhone（Safari）**：打開網址 → 分享按鈕 → **加入主畫面**。
