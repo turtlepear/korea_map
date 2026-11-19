@@ -4935,6 +4935,12 @@ function lineLabel(tags){
 }
 async function loadSubwayRegion(reg){
   if (subway.loaded[reg.id]) return subway.loaded[reg.id];
+  // 1) 網站上事先抓好的資料（GitHub Actions 每週更新）：最快、也能離線
+  try {
+    const r = await fetchT(`data/subway-${reg.id}.json`, 20000);
+    if (r.ok) { const d = await r.json(); if (d.stations?.length) return subway.loaded[reg.id] = d; }
+  } catch(e) {}
+  // 2) 瀏覽器裡存過的；3) 即時向 Overpass 查詢
   const cached = await idb.get('subway-' + reg.id);
   if (cached && Date.now() - cached.time < 60 * 86400e3) return subway.loaded[reg.id] = cached;
   const b = reg.bbox.join(',');
@@ -5127,9 +5133,27 @@ function exitRef(t){
   return m ? m[1] : null;
 }
 function stationBase(n){ return (n || '').replace(/\s*\d+(-\d+)?\s*번\s*출\S*.*$/, '').replace(/\s*(출입구|出口|exit).*$/i, '').trim(); }
+const staticExits = {};
+async function loadStaticExits(regId){
+  if (staticExits[regId] !== undefined) return staticExits[regId];
+  staticExits[regId] = null;
+  try { const r = await fetchT(`data/exits-${regId}.json`, 20000); if (r.ok) staticExits[regId] = (await r.json()).exits || null; } catch(e) {}
+  return staticExits[regId];
+}
 async function fetchExits(lat, lng, r = 700){
   const key = `${lat.toFixed(4)},${lng.toFixed(4)},${r}`;
   if (exitCache[key]) return exitCache[key];
+  const reg = regionAt(L.latLng(lat, lng));
+  const st = reg ? await loadStaticExits(reg.id) : null;
+  if (st?.length) {
+    const out = [];
+    for (const [la, ln, ref, stKo, stZh, elev] of st) {
+      if (Math.abs(la - lat) > 0.01 || Math.abs(ln - lng) > 0.012) continue;
+      const d = map.distance([lat, lng], [la, ln]); if (d > r) continue;
+      out.push({ lat:la, lng:ln, ref:ref || null, station:(stZh && stZh !== stKo ? stZh : stKo) || null, stKo:stKo || null, dist:d, elevator:!!elev });
+    }
+    return exitCache[key] = out.filter(x => x.ref || x.station).sort((a,b) => a.dist - b.dist);
+  }
   const q = `[out:json][timeout:25];(node["railway"="subway_entrance"](around:${r},${lat},${lng});node["railway"="train_station_entrance"](around:${r},${lat},${lng}););out;` +
             `node["railway"="station"](around:${r + 700},${lat},${lng});out;`;
   const j = await overpass(q, 60000);
