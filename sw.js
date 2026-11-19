@@ -2,19 +2,20 @@
 // 網頁本體：有網路時抓最新版，沒網路時用快取
 // 地圖圖磚：先用快取（離線地圖下載的就存在這裡）
 // 搜尋／路線／翻譯：先連網路，失敗時用上次的結果
-const VER = 'kmap-v1';
+const VER = 'kmap-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const TILE_HOSTS = ['tiles.openfreemap.org', 'tile.openstreetmap.fr', 'tile.opentopomap.org', 'server.arcgisonline.com'];
 const API_HOSTS = ['nominatim.openstreetmap.org', 'routing.openstreetmap.de', 'api.transitous.org', 'translate.googleapis.com',
-  'api.mymemory.translated.net', 'open.er-api.com', 'overpass-api.de'];
+  'api.mymemory.translated.net', 'open.er-api.com', 'overpass-api.de', 'api.open-meteo.com', 'air-quality-api.open-meteo.com', 'maps.mail.ru', 'overpass.private.coffee'];
 const MAX_API_ENTRIES = 400;
+const TILE_CACHE = 'kmap-tiles';   // 固定名稱：更新網頁版本時保留已下載的離線地圖
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VER + '-shell').then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
-    .then(ks => Promise.all(ks.filter(k => k.startsWith('kmap-') && !k.startsWith(VER)).map(k => caches.delete(k))))
+    .then(ks => Promise.all(ks.filter(k => k.startsWith('kmap-') && !k.startsWith(VER) && k !== TILE_CACHE && !k.endsWith('-tiles')).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
@@ -24,7 +25,7 @@ function isStaticTile(u){
 }
 async function cacheFirst(req, name){
   const c = await caches.open(name);
-  const hit = await c.match(req);
+  const hit = await caches.match(req);   // 所有快取都找（含舊版本下載的離線地圖）
   if (hit) return hit;
   const res = await fetch(req);
   if (res.ok) c.put(req, res.clone());
@@ -55,11 +56,11 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (TILE_HOSTS.some(h => u.hostname === h || u.hostname.endsWith('.' + h))) {
-    e.respondWith(isStaticTile(u) ? cacheFirst(req, VER + '-tiles') : networkFirst(req, VER + '-tiles'));
+    e.respondWith(isStaticTile(u) ? cacheFirst(req, TILE_CACHE) : networkFirst(req, TILE_CACHE));
     return;
   }
   if (API_HOSTS.some(h => u.hostname === h)) {
-    const timeout = u.hostname === 'overpass-api.de' ? 130000 : u.hostname === 'api.transitous.org' ? 30000 : 12000;
+    const timeout = /overpass|maps\.mail\.ru/.test(u.hostname) ? 130000 : u.hostname === 'api.transitous.org' ? 30000 : 12000;
     e.respondWith(networkFirst(req, VER + '-api', timeout, MAX_API_ENTRIES));
   }
 });

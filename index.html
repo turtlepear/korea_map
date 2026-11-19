@@ -1112,6 +1112,36 @@ return maplibregl$1;
   body.dark .leaflet-tooltip { background:var(--bg); color:var(--t); border-color:var(--line); }
   body.dark .qr { background:#fff; }
   .r.weak { opacity:.7; }
+  #navBar { position:absolute; top:0; left:0; right:0; z-index:1500; display:none; align-items:center; gap:10px; background:#188038; color:#fff; padding:12px 14px; padding-top:max(12px, env(safe-area-inset-top)); box-shadow:0 2px 8px rgba(0,0,0,.3); }
+  body.navon .top, body.navon #results { display:none !important; }
+  #navBar .na { font-size:34px; } #navBar .nt { flex:1; font-size:15px; line-height:1.35; } #navBar .nt b { display:block; font-size:22px; } #navBar .nt small { display:block; opacity:.85; font-size:12px; }
+  #navBar button { border:0; background:rgba(255,255,255,.2); color:#fff; border-radius:50%; width:40px; height:40px; font-size:18px; cursor:pointer; }
+  .exits { margin:6px 0; border:1px solid var(--line); border-radius:10px; padding:6px 10px; }
+  .exh { font-size:12px; color:var(--m); font-weight:bold; margin-bottom:2px; }
+  .exr { display:flex; align-items:center; gap:8px; padding:4px 0; cursor:pointer; font-size:14px; }
+  .exr small { display:block; color:var(--m); font-size:12px; }
+  .exn { flex:none; min-width:26px; height:26px; border-radius:6px; background:#fbbc04; color:#202124; font-weight:bold; display:inline-flex; align-items:center; justify-content:center; font-size:13px; padding:0 4px; }
+  .exitsug { margin-top:4px; background:#fef7e0; color:#5f4b00; border-radius:6px; padding:3px 8px; font-size:13px; display:inline-block; }
+  body.dark .exitsug { background:#3d2e00; color:#fdd663; }
+  .lastbox { border:1px dashed var(--line); border-radius:10px; padding:8px 10px; margin:6px 0 10px; font-size:13px; }
+  .lastbox.soon { border-color:#e8710a; background:#fef7e0; } .lastbox.gone { border-color:#d93025; background:#fce8e6; }
+  body.dark .lastbox.soon { background:#3d2e00; } body.dark .lastbox.gone { background:#3c1f1d; }
+  .wxl { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; font-size:15px; margin:4px 0; cursor:pointer; }
+  .wxl small { color:var(--m); } .wxl span { font-size:13px; } .wxl .more { color:var(--m); margin-left:auto; }
+  .wxnow { display:flex; align-items:center; gap:12px; margin:6px 0; } .wxnow .big { font-size:46px; } .wxnow b { font-size:26px; } .wxnow small { color:var(--m); }
+  .aq { border-left:4px solid; padding:6px 10px; margin:8px 0; border-radius:4px; background:var(--soft); font-size:14px; } .aq small { color:var(--m); }
+  .hours { display:flex; gap:6px; overflow-x:auto; padding:4px 0; } .hours div { flex:none; display:flex; flex-direction:column; align-items:center; gap:2px; min-width:52px; font-size:13px; background:var(--soft); border-radius:8px; padding:6px 4px; }
+  .hours small { color:var(--m); font-size:11px; }
+  .days .wd { display:grid; grid-template-columns:56px 1fr auto 52px 64px; gap:6px; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .days .wd small { display:block; color:var(--m); font-size:11px; } .days i { font-style:normal; margin-right:2px; }
+  .favcat { display:flex; flex-wrap:wrap; gap:5px; align-items:center; font-size:12px; color:var(--m); margin:6px 0; }
+  .favcat button { border:1px solid var(--line); background:var(--card); color:var(--t); border-radius:14px; padding:4px 9px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .favcat button.on { background:#1a73e8; color:#fff; border-color:#1a73e8; }
+  .taxi > div { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px; } .taxi > div > span:last-child { flex:1; }
+  .taxi .n { flex:none; width:24px; height:24px; border-radius:50%; background:#fee500; color:#191919; font-weight:bold; display:inline-flex; align-items:center; justify-content:center; }
+  .taxi .dest { font-size:20px; font-weight:bold; margin:6px 0; word-break:keep-all; } .taxi .dest small { display:block; font-size:13px; font-weight:normal; color:var(--m); }
+  .taxi .go { border:0; background:#1a73e8; color:#fff; border-radius:8px; padding:8px 12px; cursor:pointer; font-family:inherit; }
+
   .r .sub { font-size:13px; color:#3c4043; margin:2px 0; }
   .fab { position:absolute; right:12px; z-index:1000; width:46px; height:46px; border-radius:50%; border:0; background:var(--bg); box-shadow:0 2px 8px rgba(0,0,0,.3); font-size:20px; cursor:pointer; }
   #locBtn { bottom:28px; } #favBtn { bottom:84px; } #layerBtn { bottom:140px; } #spotBtn { bottom:196px; }
@@ -1159,6 +1189,11 @@ return maplibregl$1;
     <button class="chip" data-k="atm">🏧 ATM/換錢</button>
     <button class="chip" data-k="pharmacy">💊 藥局</button>
     <button class="chip" data-k="toilet">🚻 廁所</button>
+    <button class="chip" data-k="parking">🅿️ 停車場</button>
+    <button class="chip" data-k="bike">🚲 公共腳踏車</button>
+    <button class="chip" data-k="fuel">⛽ 加油站</button>
+    <button class="chip" data-k="hospital">🏥 醫院</button>
+    <button class="chip" data-k="dutyfree">🛍️ 免稅店</button>
   </div>
   <div class="results" id="results"></div>
 </div>
@@ -1166,6 +1201,7 @@ return maplibregl$1;
 <button class="fab" id="menuBtn" title="更多功能">☰</button>
 <button class="fab" id="spotBtn" title="熱門景點">🗺️</button>
 <div id="subBar"></div>
+<div id="navBar"></div>
 <div id="offBar">📴 離線中：只能看已下載的地圖和收藏；搜尋與路線需要網路</div>
 <button class="fab" id="layerBtn" title="切換地圖樣式">🧭</button>
 <button class="fab" id="favBtn" title="我的收藏">⭐</button>
@@ -3865,7 +3901,10 @@ function renderSheet(){
       `<span class="tr" data-t="${esc(p[l])}">${FLAG[l]} ${esc(p[l])}${p._auto?.[l] ? '<i>翻譯</i>' : ''}</span>`).join('')}</div>
     ${p.near ? `<div class="addr" style="color:#b06000">⚠️ 地圖資料裡沒有「${esc(p.near)}」本身，這是附近／名稱相關的位置。請按下方「查確切地址」用 Kakao／Naver 找準確位置。</div>` : ''}
     <div class="addr">${p.koAddr ? '🇰🇷 '+esc(p.koAddr) : (p.addr ? esc(p.addr) : '')}</div>
+    <div id="wxBox">${p._wx ? wxLineHtml(p._wx) : ''}</div>
     ${placeDetails(p)}
+    <div id="exitBox">${p._exits ? exitsHtml(p._exits) : ''}</div>
+    ${favCatChips(p)}
     <div class="btns">
       <a class="naver" href="nmap://route/public?dlat=${p.lat}&dlng=${p.lng}&dname=${n}&appname=koreatravelmap">Naver 大眾運輸導航</a>
       <a class="kakao" href="https://map.kakao.com/link/to/${n},${p.lat},${p.lng}" target="_blank" rel="noopener">Kakao 地圖導航</a>
@@ -3877,12 +3916,19 @@ function renderSheet(){
       <button id="startBtn">🟢 從這裡出發</button>
       <button id="tripAddBtn">📅 加入行程</button>
       <button id="driverBtn">🚕 給司機看</button>
+      <button id="taxiBtn">🚖 叫計程車</button>
+      <button id="shareBtn">🔗 分享</button>
     </div>
     <div class="addr" style="margin-top:10px">💡 Naver 導航需安裝 Naver Map App；Kakao 連結手機電腦都能開。</div>`;
   $('favToggle').onclick = () => toggleFav(p);
   $('routeBtn').onclick = () => { if (route.start && route.start.lat===p.lat && route.start.lng===p.lng) route.start = null; openRoute({ lat:p.lat, lng:p.lng, name:p.name, ko:p.ko }); };
   $('startBtn').onclick = () => setStartFrom(p);
   $('tripAddBtn').onclick = () => tripAddDialog(p);
+  $('taxiBtn').onclick = () => openTaxi(p);
+  $('shareBtn').onclick = () => sharePlace(p);
+  bindFavCat(p); bindExitRows($('exitBox'));
+  if ($('wxOpen')) $('wxOpen').onclick = () => openWeather(p.lat, p.lng, p.name);
+  loadWeatherFor(p); loadExitsFor(p);
   $('sheetBody').querySelectorAll('.names [data-t]').forEach(el => el.onclick = () => copyText(el.dataset.t));
   $('copyBtn').onclick = async () => {
     const t = [p.ko || p.name, p.koAddr || p.addr].filter(Boolean).join('\n');
@@ -3919,23 +3965,15 @@ map.on('click', async e => {
 // ---------- 收藏 ----------
 function drawFavs(){
   favLayer.clearLayers();
-  favs.forEach(f => L.marker([f.lat,f.lng], { icon: icon('⭐',22) }).addTo(favLayer).on('click', () => showPlace({...f})));
+  favs.forEach(f => L.marker([f.lat,f.lng], { icon: icon((typeof FAVCAT !== 'undefined' && FAVCAT[f.cat || 'other'] || ['⭐'])[0],22) }).addTo(favLayer).on('click', () => showPlace({...f})));
 }
 function toggleFav(p){
   const i = favs.findIndex(f => f.lat===p.lat && f.lng===p.lng);
   if (i>=0) { favs.splice(i,1); toast('已移除收藏'); }
-  else { favs.push({ lat:p.lat, lng:p.lng, name:p.name, ko:p.ko, en:p.en, zh:p.zh, addr:p.addr, koAddr:p.koAddr, tags:p.tags }); toast('已加入收藏'); }
+  else { const cat = guessCat(p); favs.push({ lat:p.lat, lng:p.lng, name:p.name, ko:p.ko, en:p.en, zh:p.zh, addr:p.addr, koAddr:p.koAddr, tags:p.tags, cat }); toast(`已加入收藏（${FAVCAT[cat][0]} ${FAVCAT[cat][1]}）`); }
   store.set('kmap_favs', favs); drawFavs(); renderSheet();
 }
-$('favBtn').onclick = () => {
-  current = null; if (route.active) { route.active = false; routeLayer.clearLayers(); }
-  $('sheetBody').innerHTML = `<h2>⭐ 我的收藏</h2>` + (favs.length ? `<div class="list">${favs.map((f,i)=>`
-    <div class="item"><span data-i="${i}">${esc(f.name)}${distTag(f.lat,f.lng)}<small>${esc(f.ko||'')}</small></span><button data-d="${i}">🗑</button></div>`).join('')}</div>`
-    : '<div class="addr">還沒有收藏。搜尋或點地圖上的地點，按「☆ 收藏」就會出現在這裡。</div>');
-  $('sheetBody').querySelectorAll('[data-i]').forEach(el => el.onclick = () => showPlace({...favs[+el.dataset.i]}));
-  $('sheetBody').querySelectorAll('[data-d]').forEach(el => el.onclick = () => { favs.splice(+el.dataset.d,1); store.set('kmap_favs',favs); drawFavs(); $('favBtn').onclick(); });
-  $('sheet').classList.add('open');
-};
+$('favBtn').onclick = () => openFavs();
 
 // ---------- 熱門景點面板 ----------
 $('spotBtn').onclick = () => {
@@ -3967,6 +4005,7 @@ function onPos(pos){
   if (follow) map.panTo(myPos, { animate:true });
   if (subway.on) updateSubBar();
   posWaiters.splice(0).forEach(w => w.ok(myPos));
+  if (nav.on) navUpdate();
   if (route.active && route.start?.isMe) route.start.lat = myPos[0], route.start.lng = myPos[1];
 }
 function startWatch(){
@@ -4001,7 +4040,7 @@ const MODES = {
   bike: { label:'🚲 腳踏車', url:'https://routing.openstreetmap.de/routed-bike/route/v1/driving/', color:'#188038' },
   transit: { label:'🚇 大眾運輸' },
 };
-const fmtDist = m => m < 1000 ? Math.round(m/10)*10 + ' 公尺' : (m/1000).toFixed(1) + ' 公里';
+const fmtDist = m => m < 995 ? Math.round(m/10)*10 + ' 公尺' : (m/1000).toFixed(1) + ' 公里';
 const fmtTime = s => { const m = Math.round(s/60); return m < 60 ? Math.max(1,m) + ' 分鐘' : Math.floor(m/60) + ' 小時 ' + (m%60) + ' 分'; };
 let lastRouteCall = 0;
 async function fetchRoute(mode){
@@ -4098,6 +4137,7 @@ function renderRoute(msg){
     if (mode === 'car') { const f = taxiFare(r.distance); tip = `<div class="best">🚕 計程車約 ${won(f.low)}～${won(f.high)}${fxTwd(f.low)} 起（${f.label}）</div><div class="addr">⏱ 時間未計入塞車，首爾尖峰時段可能多 1.5～2 倍。</div>`; }
     if (mode === 'foot' && r.duration <= 25*60) tip = '<div class="best">👍 推薦步行，距離不遠。</div>';
     body = `<div class="sum"><b>${fmtTime(r.duration)}</b><span>${fmtDist(r.distance)}</span></div>${tip}
+      <div class="btns" style="margin:6px 0"><button class="go wide" id="navStart">🔊 開始語音導航</button></div>
       <div class="steps">${steps.map(st => `<div class="step" data-ll="${st.maneuver.location[1]},${st.maneuver.location[0]}"><span>${esc(stepText(st))}</span><small>${st.distance > 0 ? fmtDist(st.distance) : ''}</small></div>`).join('')}</div>
       <div class="addr" style="margin-top:8px">路線資料來自 OpenStreetMap，建議搭配現場路標確認。</div>`;
   }
@@ -4124,6 +4164,7 @@ function renderRoute(msg){
   $('rPick').onclick = () => { route.pick = true; renderRoute(); toast('請在地圖上點選起點'); if (window.innerWidth < 700) $('sheet').classList.remove('open'); };
   $('rSwap').onclick = () => { if (!A) return; [route.start, route.end] = [B, A]; route.start.isMe = route.start.name === '我的位置' && A.isMe; route.data = {}; showMode(route.mode); };
   $('rClose').onclick = closeRoute;
+  if ($('navStart')) $('navStart').onclick = () => { if (!route.start?.isMe) toast('語音導航會用你的即時位置當起點'); startNav(); };
   if (route.mode === 'transit') bindTransitUI();
   $('sheet').classList.add('open');
 }
@@ -4194,7 +4235,7 @@ function transitBody(straight){
   if (route.sel != null) return transitDetail(res.its[route.sel]) + fallback;
   const best = res.its.reduce((a,b) => a.duration <= b.duration ? a : b);
   const walkTip = res.walk && res.walk.duration < best.duration ? `<div class="best">🚶 其實走路只要 ${fmtTime(res.walk.duration)}，比搭車快！</div>` : '';
-  return timeCtl + walkTip +
+  return timeCtl + walkTip + lastTrainHtml() +
     `<div class="itins">${res.its.map((it,i) => `
       <div class="itin" data-i="${i}">
         <div class="ih"><b>${tKST(it.startTime)} → ${tKST(it.endTime)}</b><span class="dur">${fmtTime(it.duration)}</span>${it === best ? '<span class="tag">最快</span>' : ''}</div>
@@ -4219,6 +4260,7 @@ function transitDetail(it){
         <div class="ts">${tKST(l.startTime)} 在 <b>${trName(l.from.name)}</b> 上車${l.from.track ? `（${esc(l.from.track)} 月台）` : ''}</div>
         <div class="ts sm">搭 ${stops} 站 · ${Math.round(l.duration/60)} 分${l.agencyName ? ' · ' + esc(l.agencyName) : ''}</div>
         <div class="ts">${tKST(l.endTime)} 在 <b>${trName(l.to.name)}</b> 下車</div>
+        ${it._exit && it._exit.idx === i ? `<div class="exitsug">🚪 建議從 <b>${esc(it._exit.ref)} 號出口</b>出站（離目的地約 ${fmtDist(it._exit.d)}）</div>` : ''}
       </div></div>`;
   }).join('');
   return `<div class="btns" style="grid-template-columns:auto 1fr;margin-bottom:6px"><button id="tBack">‹ 返回</button>
@@ -4260,14 +4302,17 @@ function bindTransitUI(){
   $('sheetBody').querySelectorAll('.itin').forEach(el => el.onclick = async () => {
     route.sel = +el.dataset.i; const it = res.its[route.sel];
     drawTransit(it); renderRoute();
-    await translateNames(it); if (route.active && route.sel != null) renderRoute();
+    await Promise.all([translateNames(it), suggestExit(it)]); if (route.active && route.sel != null) renderRoute();
   });
   const back = $('tBack'); if (back) back.onclick = () => { route.sel = null; drawRoute(null); renderRoute(); };
   const dep = $('tDepart'); if (dep) dep.onchange = () => { route.depart = dep.value || null; showMode('transit'); };
   const now = $('tNow'); if (now) now.onclick = () => { route.depart = null; showMode('transit'); };
+  const lt = $('ltBtn'); if (lt) lt.onclick = runLastTrain;
+  const h = Math.floor(kstNowParts().mins / 60);
+  if (!route.data.last && !route.depart && route.sel == null && res?.its?.length && (h >= 21 || h < 3)) runLastTrain();
 }
 
-function closeRoute(){ route.active = false; route.pick = false; routeLayer.clearLayers(); closeSheet(); }
+function closeRoute(){ if (nav.on) stopNav(true); route.active = false; route.pick = false; routeLayer.clearLayers(); closeSheet(); }
 // 地點頁「從這裡出發」
 function setStartFrom(p){ route.start = { lat:p.lat, lng:p.lng, name:p.name, ko:p.ko }; route.data = {}; toast('已設為起點，再選一個目的地按「路線」'); }
 
@@ -4278,6 +4323,28 @@ $('layerBtn').onclick = () => {
   layers[layerIdx].l.addTo(map); toast(layers[layerIdx].name); syncSatClass();
 };
 
+// ---------- Overpass（OpenStreetMap 資料查詢）：多台伺服器自動輪替 ----------
+// overpass-api.de 經常滿載（502／429／406），VK Maps 與 private.coffee 為公開替代伺服器
+const OVERPASS_EPS = ['https://maps.mail.ru/osm/tools/overpass/api/interpreter', 'https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
+const ovpCool = {};   // 失敗的伺服器暫停使用到這個時間
+let ovpPref = (() => { try { return localStorage.getItem('kmap_ovp') || OVERPASS_EPS[0]; } catch(e) { return OVERPASS_EPS[0]; } })();
+async function overpass(query, timeout = 30000){
+  const order = [ovpPref, ...OVERPASS_EPS.filter(e => e !== ovpPref)];
+  const now = Date.now();
+  const usable = order.filter(e => !(ovpCool[e] > now));
+  let lastErr = null;
+  for (const ep of usable.length ? usable : order) {
+    try {
+      const r = await fetchT(ep + '?data=' + encodeURIComponent(query), timeout);
+      if (!r.ok) { ovpCool[ep] = Date.now() + ([429, 406].includes(r.status) ? 60e3 : 30e3); lastErr = new Error('HTTP ' + r.status); continue; }
+      const j = await r.json();
+      if (ep !== ovpPref) { ovpPref = ep; try { localStorage.setItem('kmap_ovp', ep); } catch(e) {} }
+      return j;
+    } catch(e) { ovpCool[ep] = Date.now() + 30e3; lastErr = e; }
+  }
+  throw lastErr || new Error('overpass');
+}
+
 // ---------- 附近搜尋（Overpass） ----------
 const NEARBY = {
   subway:   { e:'🚇', q:'nwr["railway"="station"];nwr["public_transport"="station"]["subway"="yes"];' },
@@ -4287,6 +4354,11 @@ const NEARBY = {
   atm:      { e:'🏧', q:'nwr["amenity"="atm"];nwr["amenity"="bureau_de_change"];nwr["amenity"="bank"];' },
   pharmacy: { e:'💊', q:'nwr["amenity"="pharmacy"];' },
   toilet:   { e:'🚻', q:'nwr["amenity"="toilets"];' },
+  parking:  { e:'🅿️', q:'nwr["amenity"="parking"];' },
+  bike:     { e:'🚲', q:'nwr["amenity"="bicycle_rental"];' },
+  fuel:     { e:'⛽', q:'nwr["amenity"="fuel"];' },
+  hospital: { e:'🏥', q:'nwr["amenity"="hospital"];nwr["amenity"="clinic"];' },
+  dutyfree: { e:'🛍️', q:'nwr["shop"="duty_free"];nwr["name"~"면세점"];' },
 };
 function setChip(k){ document.querySelectorAll('#nearby .chip').forEach(c => c.classList.toggle('on', c.dataset.k===k)); }
 document.querySelectorAll('#nearby .chip').forEach(chip => chip.onclick = async () => {
@@ -4298,8 +4370,7 @@ document.querySelectorAll('#nearby .chip').forEach(chip => chip.onclick = async 
   const query = `[out:json][timeout:20];(${NEARBY[k].q.split(';').filter(Boolean).map(s=>s+around+';').join('')});out center 60;`;
   toast('搜尋附近…');
   try {
-    const res = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(query) });
-    const data = await res.json();
+    const data = await overpass(query, 30000);
     if (!data.elements.length) return toast('這附近找不到，試著拖動或縮小地圖');
     data.elements.forEach(el => {
       const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon; if (lat==null) return;
@@ -4354,11 +4425,14 @@ function openMenu(){
       <button data-a="offline"><span>📥</span>離線地圖</button>
       <button data-a="dark"><span>${document.body.classList.contains('dark') ? '☀️' : '🌙'}</span>${document.body.classList.contains('dark') ? '淺色模式' : '深色模式'}</button>
       <button data-a="hist"><span>🕘</span>搜尋紀錄</button>
+      <button data-a="wx"><span>☁️</span>天氣／空氣</button>
+      <button data-a="shareme"><span>📍</span>分享我的位置</button>
       <button data-a="about"><span>ℹ️</span>關於／資料來源</button>
     </div>`, el => el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => ({
       trip: openTrip, sync: openSync, subway: toggleSubway, tools: openTools, offline: openOffline,
       dark: () => { setTheme(document.body.classList.contains('dark') ? 'light' : 'dark'); openMenu(); },
       hist: () => { closeSheet(); $('q').focus(); showHistory(); }, about: openAbout,
+      wx: () => openWeather(), shareme: shareMyLocation,
     })[b.dataset.a]()));
 }
 
@@ -4387,12 +4461,12 @@ $('q').addEventListener('input', () => { if (!$('q').value.trim()) showHistory()
 // ---------- 🔄 收藏同步（檔案／連結／QR Code） ----------
 function packData(){
   return { v:1,
-    f: favs.map(f => [f.lat, f.lng, f.name, f.ko || '']),
+    f: favs.map(f => [f.lat, f.lng, f.name, f.ko || '', f.cat || 'other']),
     t: trip.days.map(d => ({ s:d.start, d:d.date || '', p:d.stops.map(s => [s.lat, s.lng, s.name, s.ko || '', s.stay]) })) };
 }
 function unpackData(o){
   return {
-    favs: (o.f || []).map(a => ({ lat:a[0], lng:a[1], name:a[2], ko:a[3] || null })),
+    favs: (o.f || []).map(a => ({ lat:a[0], lng:a[1], name:a[2], ko:a[3] || null, cat:a[4] || 'other' })),
     days: (o.t || []).map(d => ({ start:d.s || '09:00', date:d.d || '', stops:(d.p || []).map(a => ({ lat:a[0], lng:a[1], name:a[2], ko:a[3] || null, stay:a[4] ?? 60 })) })),
   };
 }
@@ -4846,7 +4920,7 @@ async function loadSubwayRegion(reg){
   if (cached && Date.now() - cached.time < 60 * 86400e3) return subway.loaded[reg.id] = cached;
   const b = reg.bbox.join(',');
   const q = `[out:json][timeout:120];relation["route"~"^(subway|light_rail)$"](${b});out geom;node["railway"="station"](if:t["station"]=="subway"||t["subway"]=="yes"||t["station"]=="light_rail"||t["light_rail"]=="yes")(${b});out;`;
-  const j = await (await fetchT('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(q), 120000)).json();
+  const j = await overpass(q, 120000);
   const lines = [], stops = [], seen = new Set();
   for (const el of j.elements) {
     if (el.type !== 'relation') continue;
@@ -5006,7 +5080,8 @@ function openAbout(){
     <div class="group">資料來源</div>
     <div class="addr">
       地圖：<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>、OSM France、OpenTopoMap、Esri · 資料 © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> 貢獻者<br>
-      搜尋：Nominatim · 附近設施與地鐵圖：Overpass API<br>
+      搜尋：Nominatim · 附近設施、地鐵圖與出口：Overpass API<br>
+      天氣與空氣品質：<a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo.com</a>（CC BY 4.0）· 空汙分級依韓國環境部<br>
       步行／開車／腳踏車路線：<a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener">FOSSGIS OSRM</a><br>
       大眾運輸：<a href="https://transitous.org/sources/" target="_blank" rel="noopener">Transitous</a>（KTDB、Korail 等）<br>
       翻譯：Google 翻譯公開端點、MyMemory · 匯率：<a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">Exchange Rate API</a><br>
@@ -5018,10 +5093,362 @@ function openAbout(){
 // ---------- 啟動 ----------
 loadFx();
 updateOnline();
-checkImportHash();
-window.addEventListener('hashchange', checkImportHash);
+
+
+// ====================================================================
+//  擴充功能（第二批）：地鐵出口、末班車、天氣與空氣品質、分享、
+//  收藏分類、叫計程車、語音導航
+// ====================================================================
+
+// ---------- 🚇 地鐵出口指引（OpenStreetMap 的地鐵出入口資料） ----------
+const exitCache = {};
+function exitRef(t){
+  if (t.ref) return String(t.ref).replace(/번$/, '');
+  const m = (t.name || t['description:ko'] || t.description || '').match(/(\d+(?:-\d+)?)\s*번\s*출/) || (t['name:en'] || '').match(/exit\s*(\d+(?:-\d+)?)/i) || (t['name:zh'] || '').match(/(\d+(?:-\d+)?)\s*號/);
+  return m ? m[1] : null;
+}
+function stationBase(n){ return (n || '').replace(/\s*\d+(-\d+)?\s*번\s*출\S*.*$/, '').replace(/\s*(출입구|出口|exit).*$/i, '').trim(); }
+async function fetchExits(lat, lng, r = 700){
+  const key = `${lat.toFixed(4)},${lng.toFixed(4)},${r}`;
+  if (exitCache[key]) return exitCache[key];
+  const q = `[out:json][timeout:25];(node["railway"="subway_entrance"](around:${r},${lat},${lng});node["railway"="train_station_entrance"](around:${r},${lat},${lng}););out;` +
+            `node["railway"="station"](around:${r + 700},${lat},${lng});out;`;
+  const j = await overpass(q, 30000);
+  const stations = j.elements.filter(e => e.tags?.railway === 'station' && e.tags.name).map(e => ({
+    lat:e.lat, lng:e.lon, ko:e.tags['name:ko'] || e.tags.name, zh:e.tags['name:zh-Hant'] || e.tags['name:zh'] || null }));
+  const exits = j.elements.filter(e => /entrance/.test(e.tags?.railway || '')).map(e => {
+    const t = e.tags, ref = exitRef(t);
+    let st = null, base = stationBase(t.name || t['description:ko'] || t.description);
+    if (base) st = stations.find(s => normName(s.ko) === normName(base) || normName(s.ko) === normName(base + '역') || normName(s.ko + '역') === normName(base));
+    if (!st) { let bd = 450; for (const s of stations) { const d = map.distance([s.lat,s.lng],[e.lat,e.lon]); if (d < bd) { bd = d; st = s; } } }
+    return { lat:e.lat, lng:e.lon, ref, station: st ? (st.zh && st.zh !== st.ko ? st.zh : st.ko) : (base || null), stKo: st?.ko || base || null,
+      dist: map.distance([lat,lng],[e.lat,e.lon]), elevator: t.wheelchair === 'yes' || /엘리베이터|elevator/i.test((t.name || '') + (t.description || '')) };
+  }).filter(x => x.ref || x.station).sort((a,b) => a.dist - b.dist);
+  return exitCache[key] = exits;
+}
+function exitsHtml(exits){
+  if (!exits?.length) return '';
+  const per = new Map();
+  for (const x of exits) { const k = x.stKo || '?'; if (!per.has(k)) per.set(k, x); }
+  const rows = [...per.values()].slice(0, 3);
+  return `<div class="exits"><div class="exh">🚇 最近的地鐵出口</div>${rows.map(x =>
+    `<div class="exr" data-ll="${x.lat},${x.lng}"><span class="exn">${x.ref ? esc(x.ref) : '?'}</span>
+      <span><b>${esc(x.station || '車站')}</b> ${x.ref ? esc(x.ref) + ' 號出口' : '出口'}${x.elevator ? ' ♿' : ''}<small>走路約 ${Math.max(1, Math.round(x.dist * 1.3 / 75))} 分（${fmtDist(x.dist)}）</small></span></div>`).join('')}</div>`;
+}
+async function loadExitsFor(p){
+  if (p._exits !== undefined || p.placeholder || !regionAt(L.latLng(p.lat, p.lng))) return;
+  p._exits = null;
+  try { p._exits = await fetchExits(p.lat, p.lng); } catch(e) { p._exits = []; }
+  if (current === p) { const box = $('exitBox'); if (box) { box.innerHTML = exitsHtml(p._exits); bindExitRows(box); } }
+}
+function bindExitRows(el){ el.querySelectorAll('.exr').forEach(r => r.onclick = () => map.setView(r.dataset.ll.split(',').map(Number), 18)); }
+// 大眾運輸：在最後一段地鐵的下車站，找離目的地最近的出口
+async function suggestExit(it){
+  if (it._exitDone) return; it._exitDone = true;
+  const idx = it.legs.map((l,i) => [l,i]).filter(([l]) => /SUBWAY|METRO|RAIL|SUBURBAN/.test(l.mode)).pop()?.[1];
+  if (idx == null) return;
+  const stop = it.legs[idx].to, dest = route.end;
+  try {
+    const ex = (await fetchExits(stop.lat, stop.lon, 400)).filter(x => x.ref);
+    if (!ex.length) return;
+    ex.sort((a,b) => map.distance([a.lat,a.lng],[dest.lat,dest.lng]) - map.distance([b.lat,b.lng],[dest.lat,dest.lng]));
+    it._exit = { idx, ref: ex[0].ref, d: map.distance([ex[0].lat,ex[0].lng],[dest.lat,dest.lng]) };
+  } catch(e) {}
+}
+
+// ---------- 🌙 末班車 ----------
+async function transitousPlan(params){
+  const wait = 1100 - (Date.now() - lastTransitCall); if (wait > 0) await sleep(wait);
+  lastTransitCall = Date.now();
+  const qs = new URLSearchParams({ maxTransfers:'4', language:'ko', ...params });
+  for (const v of [...new Set([transitVer, 'v6','v5','v4'])]) {
+    try {
+      const r = await fetchT(`${TRANSIT_API}${v}/plan?${qs}`, 25000);
+      if (r.status === 404) continue; if (!r.ok) return null;
+      const j = await r.json(); transitVer = v; return j;
+    } catch(e) { return null; }
+  }
+  return null;
+}
+async function findLastTrain(){
+  const A = route.start, B = route.end, k = kstNowParts();
+  // 營運日：凌晨 3 點前算前一天
+  const base = new Date(Date.parse(k.date + 'T00:00:00+09:00') + (k.mins < 180 ? 0 : 86400e3));
+  const ymd = new Intl.DateTimeFormat('sv-SE', { timeZone:KST_TZ }).format(base);
+  const j = await transitousPlan({ fromPlace:`${A.lat},${A.lng}`, toPlace:`${B.lat},${B.lng}`, arriveBy:'true', time:`${ymd}T03:00:00+09:00`, numItineraries:'6' });
+  if (!j) return { err:'查詢失敗' };
+  const cutoff = Date.parse(`${ymd}T03:00:00+09:00`);
+  const its = (j.itineraries || []).filter(it => it.legs.some(l => l.mode !== 'WALK') && Date.parse(it.startTime) < cutoff);
+  if (!its.length) return { none:true };
+  const last = its.reduce((a,b) => Date.parse(a.startTime) >= Date.parse(b.startTime) ? a : b);
+  return { it:last, night: Date.parse(last.startTime) > cutoff - 2 * 3600e3 };
+}
+function lastTrainHtml(){
+  const L1 = route.data.last;
+  if (!L1) return `<div class="lastbox"><button class="linkbtn" id="ltBtn">🌙 查今晚的末班車</button></div>`;
+  if (L1.loading) return `<div class="lastbox">🌙 查詢末班車中…</div>`;
+  if (L1.err || L1.none) return `<div class="lastbox">🌙 ${L1.err ? '末班車查詢失敗' : '查不到今晚的末班車資料'}，請用 Kakao／Naver 確認。</div>`;
+  const it = L1.it, left = (Date.parse(it.startTime) - Date.now()) / 60000;
+  const cls = left < 0 ? 'gone' : left < 60 ? 'soon' : '';
+  return `<div class="lastbox ${cls}">🌙 今晚最後一班：<b>${tKST(it.startTime)} 出發</b> → ${tKST(it.endTime)} 抵達
+    <div class="chips2">${legChips(it)}</div>
+    ${left < 0 ? '⚠️ 已經錯過末班車，建議搭計程車。' : left < 60 ? `⏰ 只剩約 ${Math.round(left)} 分鐘，要準備出發了！` : `還有約 ${fmtTime(left * 60)}。`}
+    ${L1.night ? '<small>（可能是深夜公車 N 線）</small>' : ''}</div>`;
+}
+async function runLastTrain(){
+  route.data.last = { loading:true }; renderRoute();
+  const r = await findLastTrain();
+  if (!route.active) return;
+  route.data.last = r; renderRoute();
+}
+
+// ---------- ☁️ 天氣與空氣品質（Open-Meteo，免 key，CC BY 4.0） ----------
+const WMO = { 0:['☀️','晴'],1:['🌤️','大致晴'],2:['⛅','多雲'],3:['☁️','陰'],45:['🌫️','霧'],48:['🌫️','霧凇'],51:['🌦️','毛毛雨'],53:['🌦️','毛毛雨'],55:['🌧️','毛毛雨'],
+  56:['🌧️','凍毛雨'],57:['🌧️','凍毛雨'],61:['🌧️','小雨'],63:['🌧️','雨'],65:['🌧️','大雨'],66:['🌧️','凍雨'],67:['🌧️','凍雨'],71:['🌨️','小雪'],73:['🌨️','雪'],75:['❄️','大雪'],
+  77:['🌨️','雪粒'],80:['🌦️','陣雨'],81:['🌧️','陣雨'],82:['⛈️','強陣雨'],85:['🌨️','陣雪'],86:['❄️','大陣雪'],95:['⛈️','雷雨'],96:['⛈️','雷雨冰雹'],99:['⛈️','雷雨冰雹'] };
+const wmo = c => WMO[c] || ['🌡️','—'];
+// 韓國環境部預報分級（㎍/㎥）：PM10 0–30／31–80／81–150／151+；PM2.5 0–15／16–35／36–75／76+
+function pmGrade(pm10, pm25){
+  const g10 = pm10 == null ? 0 : pm10 <= 30 ? 0 : pm10 <= 80 ? 1 : pm10 <= 150 ? 2 : 3;
+  const g25 = pm25 == null ? 0 : pm25 <= 15 ? 0 : pm25 <= 35 ? 1 : pm25 <= 75 ? 2 : 3;
+  const g = Math.max(g10, g25);
+  return { g, label:['良好','普通','不良','非常不良'][g], ko:['좋음','보통','나쁨','매우나쁨'][g], color:['#1a73e8','#188038','#e8710a','#d93025'][g],
+    tip:['','','敏感族群建議戴口罩','建議戴 KF94 口罩、減少戶外活動'][g] };
+}
+const wxCache = {};
+async function fetchWeather(lat, lng){
+  const key = `${lat.toFixed(2)},${lng.toFixed(2)}`, c = wxCache[key];
+  if (c && Date.now() - c.t < 30 * 60e3) return c.d;
+  const tz = 'timezone=Asia%2FSeoul';
+  const [w, a] = await Promise.all([
+    fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,weather_code,precipitation,wind_speed_10m,relative_humidity_2m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&forecast_days=7&${tz}`, 10000).then(r => r.json()).catch(() => null),
+    fetchT(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=pm10,pm2_5&hourly=pm10,pm2_5&forecast_days=3&${tz}`, 10000).then(r => r.json()).catch(() => null),
+  ]);
+  if (!w?.current) throw new Error('weather');
+  const d = { w, a };
+  wxCache[key] = { t:Date.now(), d };
+  return d;
+}
+function wxLineHtml(d){
+  const c = d.w.current, [e, t] = wmo(c.weather_code);
+  const i = d.w.hourly.time.findIndex(x => x >= c.time.slice(0, 13));
+  const rain = i >= 0 ? Math.max(...d.w.hourly.precipitation_probability.slice(i, i + 6).map(v => v ?? 0)) : null;
+  const aq = d.a?.current ? pmGrade(d.a.current.pm10, d.a.current.pm2_5) : null;
+  return `<div class="wxl" id="wxOpen">${e} ${Math.round(c.temperature_2m)}° <small>${t} · 體感 ${Math.round(c.apparent_temperature)}°</small>
+    ${rain != null ? `<span>☔ ${rain}%</span>` : ''}${aq ? `<span style="color:${aq.color}">😷 空氣${aq.label}</span>` : ''}<span class="more">›</span></div>`;
+}
+async function loadWeatherFor(p){
+  if (p._wx !== undefined || p.placeholder) return;
+  p._wx = null;
+  try { p._wx = await fetchWeather(p.lat, p.lng); } catch(e) { p._wx = false; }
+  if (current === p && p._wx) { const box = $('wxBox'); if (box) { box.innerHTML = wxLineHtml(p._wx); $('wxOpen').onclick = () => openWeather(p.lat, p.lng, p.name); } }
+}
+function dailyPm(d, day){
+  if (!d.a?.hourly) return null;
+  const idx = d.a.hourly.time.map((t,i) => t.startsWith(day) ? i : -1).filter(i => i >= 0);
+  if (!idx.length) return null;
+  const avg = arr => { const v = idx.map(i => arr[i]).filter(x => x != null); return v.length ? v.reduce((s,x) => s + x, 0) / v.length : null; };
+  return pmGrade(avg(d.a.hourly.pm10), avg(d.a.hourly.pm2_5));
+}
+async function openWeather(lat, lng, name){
+  if (lat == null) { const c = myPos ? L.latLng(myPos) : map.getCenter(); lat = +c.lat.toFixed(4); lng = +c.lng.toFixed(4); name = myPos ? '我的位置' : '地圖中心'; }
+  openPanel(`<h2>☁️ 天氣</h2><div class="addr">讀取中…</div>`);
+  let d; try { d = await fetchWeather(lat, lng); } catch(e) { openPanel(`<h2>☁️ 天氣</h2><div class="addr">⚠️ 無法取得天氣資料（需要網路）</div>`); return; }
+  const c = d.w.current, [e, t] = wmo(c.weather_code), aq = d.a?.current ? pmGrade(d.a.current.pm10, d.a.current.pm2_5) : null;
+  const i0 = Math.max(0, d.w.hourly.time.findIndex(x => x >= c.time.slice(0, 13)));
+  const hours = d.w.hourly.time.slice(i0, i0 + 24).filter((_, i) => i % 3 === 0).map((tm, k) => { const i = i0 + k * 3;
+    return `<div><small>${tm.slice(11, 13)}時</small><span>${wmo(d.w.hourly.weather_code[i])[0]}</span><b>${Math.round(d.w.hourly.temperature_2m[i])}°</b><small>☔${d.w.hourly.precipitation_probability[i] ?? '-'}%</small></div>`; }).join('');
+  const days = d.w.daily.time.map((dy, i) => { const pm = dailyPm(d, dy), wd = new Date(dy + 'T12:00:00+09:00').getDay();
+    return `<div class="wd"><span>${i === 0 ? '今天' : '週' + ZH_DAY[wd]}<small>${dy.slice(5).replace('-', '/')}</small></span><span>${wmo(d.w.daily.weather_code[i])[0]} ${wmo(d.w.daily.weather_code[i])[1]}</span>
+      <span>${Math.round(d.w.daily.temperature_2m_min[i])}° / <b>${Math.round(d.w.daily.temperature_2m_max[i])}°</b></span><span>☔${d.w.daily.precipitation_probability_max[i] ?? '-'}%</span>
+      <span>${pm ? `<i style="color:${pm.color}">●</i>${pm.label}` : ''}</span></div>`; }).join('');
+  openPanel(`<h2>☁️ ${esc(name || '天氣')}</h2>
+    <div class="wxnow"><span class="big">${e}</span><div><b>${Math.round(c.temperature_2m)}°C</b> ${t}<br><small>體感 ${Math.round(c.apparent_temperature)}° · 濕度 ${c.relative_humidity_2m}% · 風速 ${Math.round(c.wind_speed_10m)} km/h</small></div></div>
+    ${aq ? `<div class="aq" style="border-color:${aq.color}"><b style="color:${aq.color}">空氣品質：${aq.label}（${aq.ko}）</b><br><small>PM2.5 ${Math.round(d.a.current.pm2_5)} · PM10 ${Math.round(d.a.current.pm10)} ㎍/㎥（韓國環境部分級）${aq.tip ? '<br>😷 ' + aq.tip : ''}</small></div>` : ''}
+    <div class="group">接下來 24 小時</div><div class="hours">${hours}</div>
+    <div class="group">7 天預報 <small style="font-weight:normal;color:var(--m)">（空氣品質僅前 3 天）</small></div><div class="days">${days}</div>
+    <div class="addr">日出 ${d.w.daily.sunrise[0].slice(11)} · 日落 ${d.w.daily.sunset[0].slice(11)} · 資料：<a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo.com</a>（CC BY 4.0）</div>`);
+}
+
+// ---------- 🔗 分享地點／我的位置 ----------
+function placeLink(p){
+  const u8 = new TextEncoder().encode(JSON.stringify([+p.lat.toFixed(6), +p.lng.toFixed(6), p.name, p.ko || '']));
+  return shareBase() + '#p=' + b64url(u8);
+}
+async function sharePlace(p, isMe){
+  const ko = p.ko || p.name, kakao = `https://map.kakao.com/link/map/${encodeURIComponent(isMe ? '내 위치' : ko)},${p.lat},${p.lng}`;
+  const web = location.protocol === 'file:' ? null : placeLink(p);
+  const title = isMe ? '📍 我現在在這裡' : `📍 ${p.name}`;
+  const text = [title, !isMe && p.ko && p.ko !== p.name ? p.ko : null, p.koAddr || null, web ? `地圖：${web}` : null, `Kakao 地圖：${kakao}`].filter(Boolean).join('\n');
+  try { if (navigator.share) { await navigator.share({ title, text }); return; } } catch(e) { if (e.name === 'AbortError') return; }
+  copyText(text);
+}
+async function shareMyLocation(){
+  toast('定位中…');
+  try { const p = await getMyPos(); const k = await koreanAddress(p[0], p[1]); sharePlace({ lat:p[0], lng:p[1], name:'我的位置', koAddr:k.addr }, true); }
+  catch(e) { toast(geoErrMsg(e)); }
+}
+async function checkPlaceHash(){
+  const h = location.hash; if (!h.startsWith('#p=')) return;
+  try {
+    const [lat, lng, name, ko] = JSON.parse(new TextDecoder().decode(unb64url(h.slice(3))));
+    try { history.replaceState(null, '', shareBase()); } catch(e) {}
+    showPlace({ lat, lng, name, ko: ko || null });
+  } catch(e) { toast('分享連結已損毀'); }
+}
+
+// ---------- ⭐ 收藏分類 ----------
+const FAVCAT = { food:['🍜','想吃'], shop:['🛍️','想逛'], see:['📸','想去'], stay:['🏨','住宿'], other:['⭐','其他'] };
+function guessCat(p){
+  const t = p.tags || {};
+  if (/^(restaurant|cafe|fast_food|bar|pub|food_court|ice_cream)$/.test(t.amenity || '')) return 'food';
+  if (/^(hotel|guest_house|hostel|motel|apartment|resort)$/.test(t.tourism || '') || /(호텔|리조트|게스트하우스|飯店|酒店|渡假村|民宿)/.test((p.ko || '') + (p.name || ''))) return 'stay';
+  if (t.shop || t.amenity === 'marketplace') return 'shop';
+  if (t.tourism || t.historic || t.leisure) return 'see';
+  return 'other';
+}
+let favFilter = 'all';
+function favCatChips(p){
+  const f = favs.find(x => x.lat === p.lat && x.lng === p.lng); if (!f) return '';
+  return `<div class="favcat">分類：${Object.entries(FAVCAT).map(([k,[e,n]]) => `<button data-fc="${k}" class="${(f.cat || 'other') === k ? 'on' : ''}">${e} ${n}</button>`).join('')}</div>`;
+}
+function bindFavCat(p){
+  $('sheetBody').querySelectorAll('[data-fc]').forEach(b => b.onclick = () => {
+    const f = favs.find(x => x.lat === p.lat && x.lng === p.lng); if (!f) return;
+    f.cat = b.dataset.fc; store.set('kmap_favs', favs); drawFavs(); renderSheet();
+  });
+}
+function openFavs(){
+  const counts = {}; favs.forEach(f => counts[f.cat || 'other'] = (counts[f.cat || 'other'] || 0) + 1);
+  const shown = favs.map((f,i) => [f,i]).filter(([f]) => favFilter === 'all' || (f.cat || 'other') === favFilter);
+  openPanel(`<h2>⭐ 我的收藏</h2>
+    ${favs.length ? `<div class="modes"><button data-ff="all" class="${favFilter === 'all' ? 'on' : ''}">全部 ${favs.length}</button>${Object.entries(FAVCAT).filter(([k]) => counts[k]).map(([k,[e,n]]) =>
+      `<button data-ff="${k}" class="${favFilter === k ? 'on' : ''}">${e} ${n} ${counts[k]}</button>`).join('')}</div>` : ''}
+    ${shown.length ? `<div class="list">${shown.map(([f,i]) => `<div class="item"><span data-i="${i}">${FAVCAT[f.cat || 'other'][0]} ${esc(f.name)}${distTag(f.lat,f.lng)}<small>${esc(f.ko || '')}</small></span><button data-d="${i}">🗑</button></div>`).join('')}</div>`
+      : '<div class="addr">還沒有收藏。搜尋或點地圖上的地點，按「☆ 收藏」就會出現在這裡；收藏後可以選分類（想吃、想逛、想去、住宿）。</div>'}`, el => {
+      el.querySelectorAll('[data-ff]').forEach(b => b.onclick = () => { favFilter = b.dataset.ff; openFavs(); });
+      el.querySelectorAll('[data-i]').forEach(b => b.onclick = () => showPlace({ ...favs[+b.dataset.i] }));
+      el.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { favs.splice(+b.dataset.d, 1); store.set('kmap_favs', favs); drawFavs(); openFavs(); });
+    });
+}
+
+// ---------- 🚕 叫計程車（Kakao T） ----------
+function openTaxi(p){
+  const ko = p.near || p.ko || p.name, addr = p.near ? '' : (p.koAddr || '');
+  let fare = '';
+  if (myPos) { const d = map.distance(myPos, [p.lat, p.lng]) * 1.35; const f = taxiFare(d); fare = `<div class="best">🚕 從你的位置約 ${fmtDist(d)}，車資約 ${won(f.low)}～${won(f.high)}${fxTwd(f.low)} 起（${f.label}，估算）</div>`; }
+  openPanel(`<h2>🚕 叫計程車</h2>
+    <div class="addr">韓國最常用的叫車 App 是 <b>Kakao T</b>。它沒有開放讓網頁直接帶入目的地，所以請照下面三步：</div>
+    <div class="taxi">
+      <div><span class="n">1</span><span>複製韓文目的地<div class="dest">${esc(ko)}${addr ? `<small>${esc(addr)}</small>` : ''}</div><button class="go" id="txCopy">📋 複製目的地</button></span></div>
+      <div><span class="n">2</span><span>打開 Kakao T，點「택시」→ 目的地欄位（도착지）<div class="btns" style="margin-top:6px">
+        <a href="https://apps.apple.com/kr/app/id981110422" target="_blank" rel="noopener">iPhone 下載／開啟</a>
+        <a href="https://play.google.com/store/search?q=%EC%B9%B4%EC%B9%B4%EC%98%A4%20T&c=apps" target="_blank" rel="noopener">Android 下載／開啟</a></div></span></div>
+      <div><span class="n">3</span><span>貼上目的地，選第一個結果，按「호출하기」叫車</span></div>
+    </div>
+    ${fare}
+    <div class="addr">沒有 Kakao T 也可以在路邊招車，按「給司機看」用大字韓文給司機看目的地。</div>
+    <div class="btns"><button class="wide" id="txDriver">🚕 給司機看（大字韓文）</button></div>`, () => {
+      $('txCopy').onclick = () => copyText(ko);
+      $('txDriver').onclick = () => { $('dName').textContent = ko; $('dAddr').textContent = addr; $('driver').style.display = 'flex'; };
+    });
+}
+
+// ---------- 🔊 語音導航（步行／開車／腳踏車） ----------
+const nav = { on:false, steps:[], idx:0, mode:null, coords:[], spoken:{}, wake:null, lastReroute:0, offCount:0, muted:false, end:null };
+const ARROW = { left:'⬅️', right:'➡️', 'sharp left':'↙️', 'sharp right':'↘️', 'slight left':'↖️', 'slight right':'↗️', straight:'⬆️', uturn:'↩️' };
+function stepArrow(st){ const m = st.maneuver; return m.type === 'arrive' ? '🏁' : /roundabout|rotary/.test(m.type) ? '🔄' : (ARROW[m.modifier] || '⬆️'); }
+function voiceText(st){
+  const m = st.maneuver, mod = MOD[m.modifier] || '';
+  switch (m.type) {
+    case 'depart': return '開始導航，請沿著路線前進';
+    case 'arrive': return '即將抵達目的地';
+    case 'roundabout': case 'rotary': case 'roundabout turn': return `進入圓環，從第 ${m.exit || 1} 個出口離開`;
+    case 'end of road': return `走到底後${mod || '轉彎'}`;
+    case 'fork': return `在岔路${mod || '繼續'}`;
+    case 'continue': case 'new name': return mod && mod !== '直行' ? mod : '繼續直走';
+    default: return mod || '繼續前進';
+  }
+}
+let zhVoice = null;
+function pickVoice(){ try { const vs = speechSynthesis.getVoices(); zhVoice = vs.find(v => /zh[-_]TW/i.test(v.lang)) || vs.find(v => /zh[-_](HK|Hant)/i.test(v.lang)) || vs.find(v => /^zh/i.test(v.lang)) || null; } catch(e) {} }
+if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(t){
+  if (nav.muted || !window.speechSynthesis) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'zh-TW'; if (zhVoice) u.voice = zhVoice; u.rate = 1.05; speechSynthesis.speak(u); } catch(e) {}
+}
+function roundDist(d){ return d >= 1000 ? (d/1000).toFixed(1) + ' 公里' : (d >= 100 ? Math.round(d/50)*50 : Math.max(10, Math.round(d/10)*10)) + ' 公尺'; }
+function distToRoute(p){
+  // 最近距離（公尺），以等距投影近似
+  const R = 6371000, lat0 = p[0] * Math.PI / 180, kx = Math.cos(lat0) * Math.PI / 180 * R, ky = Math.PI / 180 * R;
+  let best = Infinity;
+  for (let i = 0; i < nav.coords.length - 1; i++) {
+    const ax = (nav.coords[i][1] - p[1]) * kx, ay = (nav.coords[i][0] - p[0]) * ky, bx = (nav.coords[i+1][1] - p[1]) * kx, by = (nav.coords[i+1][0] - p[0]) * ky;
+    const dx = bx - ax, dy = by - ay, L2 = dx*dx + dy*dy; let t = L2 ? -(ax*dx + ay*dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+    best = Math.min(best, Math.hypot(ax + t*dx, ay + t*dy));
+  }
+  return best;
+}
+function loadNavRoute(r){
+  nav.steps = r.legs.flatMap(l => l.steps); nav.idx = 1; nav.spoken = {}; nav.offCount = 0;
+  nav.coords = r.geometry.coordinates.map(c => [c[1], c[0]]);
+}
+async function startNav(){
+  const res = route.data[route.mode]; if (!res?.r) return;
+  nav.on = true; nav.mode = route.mode; nav.end = { ...route.end }; loadNavRoute(res.r);
+  follow = true; $('locBtn').classList.add('on'); startWatch(); enableCompass();
+  try { nav.wake = await navigator.wakeLock?.request('screen'); } catch(e) {}
+  $('navBar').style.display = 'flex'; document.body.classList.add('navon'); closeSheet();
+  speak('開始導航。' + voiceText(nav.steps[1] || nav.steps[0]).replace('開始導航，', ''));
+  if (myPos) { map.setView(myPos, 18); navUpdate(); } else updateNavBar(null);
+}
+function stopNav(silent){
+  nav.on = false; $('navBar').style.display = 'none'; document.body.classList.remove('navon');
+  try { nav.wake?.release(); } catch(e) {} nav.wake = null;
+  try { speechSynthesis.cancel(); } catch(e) {}
+  if (!silent) toast('已結束導航');
+}
+function updateNavBar(d){
+  const st = nav.steps[nav.idx] || nav.steps[nav.steps.length - 1];
+  const remain = nav.end && myPos ? map.distance(myPos, [nav.end.lat, nav.end.lng]) : null;
+  $('navBar').innerHTML = `<span class="na">${stepArrow(st)}</span>
+    <span class="nt"><b>${d != null ? roundDist(d) + ' 後' : '定位中…'}</b>${esc(stepText(st))}<small>${remain != null ? '距離目的地 ' + fmtDist(remain) : ''}</small></span>
+    <button id="navMute" title="靜音">${nav.muted ? '🔇' : '🔊'}</button><button id="navStop" title="結束">✕</button>`;
+  $('navMute').onclick = () => { nav.muted = !nav.muted; if (nav.muted) try { speechSynthesis.cancel(); } catch(e) {} updateNavBar(d); };
+  $('navStop').onclick = () => stopNav();
+}
+async function navUpdate(){
+  if (!nav.on || !myPos) return;
+  const foot = nav.mode !== 'car';
+  const endD = map.distance(myPos, [nav.end.lat, nav.end.lng]);
+  if (endD < (foot ? 20 : 40)) { speak('已抵達目的地'); toast('🏁 已抵達目的地'); stopNav(true); return; }
+  let st = nav.steps[nav.idx];
+  if (!st) { updateNavBar(endD); return; }
+  let loc = [st.maneuver.location[1], st.maneuver.location[0]], d = map.distance(myPos, loc);
+  // 已經走過這個路口：比較接近下一個路口時就前進一步
+  const nx = nav.steps[nav.idx + 1];
+  if (nx) { const nl = [nx.maneuver.location[1], nx.maneuver.location[0]]; if (map.distance(myPos, nl) < map.distance(loc, nl) - (foot ? 10 : 30)) { nav.idx++; return navUpdate(); } }
+  const passR = foot ? 12 : 30, warnR = foot ? 40 : 200, farR = foot ? 150 : 800;
+  if (d < passR) { nav.idx++; return navUpdate(); }
+  if (!nav.spoken[nav.idx + ':far'] && d < farR && d > warnR * 1.5 && !foot) { nav.spoken[nav.idx + ':far'] = 1; speak(`${roundDist(d)}後，${voiceText(st)}`); }
+  if (!nav.spoken[nav.idx] && d < warnR) { nav.spoken[nav.idx] = 1; speak(st.maneuver.type === 'arrive' ? '即將抵達目的地' : `前方 ${roundDist(d)}，${voiceText(st)}`); }
+  updateNavBar(d);
+  // 偏離路線：連續兩次超過門檻，且距離上次重算超過 20 秒
+  const off = distToRoute(myPos);
+  nav.offCount = off > (foot ? 40 : 70) ? nav.offCount + 1 : 0;
+  if (nav.offCount >= 2 && Date.now() - nav.lastReroute > 20000) {
+    nav.lastReroute = Date.now(); nav.offCount = 0;
+    speak('已偏離路線，重新規劃中'); toast('重新規劃路線…');
+    route.start = { lat:myPos[0], lng:myPos[1], name:'我的位置', isMe:true }; route.end = nav.end; route.data = {};
+    const res = await fetchRoute(nav.mode);
+    if (res?.r && nav.on) { loadNavRoute(res.r); if (route.active) drawRoute(res.r, nav.mode); navUpdate(); }
+  }
+}
 
 $('menuBtn').onclick = openMenu;
+// 開頁時處理同步連結（#import=）與分享地點連結（#p=）——放在最後，確保所有功能都已載入
+checkImportHash(); checkPlaceHash();
+window.addEventListener('hashchange', () => { checkImportHash(); checkPlaceHash(); });
 drawFavs();
 let tileErr=0; layers.forEach(o=>o.l.on && o.l.on('tileerror',()=>{ if(++tileErr===6) toast('地圖圖片載入失敗，請按 🧭 換一種地圖'); }));
 </script>
