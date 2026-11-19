@@ -2,20 +2,21 @@
 // 網頁本體：有網路時抓最新版，沒網路時用快取
 // 地圖圖磚：先用快取（離線地圖下載的就存在這裡）
 // 搜尋／路線／翻譯：先連網路，失敗時用上次的結果
-const VER = 'kmap-v2';
+const VER = 'kmap-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const TILE_HOSTS = ['tiles.openfreemap.org', 'tile.openstreetmap.fr', 'tile.opentopomap.org', 'server.arcgisonline.com'];
 const API_HOSTS = ['nominatim.openstreetmap.org', 'routing.openstreetmap.de', 'api.transitous.org', 'translate.googleapis.com',
   'api.mymemory.translated.net', 'open.er-api.com', 'overpass-api.de', 'api.open-meteo.com', 'air-quality-api.open-meteo.com', 'maps.mail.ru', 'overpass.private.coffee'];
 const MAX_API_ENTRIES = 400;
 const TILE_CACHE = 'kmap-tiles';   // 固定名稱：更新網頁版本時保留已下載的離線地圖
+const LIB_CACHE = 'kmap-libs';     // 拍照辨識程式與韓文辨識資料（固定版本，下載一次就離線可用）
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VER + '-shell').then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
-    .then(ks => Promise.all(ks.filter(k => k.startsWith('kmap-') && !k.startsWith(VER) && k !== TILE_CACHE && !k.endsWith('-tiles')).map(k => caches.delete(k))))
+    .then(ks => Promise.all(ks.filter(k => k.startsWith('kmap-') && !k.startsWith(VER) && k !== TILE_CACHE && k !== LIB_CACHE && !k.endsWith('-tiles')).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
@@ -57,6 +58,10 @@ self.addEventListener('fetch', e => {
   }
   if (TILE_HOSTS.some(h => u.hostname === h || u.hostname.endsWith('.' + h))) {
     e.respondWith(isStaticTile(u) ? cacheFirst(req, TILE_CACHE) : networkFirst(req, TILE_CACHE));
+    return;
+  }
+  if (u.hostname === 'cdn.jsdelivr.net' && /tesseract/.test(u.pathname)) {
+    e.respondWith(cacheFirst(req, LIB_CACHE));
     return;
   }
   if (API_HOSTS.some(h => u.hostname === h)) {

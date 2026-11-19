@@ -1112,6 +1112,47 @@ return maplibregl$1;
   body.dark .leaflet-tooltip { background:var(--bg); color:var(--t); border-color:var(--line); }
   body.dark .qr { background:#fff; }
   .r.weak { opacity:.7; }
+  #phraseBtn { bottom:308px; } #hotelBtn { bottom:364px; }
+  @media (max-height: 640px) { #hotelBtn { display:none; } }
+  .mg { font-size:12px; font-weight:bold; color:var(--m); margin:10px 0 2px; }
+  #bigCard { position:fixed; inset:0; z-index:3000; background:#fff; color:#202124; display:none; flex-direction:column; justify-content:center; align-items:center; padding:24px; text-align:center; }
+  body.dark #bigCard { background:#000; color:#fff; }
+  #bigCard .bk { font-size:44px; font-weight:bold; line-height:1.3; word-break:keep-all; }
+  #bigCard .br { font-size:18px; color:#5f6368; margin-top:10px; } #bigCard .bz { font-size:22px; margin-top:18px; color:#5f6368; }
+  #bigCard .bb { display:flex; gap:12px; margin-top:32px; } #bigCard .bb button { border:1px solid #dadce0; background:#f8f9fa; border-radius:22px; padding:10px 18px; font-size:16px; cursor:pointer; font-family:inherit; }
+  .phr { border-top:1px solid var(--line); margin-top:6px; }
+  .pr { display:flex; align-items:center; gap:8px; padding:9px 2px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .pr > div { flex:1; } .pr b { font-size:17px; display:block; } .pr small { color:var(--m); font-size:12px; }
+  .pr .ps, .pr .pd { font-size:18px; padding:4px 6px; cursor:pointer; }
+  .cv textarea { width:100%; border:1px solid var(--line); border-radius:10px; padding:10px; font-size:16px; font-family:inherit; background:var(--card); color:var(--t); margin:6px 0; box-sizing:border-box; resize:vertical; }
+  .cvres { border-radius:12px; padding:12px; margin:8px 0; background:var(--soft); } .cvres .big { font-size:24px; font-weight:bold; margin-bottom:4px; word-break:keep-all; } .cvres small { color:var(--m); display:block; margin-bottom:8px; }
+  .cvres.them { background:#e8f0fe; } body.dark .cvres.them { background:#1e2b44; }
+  .cvlog > div { padding:6px 10px; border-radius:10px; margin:4px 0; max-width:85%; } .cvlog .me { background:var(--soft); margin-left:auto; text-align:right; } .cvlog .them { background:#e8f0fe; } body.dark .cvlog .them { background:#1e2b44; }
+  .cvlog b { display:block; } .cvlog small { color:var(--m); }
+  .filebtn.big { padding:16px; font-size:16px; margin:8px 0; background:#1a73e8; color:#fff; border:0; }
+  .ocrimg { max-width:100%; max-height:220px; display:block; margin:6px auto; border-radius:8px; }
+  .exsum { display:flex; gap:10px; margin:6px 0; } .exsum > div { flex:1; background:var(--soft); border-radius:10px; padding:8px 10px; }
+  .exsum small { display:block; color:var(--m); font-size:12px; } .exsum b { font-size:20px; display:block; } .exsum span { font-size:12px; color:var(--m); }
+  .excat { display:flex; flex-wrap:wrap; gap:6px; font-size:12px; margin:4px 0 8px; } .excat span { background:var(--soft); border-radius:10px; padding:3px 8px; }
+  .exadd { border:1px solid var(--line); border-radius:12px; padding:8px 10px; margin:8px 0; }
+  .excats { display:flex; flex-wrap:wrap; gap:5px; margin:6px 0; } .excats button { border:1px solid var(--line); background:var(--card); color:var(--t); border-radius:14px; padding:5px 9px; font-size:13px; cursor:pointer; font-family:inherit; }
+  .excats button.on { background:#1a73e8; color:#fff; border-color:#1a73e8; }
+  .exnote { width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; font-size:15px; font-family:inherit; background:var(--card); color:var(--t); box-sizing:border-box; margin-bottom:6px; }
+  .exwho { font-size:13px; margin:4px 0 8px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; } .exwho select { border:1px solid var(--line); border-radius:6px; padding:3px; background:var(--card); color:var(--t); }
+  .exwho label { display:inline-flex; align-items:center; gap:2px; }
+  .exppl { font-size:13px; color:var(--m); margin:6px 0; }
+  .settle > div { padding:6px 10px; background:#e6f4ea; border-radius:8px; margin:4px 0; font-size:14px; } body.dark .settle > div { background:#1e3a2a; } .settle small { color:var(--m); }
+  .exi { display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .exi .en { flex:1; min-width:0; } .exi small { display:block; color:var(--m); font-size:11px; } .exi .ea { text-align:right; font-weight:bold; white-space:nowrap; } .exi .ea small { font-weight:normal; }
+  .rules > div { font-size:13px; padding:5px 0; border-bottom:1px dashed var(--line); line-height:1.5; }
+  .shl label { display:flex; align-items:center; gap:10px; padding:9px 2px; border-bottom:1px solid var(--line); font-size:15px; cursor:pointer; }
+  .shl label span { flex:1; } .shl small { display:block; color:var(--m); font-size:12px; } .shl input { width:20px; height:20px; flex:none; }
+  .shl label.done span { text-decoration:line-through; color:var(--m); }
+  .prog { height:8px; background:var(--soft); border-radius:4px; overflow:hidden; margin:6px 0 2px; } .prog div { height:100%; background:#188038; }
+  .hotel { background:var(--soft); border-radius:12px; padding:12px; margin:6px 0; } .hotel b { font-size:18px; } .hotel small { display:block; color:var(--m); margin-top:4px; }
+  .sizes { display:flex; gap:10px; flex-wrap:wrap; } .sizes table { flex:1; min-width:150px; border-collapse:collapse; font-size:13px; margin:4px 0; }
+  .sizes th, .sizes td { border-bottom:1px solid var(--line); padding:4px 6px; text-align:center; } .sizes th { color:var(--m); font-weight:normal; font-size:12px; }
+
   #navBar { position:absolute; top:0; left:0; right:0; z-index:1500; display:none; align-items:center; gap:10px; background:#188038; color:#fff; padding:12px 14px; padding-top:max(12px, env(safe-area-inset-top)); box-shadow:0 2px 8px rgba(0,0,0,.3); }
   body.navon .top, body.navon #results { display:none !important; }
   #navBar .na { font-size:34px; } #navBar .nt { flex:1; font-size:15px; line-height:1.35; } #navBar .nt b { display:block; font-size:22px; } #navBar .nt small { display:block; opacity:.85; font-size:12px; }
@@ -1198,6 +1239,8 @@ return maplibregl$1;
   <div class="results" id="results"></div>
 </div>
 
+<button class="fab" id="hotelBtn" title="回飯店">🏨</button>
+<button class="fab" id="phraseBtn" title="韓文句卡／翻譯">🗣️</button>
 <button class="fab" id="menuBtn" title="更多功能">☰</button>
 <button class="fab" id="spotBtn" title="熱門景點">🗺️</button>
 <div id="subBar"></div>
@@ -1215,6 +1258,7 @@ return maplibregl$1;
   <div class="say">여기로 가 주세요.（請載我到這裡）<br><small>點一下畫面關閉</small></div>
 </div>
 <div id="toast"></div>
+<div id="bigCard"></div>
 
 <script>
 //---------------------------------------------------------------------
@@ -3918,6 +3962,7 @@ function renderSheet(){
       <button id="driverBtn">🚕 給司機看</button>
       <button id="taxiBtn">🚖 叫計程車</button>
       <button id="shareBtn">🔗 分享</button>
+      <button class="wide" id="hotelSetBtn">${hotel && hotel.lat === p.lat && hotel.lng === p.lng ? '🏨 這是我的飯店 ✓' : '🏨 設為我的飯店'}</button>
     </div>
     <div class="addr" style="margin-top:10px">💡 Naver 導航需安裝 Naver Map App；Kakao 連結手機電腦都能開。</div>`;
   $('favToggle').onclick = () => toggleFav(p);
@@ -3926,6 +3971,7 @@ function renderSheet(){
   $('tripAddBtn').onclick = () => tripAddDialog(p);
   $('taxiBtn').onclick = () => openTaxi(p);
   $('shareBtn').onclick = () => sharePlace(p);
+  $('hotelSetBtn').onclick = () => { setHotel(p); renderSheet(); };
   bindFavCat(p); bindExitRows($('exitBox'));
   if ($('wxOpen')) $('wxOpen').onclick = () => openWeather(p.lat, p.lng, p.name);
   loadWeatherFor(p); loadExitsFor(p);
@@ -4435,23 +4481,20 @@ function downloadFile(name, text, type='application/json'){
 
 // ---------- ☰ 選單 ----------
 function openMenu(){
+  const dark = document.body.classList.contains('dark');
+  const G = (title, items) => `<div class="mg">${title}</div><div class="menu">${items.map(([a, e, t, badge]) => `<button data-a="${a}"><span>${e}</span>${t}${badge ? `<em>${badge}</em>` : ''}</button>`).join('')}</div>`;
   openPanel(`<h2>☰ 更多功能</h2>
-    <div class="menu">
-      <button data-a="trip"><span>📅</span>行程規劃</button>
-      <button data-a="sync"><span>🔄</span>收藏同步</button>
-      <button data-a="subway"><span>🚇</span>地鐵路線圖${subway.on ? '<em>開</em>' : ''}</button>
-      <button data-a="tools"><span>🧰</span>旅遊工具</button>
-      <button data-a="offline"><span>📥</span>離線地圖</button>
-      <button data-a="dark"><span>${document.body.classList.contains('dark') ? '☀️' : '🌙'}</span>${document.body.classList.contains('dark') ? '淺色模式' : '深色模式'}</button>
-      <button data-a="hist"><span>🕘</span>搜尋紀錄</button>
-      <button data-a="wx"><span>☁️</span>天氣／空氣</button>
-      <button data-a="shareme"><span>📍</span>分享我的位置</button>
-      <button data-a="about"><span>ℹ️</span>關於／資料來源</button>
-    </div>`, el => el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => ({
+    ${G('🗺️ 地圖與行程', [['trip','📅','行程規劃'], ['hotel','🏨','回飯店'], ['subway','🚇','地鐵路線圖', subway.on ? '開' : ''], ['wx','☁️','天氣／空氣'],
+      ['offline','📥','離線地圖'], ['sync','🔄','收藏同步'], ['shareme','📍','分享我的位置'], ['hist','🕘','搜尋紀錄']])}
+    ${G('🗣️ 語言', [['phrase','🗣️','韓文句卡'], ['convo','💬','對話翻譯'], ['ocr','📷','拍照翻譯']])}
+    ${G('💰 花錢', [['expense','💰','旅費記帳'], ['tax','🧾','退稅計算'], ['shop','🛒','購物清單'], ['tools','🧰','匯率／車資／急難']])}
+    ${G('🧳 其他', [['check','✅','行前清單'], ['sizes','📏','尺寸換算'], ['dark', dark ? '☀️' : '🌙', dark ? '淺色模式' : '深色模式'], ['about','ℹ️','關於／資料來源']])}`,
+    el => el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => ({
       trip: openTrip, sync: openSync, subway: toggleSubway, tools: openTools, offline: openOffline,
-      dark: () => { setTheme(document.body.classList.contains('dark') ? 'light' : 'dark'); openMenu(); },
+      dark: () => { setTheme(dark ? 'light' : 'dark'); openMenu(); },
       hist: () => { closeSheet(); $('q').focus(); showHistory(); }, about: openAbout,
       wx: () => openWeather(), shareme: shareMyLocation,
+      hotel: openHotel, phrase: openPhrases, convo: openConvo, ocr: openOcr, expense: openExpense, tax: openTax, shop: openShop, check: openChecklist, sizes: openSizes,
     })[b.dataset.a]()));
 }
 
@@ -4481,12 +4524,20 @@ $('q').addEventListener('input', () => { if (!$('q').value.trim()) showHistory()
 function packData(){
   return { v:1,
     f: favs.map(f => [f.lat, f.lng, f.name, f.ko || '', f.cat || 'other']),
-    t: trip.days.map(d => ({ s:d.start, d:d.date || '', p:d.stops.map(s => [s.lat, s.lng, s.name, s.ko || '', s.stay]) })) };
+    t: trip.days.map(d => ({ s:d.start, d:d.date || '', p:d.stops.map(s => [s.lat, s.lng, s.name, s.ko || '', s.stay]) })),
+    ...(exp.items.length || exp.people.length > 1 ? { x: { p:exp.people, i:exp.items.map(x => [x.id, x.t, x.amt, x.cur, x.krw, x.cat, x.note || '', x.payer, x.among]) } } : {}),
+    ...(shop.length ? { s: shop.map(x => [x.text, x.store || '', x.done ? 1 : 0]) } : {}),
+    ...(hotel ? { h: [hotel.lat, hotel.lng, hotel.name, hotel.ko || '', hotel.koAddr || ''] } : {}),
+    ...(myPhrases.length ? { m: myPhrases } : {}) };
 }
 function unpackData(o){
   return {
     favs: (o.f || []).map(a => ({ lat:a[0], lng:a[1], name:a[2], ko:a[3] || null, cat:a[4] || 'other' })),
     days: (o.t || []).map(d => ({ start:d.s || '09:00', date:d.d || '', stops:(d.p || []).map(a => ({ lat:a[0], lng:a[1], name:a[2], ko:a[3] || null, stay:a[4] ?? 60 })) })),
+    exp: o.x ? { people:o.x.p || ['我'], items:(o.x.i || []).map(a => ({ id:a[0], t:a[1], amt:a[2], cur:a[3], krw:a[4], cat:a[5], note:a[6], payer:a[7], among:a[8] })) } : null,
+    shop: (o.s || []).map((a,i) => ({ id:'i' + i + Date.now().toString(36), text:a[0], store:a[1], done:!!a[2] })),
+    hotel: o.h ? { lat:o.h[0], lng:o.h[1], name:o.h[2], ko:o.h[3] || null, koAddr:o.h[4] || null } : null,
+    phrases: o.m || [],
   };
 }
 const b64url = u8 => btoa(String.fromCharCode(...u8)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -4536,20 +4587,25 @@ function confirmImport(o){
   let d; try { d = unpackData(o); } catch(e) { return toast('資料格式不正確'); }
   const nStops = d.days.reduce((s,x) => s + x.stops.length, 0);
   openPanel(`<h2>⬆️ 匯入資料</h2>
-    <div class="addr">要匯入 ⭐ ${d.favs.length} 個收藏、📅 ${d.days.length} 天行程（${nStops} 個地點）。</div>
+    <div class="addr">要匯入 ⭐ ${d.favs.length} 個收藏、📅 ${d.days.length} 天行程（${nStops} 個地點）${d.exp ? `、💰 ${d.exp.items.length} 筆帳目` : ''}${d.shop.length ? `、🛒 ${d.shop.length} 項購物清單` : ''}${d.hotel ? '、🏨 飯店' : ''}${d.phrases.length ? `、🗣️ ${d.phrases.length} 句我的句卡` : ''}。</div>
     <div class="btns">
       <button class="go" id="imMerge">合併（保留現有的）</button>
       <button id="imReplace">取代（清掉現有的）</button>
       <button class="wide" id="imCancel">取消</button>
     </div>`, () => {
-      const done = () => { store.set('kmap_favs', favs); saveTrip(); drawFavs(); toast('匯入完成'); try { history.replaceState(null, '', shareBase()); } catch(e) {} };
+      const done = () => { store.set('kmap_favs', favs); saveTrip(); drawFavs(); saveExp(); store.set('kmap_shop', shop); store.set('kmap_hotel', hotel); drawHotel(); store.set('kmap_myphr', myPhrases); toast('匯入完成'); try { history.replaceState(null, '', shareBase()); } catch(e) {} };
       $('imMerge').onclick = () => {
         d.favs.forEach(f => { if (!favs.some(x => x.lat === f.lat && x.lng === f.lng)) favs.push(f); });
         d.days.forEach(day => { if (day.stops.length) trip.days.push(day); });
         if (trip.days.length > 1 && !trip.days[0].stops.length) trip.days.shift();
+        if (d.exp) { d.exp.people.forEach(p => { if (!exp.people.includes(p)) exp.people.push(p); }); d.exp.items.forEach(x => { if (!exp.items.some(y => y.id === x.id)) exp.items.push(x); }); }
+        d.shop.forEach(x => { if (!shop.some(y => y.text === x.text)) shop.push(x); });
+        if (d.hotel && !hotel) hotel = d.hotel;
+        d.phrases.forEach(p => { if (!myPhrases.some(y => y[1] === p[1])) myPhrases.push(p); });
         done(); openTrip();
       };
-      $('imReplace').onclick = () => { favs = d.favs; trip.days = d.days.length ? d.days : [{ start:'09:00', date:'', stops:[] }]; tripDay = 0; done(); openTrip(); };
+      $('imReplace').onclick = () => { favs = d.favs; trip.days = d.days.length ? d.days : [{ start:'09:00', date:'', stops:[] }]; tripDay = 0;
+        if (d.exp) exp = d.exp; shop = d.shop; if (d.hotel) hotel = d.hotel; if (d.phrases.length) myPhrases = d.phrases; done(); openTrip(); };
       $('imCancel').onclick = () => { try { history.replaceState(null, '', shareBase()); } catch(e) {} closeSheet(); };
     });
 }
@@ -5490,6 +5546,451 @@ async function navUpdate(){
   }
 }
 
+// ====================================================================
+//  擴充功能（第三批）：韓文句卡、對話翻譯、拍照翻譯、旅費記帳＋分帳、
+//  退稅計算、購物清單、一鍵回飯店、行前清單、尺寸換算
+// ====================================================================
+
+// ---------- 共用：大字卡片、韓文／中文朗讀 ----------
+let koVoice = null, zhVoice2 = null;
+function pickVoices(){
+  try {
+    const vs = speechSynthesis.getVoices();
+    koVoice = vs.find(v => /^ko/i.test(v.lang)) || null;
+    zhVoice2 = vs.find(v => /zh[-_]TW/i.test(v.lang)) || vs.find(v => /^zh/i.test(v.lang)) || null;
+  } catch(e) {}
+}
+if (window.speechSynthesis) { pickVoices(); speechSynthesis.addEventListener?.('voiceschanged', pickVoices); }
+function say(text, lang = 'ko'){
+  if (!window.speechSynthesis || !text) return toast('此瀏覽器不支援朗讀');
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang === 'ko' ? 'ko-KR' : 'zh-TW';
+    const v = lang === 'ko' ? koVoice : zhVoice2; if (v) u.voice = v;
+    u.rate = lang === 'ko' ? 0.9 : 1;
+    speechSynthesis.speak(u);
+    if (lang === 'ko' && !koVoice) toast('手機沒有韓文語音時可能唸不出來，請到系統設定加入韓文語音');
+  } catch(e) {}
+}
+function bigCard(ko, zh, roman){
+  const el = $('bigCard');
+  el.innerHTML = `<div class="bk">${esc(ko)}</div>${roman ? `<div class="br">${esc(roman)}</div>` : ''}<div class="bz">${esc(zh || '')}</div>
+    <div class="bb"><button id="bcSay">🔊 再唸一次</button><button id="bcClose">✕ 關閉</button></div>`;
+  el.style.display = 'flex';
+  $('bcSay').onclick = e => { e.stopPropagation(); say(ko); };
+  $('bcClose').onclick = e => { e.stopPropagation(); el.style.display = 'none'; };
+  say(ko);
+}
+
+// ---------- 🗣️ 韓文句卡 ----------
+// [中文, 韓文, 羅馬拼音]
+const PHRASES = {
+  '基本': [
+    ['你好', '안녕하세요', 'annyeonghaseyo'], ['謝謝', '감사합니다', 'gamsahamnida'], ['對不起', '죄송합니다', 'joesonghamnida'],
+    ['不好意思（叫店員）', '저기요', 'jeogiyo'], ['是／不是', '네 / 아니요', 'ne / aniyo'], ['我不太會說韓文', '한국어를 잘 못해요', 'hangugeoreul jal motaeyo'],
+    ['請說慢一點', '천천히 말씀해 주세요', 'cheoncheonhi malsseumhae juseyo'], ['請寫在這裡給我', '여기에 써 주세요', 'yeogie sseo juseyo'],
+    ['我是台灣人', '저는 대만 사람이에요', 'jeoneun daeman saramieyo'],
+  ],
+  '點餐': [
+    ['請給我菜單', '메뉴판 주세요', 'menyupan juseyo'], ['有中文菜單嗎？', '중국어 메뉴 있어요?', 'junggugeo menyu isseoyo?'],
+    ['請給我這個', '이거 주세요', 'igeo juseyo'], ['請給我兩人份', '2인분 주세요', 'i-inbun juseyo'], ['這個辣嗎？', '이거 매워요?', 'igeo maewoyo?'],
+    ['請做不辣的', '안 맵게 해 주세요', 'an maepge hae juseyo'], ['請給我水', '물 좀 주세요', 'mul jom juseyo'], ['請再給我小菜', '반찬 더 주세요', 'banchan deo juseyo'],
+    ['一個人可以吃嗎？', '혼자 먹어도 돼요?', 'honja meogeodo dwaeyo?'], ['內用', '먹고 갈게요', 'meokgo galgeyo'], ['外帶', '포장해 주세요', 'pojanghae juseyo'],
+    ['請幫我結帳', '계산해 주세요', 'gyesanhae juseyo'], ['可以刷卡嗎？', '카드 돼요?', 'kadeu dwaeyo?'],
+  ],
+  '過敏飲食': [
+    ['我對花生過敏', '땅콩 알레르기가 있어요', 'ttangkong allereugiga isseoyo'], ['我對海鮮過敏', '해산물 알레르기가 있어요', 'haesanmul allereugiga isseoyo'],
+    ['我不吃牛肉', '소고기를 안 먹어요', 'sogogireul an meogeoyo'], ['我吃素', '저는 채식주의자예요', 'jeoneun chaesikjuuijayeyo'],
+    ['裡面有肉嗎？', '고기 들어가요?', 'gogi deureogayo?'], ['請不要放香菜', '고수 빼 주세요', 'gosu ppae juseyo'],
+  ],
+  '購物': [
+    ['多少錢？', '얼마예요?', 'eolmayeyo?'], ['可以便宜一點嗎？', '좀 깎아 주세요', 'jom kkakka juseyo'], ['可以試穿嗎？', '입어 봐도 돼요?', 'ibeo bwado dwaeyo?'],
+    ['有別的尺寸嗎？', '다른 사이즈 있어요?', 'dareun saijeu isseoyo?'], ['有別的顏色嗎？', '다른 색 있어요?', 'dareun saek isseoyo?'],
+    ['可以退稅嗎？', '택스 리펀드 돼요?', 'taekseu ripeondeu dwaeyo?'], ['請給我袋子', '봉투 주세요', 'bongtu juseyo'],
+    ['我只是看看', '그냥 구경하는 거예요', 'geunyang gugyeonghaneun geoyeyo'], ['請給我收據', '영수증 주세요', 'yeongsujeung juseyo'],
+  ],
+  '交通': [
+    ['請載我到這裡', '여기로 가 주세요', 'yeogiro ga juseyo'], ['地鐵站在哪裡？', '지하철역이 어디예요?', 'jihacheollyeogi eodiyeyo?'],
+    ['這班公車會到這裡嗎？', '이 버스 여기 가요?', 'i beoseu yeogi gayo?'], ['要在哪裡轉車？', '어디서 갈아타요?', 'eodiseo garatayo?'],
+    ['請在這裡停車', '여기서 세워 주세요', 'yeogiseo sewo juseyo'], ['請打開後車廂', '트렁크 열어 주세요', 'teureongkeu yeoreo juseyo'],
+    ['到這裡要多久？', '여기까지 얼마나 걸려요?', 'yeogikkaji eolmana geollyeoyo?'], ['我要加值交通卡', '교통카드 충전해 주세요', 'gyotongkadeu chungjeonhae juseyo'],
+  ],
+  '住宿': [
+    ['我要辦入住', '체크인하려고요', 'chekeuinharyeogoyo'], ['我要退房', '체크아웃할게요', 'chekeuauthalgeyo'], ['可以寄放行李嗎？', '짐 맡겨도 돼요?', 'jim matgyeodo dwaeyo?'],
+    ['Wi-Fi 密碼是什麼？', '와이파이 비밀번호가 뭐예요?', 'waipai bimilbeonhoga mwoyeyo?'], ['沒有熱水', '뜨거운 물이 안 나와요', 'tteugeoun muri an nawayo'],
+    ['我的房卡不見了', '카드키를 잃어버렸어요', 'kadeukireul ireobeoryeosseoyo'],
+  ],
+  '問路': [
+    ['廁所在哪裡？', '화장실이 어디예요?', 'hwajangsiri eodiyeyo?'], ['這裡怎麼去？', '여기 어떻게 가요?', 'yeogi eotteoke gayo?'],
+    ['走路到得了嗎？', '걸어서 갈 수 있어요?', 'georeoseo gal su isseoyo?'], ['附近有便利商店嗎？', '근처에 편의점 있어요?', 'geuncheoe pyeonuijeom isseoyo?'],
+    ['我迷路了', '길을 잃었어요', 'gireul ireosseoyo'], ['可以幫我拍照嗎？', '사진 좀 찍어 주세요', 'sajin jom jjigeo juseyo'],
+  ],
+  '緊急': [
+    ['請幫幫我', '도와주세요', 'dowajuseyo'], ['請叫救護車', '구급차 불러 주세요', 'gugeupcha bulleo juseyo'], ['請叫警察', '경찰 불러 주세요', 'gyeongchal bulleo juseyo'],
+    ['我的錢包被偷了', '지갑을 도둑맞았어요', 'jigabeul dodungmajasseoyo'], ['我的護照不見了', '여권을 잃어버렸어요', 'yeogwoneul ireobeoryeosseoyo'],
+    ['我身體不舒服', '몸이 안 좋아요', 'momi an joayo'], ['附近有藥局嗎？', '근처에 약국 있어요?', 'geuncheoe yakguk isseoyo?'],
+    ['我頭痛', '머리가 아파요', 'meoriga apayo'], ['我肚子痛', '배가 아파요', 'baega apayo'],
+  ],
+};
+let myPhrases = store.get('kmap_myphr', []);   // [中文, 韓文]
+let phraseCat = '基本';
+function openPhrases(){
+  const cats = [...(myPhrases.length ? ['⭐ 我的'] : []), ...Object.keys(PHRASES)];
+  if (!cats.includes(phraseCat)) phraseCat = cats[0];
+  const list = phraseCat === '⭐ 我的' ? myPhrases.map(p => [p[0], p[1], '']) : PHRASES[phraseCat];
+  openPanel(`<h2>🗣️ 韓文句卡</h2>
+    <div class="addr">點一下句子會放大給對方看，並用韓文唸出來。沒網路也能用。</div>
+    <div class="modes">${cats.map(c => `<button data-pc="${esc(c)}" class="${c === phraseCat ? 'on' : ''}">${esc(c)}</button>`).join('')}</div>
+    <div class="phr">${list.map((p,i) => `<div class="pr" data-pi="${i}"><div><b>${esc(p[1])}</b><small>${esc(p[0])}${p[2] ? ' · ' + esc(p[2]) : ''}</small></div>
+      <span class="ps" data-say="${i}">🔊</span>${phraseCat === '⭐ 我的' ? `<span class="pd" data-del="${i}">🗑</span>` : ''}</div>`).join('')}</div>
+    <div class="btns" style="margin-top:8px"><button class="go" id="phConvo">💬 對話翻譯</button><button id="phOcr">📷 拍照翻譯</button></div>`, el => {
+      el.querySelectorAll('[data-pc]').forEach(b => b.onclick = () => { phraseCat = b.dataset.pc; openPhrases(); });
+      el.querySelectorAll('[data-pi]').forEach(r => r.onclick = () => { const p = list[+r.dataset.pi]; bigCard(p[1], p[0], p[2]); });
+      el.querySelectorAll('[data-say]').forEach(b => b.onclick = e => { e.stopPropagation(); say(list[+b.dataset.say][1]); });
+      el.querySelectorAll('[data-del]').forEach(b => b.onclick = e => { e.stopPropagation(); myPhrases.splice(+b.dataset.del, 1); store.set('kmap_myphr', myPhrases); openPhrases(); });
+      $('phConvo').onclick = openConvo; $('phOcr').onclick = openOcr;
+    });
+}
+
+// ---------- 💬 對話翻譯（可語音輸入） ----------
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let convo = { side:'me', log:[] };   // side: me＝我說中文；them＝對方說韓文
+function openConvo(){
+  const me = convo.side === 'me';
+  openPanel(`<h2>💬 對話翻譯</h2>
+    <div class="modes"><button data-side="me" class="${me ? 'on' : ''}">🇹🇼 我說中文</button><button data-side="them" class="${!me ? 'on' : ''}">🇰🇷 對方說韓文</button></div>
+    <div class="cv">
+      <textarea id="cvIn" rows="3" placeholder="${me ? '輸入中文，或按 🎤 用說的' : '請對方輸入韓文，或按 🎤 用說的（한국어로 말씀해 주세요）'}"></textarea>
+      <div class="btns"><button class="go" id="cvGo">翻譯</button>${SR ? `<button id="cvMic">🎤 ${me ? '說中文' : '說韓文'}</button>` : `<button disabled>🎤 此瀏覽器不支援語音輸入</button>`}</div>
+    </div>
+    <div id="cvOut"></div>
+    ${convo.log.length ? `<div class="group">剛才的對話</div><div class="cvlog">${convo.log.slice().reverse().map(x =>
+      `<div class="${x.side}"><b>${esc(x.side === 'me' ? x.ko : x.zh)}</b><small>${esc(x.side === 'me' ? x.zh : x.ko)}</small></div>`).join('')}</div>` : ''}
+    <div class="addr">翻譯需要網路（Google 翻譯公開端點），機器翻譯僅供參考。</div>`, el => {
+      el.querySelectorAll('[data-side]').forEach(b => b.onclick = () => { convo.side = b.dataset.side; openConvo(); });
+      $('cvGo').onclick = () => runConvo($('cvIn').value);
+      if ($('cvMic')) $('cvMic').onclick = () => listen(me ? 'zh-TW' : 'ko-KR', t => { $('cvIn').value = t; runConvo(t); });
+    });
+}
+async function runConvo(text){
+  text = (text || '').trim(); if (!text) return;
+  const me = convo.side === 'me', out = $('cvOut');
+  out.innerHTML = '<div class="addr">翻譯中…</div>';
+  const res = await translate(text, me ? 'zh' : 'ko', me ? 'ko' : 'zh');
+  if (!res) { out.innerHTML = '<div class="addr">⚠️ 翻譯失敗，請確認網路。</div>'; return; }
+  const ko = me ? res : text, zh = me ? text : res;
+  convo.log.push({ side:convo.side, ko, zh }); if (convo.log.length > 20) convo.log.shift();
+  out.innerHTML = `<div class="cvres ${me ? 'me' : 'them'}"><div class="big">${esc(me ? ko : zh)}</div><small>${esc(me ? zh : ko)}</small>
+    <div class="btns">${me ? `<button class="go" id="cvShow">🔍 全螢幕給對方看</button><button id="cvSay">🔊 唸韓文</button><button class="wide" id="cvSave">⭐ 存到我的句卡</button>` : `<button id="cvSay">🔊 唸韓文原句</button><button id="cvReply">↩️ 換我回答</button>`}</div></div>`;
+  if (me) { say(ko); $('cvShow').onclick = () => bigCard(ko, zh); $('cvSave').onclick = () => { myPhrases.unshift([zh, ko]); store.set('kmap_myphr', myPhrases.slice(0, 100)); toast('已存到「⭐ 我的」句卡'); }; }
+  else $('cvReply').onclick = () => { convo.side = 'me'; openConvo(); };
+  $('cvSay').onclick = () => say(ko);
+}
+function listen(lang, done){
+  try {
+    const r = new SR(); r.lang = lang; r.interimResults = false; r.maxAlternatives = 1;
+    toast(lang.startsWith('ko') ? '🎤 請說韓文…' : '🎤 請說中文…');
+    r.onresult = e => done(e.results[0][0].transcript);
+    r.onerror = e => toast(e.error === 'not-allowed' ? '請允許使用麥克風' : '沒有聽清楚，請再試一次');
+    r.start();
+  } catch(e) { toast('無法啟動語音輸入'); }
+}
+
+// ---------- 📷 拍照翻譯（tesseract.js 韓文文字辨識，第一次會下載辨識資料） ----------
+let ocrWorker = null, ocrLoading = null;
+function loadTesseract(){
+  if (window.Tesseract) return Promise.resolve();
+  return ocrLoading ||= new Promise((ok, no) => {
+    const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js';
+    s.onload = ok; s.onerror = () => { ocrLoading = null; no(new Error('load')); }; document.head.appendChild(s);
+  });
+}
+function openOcr(){
+  openPanel(`<h2>📷 拍照翻譯</h2>
+    <div class="addr">拍菜單、招牌或說明，辨識韓文後翻成中文。第一次使用會下載約 10 MB 的辨識資料，請用 Wi-Fi。</div>
+    <label class="filebtn big">📷 拍照或選擇照片<input type="file" id="ocrFile" accept="image/*" capture="environment" hidden></label>
+    <div id="ocrOut"></div>
+    <div class="addr">小訣竅：拍近一點、字要清楚、光線充足；直書或手寫字比較難辨識。</div>`, () => {
+      $('ocrFile').onchange = e => { const f = e.target.files[0]; if (f) runOcr(f); };
+    });
+}
+async function runOcr(file){
+  const out = $('ocrOut'); const url = URL.createObjectURL(file);
+  out.innerHTML = `<img class="ocrimg" src="${url}"><div class="addr" id="ocrProg">準備辨識…</div>`;
+  const prog = t => { const p = $('ocrProg'); if (p) p.textContent = t; };
+  try {
+    await loadTesseract();
+    if (!ocrWorker) {
+      prog('下載韓文辨識資料中…（只有第一次需要）');
+      ocrWorker = await Tesseract.createWorker('kor', 1, { logger: m => { if (m.status && m.progress != null) prog(`${({ 'loading tesseract core':'載入辨識程式', 'loading language traineddata':'下載韓文資料', 'initializing api':'初始化', 'recognizing text':'辨識中' })[m.status] || m.status}… ${Math.round(m.progress * 100)}%`); } });
+    }
+    const { data } = await ocrWorker.recognize(file);
+    const lines = (data.text || '').split('\n').map(s => s.replace(/\s+/g, ' ').trim()).filter(s => /[가-힣]/.test(s) && s.replace(/[^가-힣]/g, '').length >= 1);
+    if (!lines.length) { prog('😕 沒有辨識到韓文，請拍近一點、讓字更清楚再試一次。'); return; }
+    prog(`辨識到 ${lines.length} 行，翻譯中…`);
+    const tr = await translate(lines.join('\n'), 'ko', 'zh');
+    const zh = tr ? tr.split('\n') : [];
+    const pairs = lines.map((ko, i) => [ko, zh.length === lines.length ? zh[i] : '']);
+    $('ocrOut').innerHTML = `<img class="ocrimg" src="${url}">
+      ${tr ? '' : '<div class="addr">⚠️ 翻譯失敗（需要網路），先顯示辨識到的韓文。</div>'}
+      ${!tr || zh.length === lines.length ? '' : `<div class="cvres"><div>${esc(tr)}</div></div>`}
+      <div class="phr">${pairs.map((p,i) => `<div class="pr" data-oi="${i}"><div><b>${esc(p[1] || p[0])}</b><small>${esc(p[0])}</small></div><span class="ps">🔊</span></div>`).join('')}</div>
+      <div class="addr">點一行可以放大並唸出韓文。辨識難免有錯字，翻譯僅供參考。</div>`;
+    $('ocrOut').querySelectorAll('[data-oi]').forEach(r => r.onclick = () => { const p = pairs[+r.dataset.oi]; bigCard(p[0], p[1]); });
+  } catch(e) { prog('⚠️ 辨識失敗：第一次使用需要網路下載辨識資料，請連上網路再試。'); }
+}
+
+// ---------- 💰 旅費記帳＋分帳 ----------
+const EXCAT = { food:['🍜','餐飲'], trans:['🚇','交通'], shop:['🛍️','購物'], stay:['🏨','住宿'], fun:['🎫','門票娛樂'], other:['📦','其他'] };
+let exp = store.get('kmap_exp', { people:['我'], items:[] });
+function saveExp(){ store.set('kmap_exp', exp); }
+const twd = krw => fx.rate ? Math.round(krw * fx.rate) : null;
+const ntd = n => n == null ? '' : 'NT$' + n.toLocaleString('en-US');
+function kstDate(ts){ return new Intl.DateTimeFormat('sv-SE', { timeZone:KST_TZ }).format(new Date(ts)); }
+function settle(){
+  const bal = Object.fromEntries(exp.people.map(p => [p, 0]));
+  for (const it of exp.items) {
+    const among = (it.among || exp.people).filter(p => p in bal); if (!among.length || !(it.payer in bal)) continue;
+    bal[it.payer] += it.krw; const share = it.krw / among.length; among.forEach(p => bal[p] -= share);
+  }
+  const pos = Object.entries(bal).filter(([,v]) => v > 1).sort((a,b) => b[1]-a[1]), neg = Object.entries(bal).filter(([,v]) => v < -1).sort((a,b) => a[1]-b[1]);
+  const tx = []; let i = 0, j = 0;
+  while (i < pos.length && j < neg.length) {
+    const m = Math.min(pos[i][1], -neg[j][1]); tx.push([neg[j][0], pos[i][0], m]);
+    pos[i][1] -= m; neg[j][1] += m; if (pos[i][1] < 1) i++; if (neg[j][1] > -1) j++;
+  }
+  return { bal, tx };
+}
+async function openExpense(){
+  await loadFx();
+  const total = exp.items.reduce((s,x) => s + x.krw, 0), today = kstNowParts().date;
+  const todayT = exp.items.filter(x => kstDate(x.t) === today).reduce((s,x) => s + x.krw, 0);
+  const byCat = {}; exp.items.forEach(x => byCat[x.cat] = (byCat[x.cat] || 0) + x.krw);
+  const days = {}; exp.items.forEach(x => (days[kstDate(x.t)] ||= []).push(x));
+  const multi = exp.people.length > 1, st = multi ? settle() : null;
+  openPanel(`<h2>💰 旅費記帳</h2>
+    <div class="exsum"><div><small>總花費</small><b>${won(total)}</b><span>${ntd(twd(total))}</span></div><div><small>今天</small><b>${won(todayT)}</b><span>${ntd(twd(todayT))}</span></div></div>
+    ${Object.keys(byCat).length ? `<div class="excat">${Object.entries(byCat).sort((a,b) => b[1]-a[1]).map(([k,v]) => `<span>${EXCAT[k][0]} ${EXCAT[k][1]} ${won(v)}</span>`).join('')}</div>` : ''}
+    <div class="exadd">
+      <div class="fx"><label>金額<input type="number" inputmode="decimal" id="exAmt" placeholder="0"></label>
+        <label style="flex:0;min-width:84px">幣別<select id="exCur"><option value="KRW">₩ 韓元</option><option value="TWD">NT$ 台幣</option></select></label></div>
+      <div class="excats">${Object.entries(EXCAT).map(([k,[e,n]], i) => `<button data-ec="${k}" class="${i === 0 ? 'on' : ''}">${e} ${n}</button>`).join('')}</div>
+      <input id="exNote" class="exnote" placeholder="備註（例如：明洞烤肉）">
+      ${multi ? `<div class="exwho">付款：<select id="exPayer">${exp.people.map(p => `<option>${esc(p)}</option>`).join('')}</select>　分給：${exp.people.map(p => `<label><input type="checkbox" data-am="${esc(p)}" checked>${esc(p)}</label>`).join('')}</div>` : ''}
+      <div class="btns"><button class="go wide" id="exAdd">＋ 記一筆</button></div>
+    </div>
+    <div class="exppl">👥 同行者：${exp.people.map((p,i) => `<span>${esc(p)}${i ? ` <button class="linkbtn" data-rp="${i}">✕</button>` : ''}</span>`).join('、')} · <button class="linkbtn" id="exAddP">＋ 新增同行者</button></div>
+    ${multi && st.tx.length ? `<div class="group">🤝 分帳結算</div><div class="settle">${st.tx.map(([a,b,m]) => `<div><b>${esc(a)}</b> 要給 <b>${esc(b)}</b> ${won(Math.round(m))} <small>${ntd(twd(m))}</small></div>`).join('')}</div>` : multi && exp.items.length ? '<div class="addr">🤝 大家目前打平，不用互相給錢。</div>' : ''}
+    ${Object.keys(days).sort().reverse().map(d => `<div class="group">${d.slice(5).replace('-','/')}（週${ZH_DAY[new Date(d + 'T12:00:00+09:00').getDay()]}）<small style="font-weight:normal;color:var(--m)"> ${won(days[d].reduce((s,x) => s + x.krw, 0))}</small></div>
+      ${days[d].sort((a,b) => b.t - a.t).map(x => `<div class="exi"><span>${EXCAT[x.cat][0]}</span><span class="en">${esc(x.note || EXCAT[x.cat][1])}${multi ? `<small>${esc(x.payer)} 付${(x.among || exp.people).length < exp.people.length ? '，分給 ' + esc((x.among || []).join('、')) : ''}</small>` : ''}</span>
+        <span class="ea">${won(x.krw)}<small>${x.cur === 'TWD' ? 'NT$' + x.amt.toLocaleString('en-US') : ntd(twd(x.krw))}</small></span><button class="linkbtn" data-dx="${x.id}">🗑</button></div>`).join('')}`).join('')}
+    ${exp.items.length ? `<div class="btns" style="margin-top:10px"><button id="exCopy">📋 複製帳目摘要</button><button id="exCsv">⬇️ 匯出 CSV</button><button class="wide" id="exClear">清空所有帳目</button></div>` : '<div class="addr">還沒有記錄。輸入金額、選分類，按「記一筆」。台幣會依匯率換算成韓元。</div>'}
+    <div class="addr">${fx.rate ? `匯率：1 台幣 ≈ ${(1/fx.rate).toFixed(1)} 韓元` : '⚠️ 沒有匯率資料，台幣換算暫時無法使用'}</div>`, el => {
+      let cat = 'food';
+      el.querySelectorAll('[data-ec]').forEach(b => b.onclick = () => { cat = b.dataset.ec; el.querySelectorAll('[data-ec]').forEach(x => x.classList.toggle('on', x === b)); });
+      $('exAdd').onclick = () => {
+        const amt = +$('exAmt').value, cur = $('exCur').value;
+        if (!(amt > 0)) return toast('請輸入金額');
+        if (cur === 'TWD' && !fx.rate) return toast('沒有匯率資料，請改用韓元');
+        const krw = cur === 'KRW' ? amt : Math.round(amt / fx.rate);
+        const among = multi ? [...el.querySelectorAll('[data-am]')].filter(c => c.checked).map(c => c.dataset.am) : null;
+        if (multi && !among.length) return toast('至少要分給一個人');
+        exp.items.push({ id:Date.now().toString(36), t:Date.now(), amt, cur, krw, cat, note:$('exNote').value.trim(), payer: multi ? $('exPayer').value : exp.people[0], among });
+        saveExp(); toast('已記錄 ' + won(krw)); openExpense();
+      };
+      $('exAddP').onclick = () => {
+        const box = document.createElement('div'); box.className = 'fx';
+        box.innerHTML = `<label>同行者名字<input id="exPName" placeholder="例如：小明"></label><button id="exPOk">新增</button>`;
+        $('exAddP').closest('.exppl').after(box); $('exPName').focus();
+        $('exPOk').onclick = () => { const n = $('exPName').value.trim(); if (n && !exp.people.includes(n)) { exp.people.push(n); saveExp(); } openExpense(); };
+      };
+      el.querySelectorAll('[data-rp]').forEach(b => b.onclick = () => { exp.people.splice(+b.dataset.rp, 1); saveExp(); openExpense(); });
+      el.querySelectorAll('[data-dx]').forEach(b => b.onclick = () => { exp.items = exp.items.filter(x => x.id !== b.dataset.dx); saveExp(); openExpense(); });
+      if ($('exCopy')) $('exCopy').onclick = () => {
+        const lines = [`💰 韓國旅費：${won(total)}${twd(total) != null ? '（' + ntd(twd(total)) + '）' : ''}`,
+          ...Object.entries(byCat).map(([k,v]) => `${EXCAT[k][0]} ${EXCAT[k][1]} ${won(v)}`),
+          ...(multi && st.tx.length ? ['', '🤝 分帳：', ...st.tx.map(([a,b,m]) => `${a} → ${b} ${won(Math.round(m))}${twd(m) != null ? '（' + ntd(twd(m)) + '）' : ''}`)] : [])];
+        copyText(lines.join('\n'));
+      };
+      if ($('exCsv')) $('exCsv').onclick = () => {
+        const rows = [['日期','分類','備註','金額(韓元)','原始金額','幣別','付款人','分給']].concat(exp.items.map(x => [kstDate(x.t), EXCAT[x.cat][1], x.note || '', x.krw, x.amt, x.cur, x.payer, (x.among || exp.people).join('/')]));
+        const csv = '﻿' + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+        if (!downloadFile(`korea-expenses-${today}.csv`, csv, 'text/csv')) toast('此瀏覽器不支援下載');
+      };
+      if ($('exClear')) $('exClear').onclick = () => {
+        $('exClear').outerHTML = `<div class="wide addr" style="grid-column:1/-1">確定要清空 ${exp.items.length} 筆帳目嗎？無法復原。 <button class="linkbtn" id="exClearYes">確定清空</button></div>`;
+        $('exClearYes').onclick = () => { exp.items = []; saveExp(); openExpense(); };
+      };
+    });
+}
+
+// ---------- 🧾 退稅計算 ----------
+// 依法規與退稅公司級距表：退稅額＝結帳金額 × 級距退稅率（約 3.3%～8.2%，金額越大比例越高）；這裡顯示估算範圍
+function refundRange(a){
+  if (a < 15000) return null;
+  const [lo, hi] = a < 30000 ? [0.033, 0.05] : a < 100000 ? [0.05, 0.07] : a < 500000 ? [0.065, 0.075] : a < 1000000 ? [0.07, 0.08] : [0.075, 0.082];
+  return [Math.floor(a * lo / 100) * 100, Math.ceil(a * hi / 100) * 100];
+}
+let taxRows = store.get('kmap_tax', []);   // [{id, store, amt, instant}]
+function openTax(){
+  const valid = taxRows.filter(r => r.amt >= 15000);
+  const sum = valid.reduce((s,r) => { const g = refundRange(r.amt); return [s[0] + g[0], s[1] + g[1]]; }, [0, 0]);
+  const instantTotal = taxRows.filter(r => r.instant).reduce((s,r) => s + r.amt, 0);
+  openPanel(`<h2>🧾 退稅計算</h2>
+    <div class="fx"><label>單張單據金額（韓元）<input type="number" inputmode="numeric" id="txAmt" placeholder="例如 85000"></label></div>
+    <div id="txQuick" class="fare"></div>
+    <div class="fx"><label>店名（選填）<input id="txStore" placeholder="例如 Olive Young 明洞店"></label>
+      <label style="flex:0;min-width:110px">退稅方式<select id="txInst"><option value="1">現場即退</option><option value="0">機場／市區</option></select></label>
+      <button id="txAdd">＋ 記下這張</button></div>
+    ${taxRows.length ? `<div class="group">我的退稅單據</div>${taxRows.map(r => { const g = refundRange(r.amt);
+      return `<div class="exi"><span>${r.instant ? '⚡' : '✈️'}</span><span class="en">${esc(r.store || '單據')}<small>${r.instant ? '現場即退' : '機場／市區退稅'}</small></span>
+        <span class="ea">${won(r.amt)}<small>${g ? '退約 ' + won(g[0]) + '～' + won(g[1]) : '⚠️ 未滿 15,000'}</small></span><button class="linkbtn" data-dt="${r.id}">🗑</button></div>`; }).join('')}
+      <div class="best">合計可退約 ${won(sum[0])}～${won(sum[1])}${fxTwd(sum[0]) ? `（${fxTwd(sum[0]).replace(' ≈ ', '≈ ')} 起）` : ''}</div>
+      ${instantTotal ? `<div class="addr">⚡ 現場即退累計 ${won(instantTotal)} / 上限 ₩5,000,000${instantTotal > 5000000 ? ' <b style="color:#d93025">已超過上限！</b>' : ''}</div>` : ''}` : ''}
+    <div class="group">退稅規則重點</div>
+    <div class="rules">
+      <div>✅ <b>門檻</b>：同一家店、同一張單據滿 <b>₩15,000</b>（少數小店是 ₩30,000），不同店不能合併計算。</div>
+      <div>⚡ <b>現場即退</b>：結帳時出示護照，直接扣掉稅金。限單筆 <b>₩1,000,000 以下</b>，整趟旅程累計 <b>₩5,000,000 以下</b>。</div>
+      <div>🏙️ <b>市區退稅</b>：在市區退稅櫃台先拿錢（要刷信用卡當押金），出境時一定要到機場掃描單據，不然押金會被扣。</div>
+      <div>✈️ <b>機場退稅</b>：出境當天在機場自助退稅機辦理，大額或需查驗的商品要先給海關看，記得預留時間。</div>
+      <div>📦 商品要在購買後 <b>3 個月內</b>帶出境；餐飲、住宿、交通不能退稅。</div>
+      <div>💡 退稅額不是全部 10% 的稅，約為結帳金額的 3%～8%，金額越大比例越高。</div>
+    </div>
+    <div class="addr">估算依退稅公司級距表的範圍，實際金額以單據為準。</div>`, () => {
+      const quick = () => { const a = +$('txAmt').value; const g = refundRange(a);
+        $('txQuick').innerHTML = !a ? '' : g ? `可退約 <b>${won(g[0])}～${won(g[1])}</b>${fxTwd(g[0]) ? `<small>（${fxTwd(g[0]).replace(' ≈ ', '≈ ')} 起）</small>` : ''}${a >= 1000000 ? '<br><small>⚠️ 超過 ₩1,000,000 不能現場即退，要到市區或機場辦理</small>' : ''}` : '⚠️ 未滿 ₩15,000，不能退稅'; };
+      $('txAmt').oninput = quick;
+      $('txAdd').onclick = () => { const a = +$('txAmt').value; if (!(a > 0)) return toast('請輸入金額');
+        taxRows.push({ id:Date.now().toString(36), store:$('txStore').value.trim(), amt:a, instant:$('txInst').value === '1' }); store.set('kmap_tax', taxRows); openTax(); };
+      document.querySelectorAll('[data-dt]').forEach(b => b.onclick = () => { taxRows = taxRows.filter(r => r.id !== b.dataset.dt); store.set('kmap_tax', taxRows); openTax(); });
+    });
+}
+
+// ---------- 🛒 購物清單 ----------
+let shop = store.get('kmap_shop', []);   // [{id, text, store, done}]
+function openShop(){
+  const sorted = shop.slice().sort((a,b) => a.done - b.done);
+  openPanel(`<h2>🛒 購物清單</h2>
+    <div class="fx"><label>要買什麼<input id="shText" placeholder="例如：防曬乳 ×3"></label><label>在哪買（選填）<input id="shStore" placeholder="例如：Olive Young"></label><button id="shAdd">＋</button></div>
+    ${shop.length ? `<div class="addr">已買 ${shop.filter(x => x.done).length} / ${shop.length}</div>
+      <div class="shl">${sorted.map(x => `<label class="${x.done ? 'done' : ''}"><input type="checkbox" data-sc="${x.id}" ${x.done ? 'checked' : ''}><span>${esc(x.text)}${x.store ? `<small>📍 ${esc(x.store)}</small>` : ''}</span><button class="linkbtn" data-sd="${x.id}">🗑</button></label>`).join('')}</div>
+      ${shop.some(x => x.done) ? '<div class="btns"><button class="wide" id="shClean">移除已買的項目</button></div>' : ''}`
+      : '<div class="addr">把想買的東西記下來，買到就打勾。可以寫上要去哪家店買。</div>'}`, el => {
+      const add = () => { const t = $('shText').value.trim(); if (!t) return; shop.push({ id:Date.now().toString(36), text:t, store:$('shStore').value.trim(), done:false }); store.set('kmap_shop', shop); openShop(); setTimeout(() => $('shText')?.focus(), 50); };
+      $('shAdd').onclick = add; $('shText').onkeydown = e => { if (e.key === 'Enter') add(); };
+      el.querySelectorAll('[data-sc]').forEach(c => c.onchange = () => { const x = shop.find(s => s.id === c.dataset.sc); if (x) { x.done = c.checked; store.set('kmap_shop', shop); openShop(); } });
+      el.querySelectorAll('[data-sd]').forEach(b => b.onclick = e => { e.preventDefault(); shop = shop.filter(s => s.id !== b.dataset.sd); store.set('kmap_shop', shop); openShop(); });
+      if ($('shClean')) $('shClean').onclick = () => { shop = shop.filter(x => !x.done); store.set('kmap_shop', shop); openShop(); };
+    });
+}
+
+// ---------- 🏨 一鍵回飯店 ----------
+let hotel = store.get('kmap_hotel', null);
+const hotelLayer = L.layerGroup().addTo(map);
+function drawHotel(){ hotelLayer.clearLayers(); if (hotel) L.marker([hotel.lat, hotel.lng], { icon: icon('🏨', 28), zIndexOffset:600 }).addTo(hotelLayer).on('click', openHotel); }
+function setHotel(p){
+  hotel = { lat:p.lat, lng:p.lng, name:p.name, ko:p.ko || null, koAddr:p.koAddr || null };
+  store.set('kmap_hotel', hotel); drawHotel(); toast('🏨 已設為我的飯店，之後按右下角 🏨 就能一鍵回去');
+}
+function openHotel(){
+  if (!hotel) return openPanel(`<h2>🏨 一鍵回飯店</h2><div class="addr">還沒設定飯店。搜尋你住的飯店，在地點頁按「🏨 設為我的飯店」，之後按這個按鈕就能直接規劃回去的路線、叫車，或給司機看地址。</div>`);
+  let info = '';
+  if (myPos) { const d = map.distance(myPos, [hotel.lat, hotel.lng]); const f = taxiFare(d * 1.35); info = `<div class="best">📍 離你約 ${fmtDist(d)} · 計程車約 ${won(f.low)}～${won(f.high)}</div>`; }
+  openPanel(`<h2>🏨 回飯店</h2>
+    <div class="hotel"><b>${esc(hotel.name)}</b>${hotel.ko && hotel.ko !== hotel.name ? `<div>${esc(hotel.ko)}</div>` : ''}${hotel.koAddr ? `<small>${esc(hotel.koAddr)}</small>` : ''}</div>
+    ${info}
+    <div class="btns">
+      <button class="go wide" id="htRoute">🧭 規劃回飯店的路線</button>
+      <button id="htTaxi">🚖 叫計程車</button>
+      <button id="htDriver">🚕 給司機看</button>
+      <button id="htMap">📍 在地圖上看</button>
+      <button id="htShare">🔗 分享飯店位置</button>
+      <button class="wide" id="htClear">取消設定</button>
+    </div>`, () => {
+      $('htRoute').onclick = () => { route.start = null; route.data = {}; openRoute({ lat:hotel.lat, lng:hotel.lng, name:hotel.name, ko:hotel.ko }); };
+      $('htTaxi').onclick = () => openTaxi({ ...hotel });
+      $('htDriver').onclick = () => { $('dName').textContent = hotel.ko || hotel.name; $('dAddr').textContent = hotel.koAddr || ''; $('driver').style.display = 'flex'; };
+      $('htMap').onclick = () => showPlace({ ...hotel });
+      $('htShare').onclick = () => sharePlace({ ...hotel });
+      $('htClear').onclick = () => { hotel = null; store.set('kmap_hotel', null); drawHotel(); openHotel(); };
+    });
+}
+drawHotel();
+
+// ---------- ✅ 行前清單 ----------
+const CHECK_DEFAULT = [
+  ['證件', '護照（效期 6 個月以上）'],
+  ['證件', 'K-ETA：台灣護照 2026/12/31 前入境免申請；2027 年後出發請到官網 k-eta.go.kr 確認'],
+  ['證件', '電子入境卡 e-Arrival Card：抵達前 3 天內上 e-arrivalcard.go.kr 免費填寫（持有 K-ETA 者免填）'],
+  ['證件', '機票、住宿確認信（存一份在手機離線可看的地方）'],
+  ['證件', '旅遊平安險／海外醫療險'],
+  ['錢', '換一些韓元現金（傳統市場、路邊攤常只收現金）'],
+  ['錢', '信用卡開通海外刷卡，並記下掛失電話'],
+  ['錢', 'T-money 交通卡（韓國便利商店可買、可加值）'],
+  ['通訊電器', 'eSIM／網卡／漫遊'],
+  ['通訊電器', '轉接頭：韓國是 220V、雙圓腳插座（C／F 型），台灣扁腳插頭需要轉接'],
+  ['通訊電器', '行動電源（只能放隨身行李，不能托運）'],
+  ['通訊電器', '充電線、充電頭'],
+  ['App', 'Naver Map 或 Kakao Map'],
+  ['App', 'Kakao T（叫計程車）'],
+  ['App', '翻譯 App（例如 Papago）'],
+  ['這個網頁', '用手機開這個網頁並「加入主畫面」'],
+  ['這個網頁', '把要去的區域「📥 下載離線地圖」'],
+  ['這個網頁', '設定「🏨 我的飯店」，並把收藏／行程同步到手機'],
+  ['其他', '常備藥（感冒、腸胃、止痛、過敏）'],
+  ['其他', '季節衣物（韓國冬天很冷，夏天潮濕）'],
+];
+let checks = store.get('kmap_check', null);
+if (!checks) checks = CHECK_DEFAULT.map((c,i) => ({ id:'d' + i, g:c[0], t:c[1], done:false }));
+function saveChecks(){ store.set('kmap_check', checks); }
+function openChecklist(){
+  const groups = [...new Set(checks.map(c => c.g))];
+  const done = checks.filter(c => c.done).length;
+  openPanel(`<h2>✅ 行前清單</h2>
+    <div class="prog"><div style="width:${checks.length ? done / checks.length * 100 : 0}%"></div></div><div class="addr">完成 ${done} / ${checks.length}</div>
+    ${groups.map(g => `<div class="group">${esc(g)}</div><div class="shl">${checks.filter(c => c.g === g).map(c =>
+      `<label class="${c.done ? 'done' : ''}"><input type="checkbox" data-ck="${c.id}" ${c.done ? 'checked' : ''}><span>${esc(c.t)}</span><button class="linkbtn" data-cd="${c.id}">🗑</button></label>`).join('')}</div>`).join('')}
+    <div class="fx"><label>新增項目<input id="ckNew" placeholder="例如：帶伴手禮給朋友"></label><button id="ckAdd">＋</button></div>
+    <div class="btns"><button id="ckReset">全部取消勾選</button><button id="ckDefault">恢復預設清單</button></div>
+    <div class="addr">入境規定可能變動，出發前請以官方網站為準。</div>`, el => {
+      el.querySelectorAll('[data-ck]').forEach(c => c.onchange = () => { const x = checks.find(k => k.id === c.dataset.ck); if (x) { x.done = c.checked; saveChecks(); openChecklist(); } });
+      el.querySelectorAll('[data-cd]').forEach(b => b.onclick = e => { e.preventDefault(); checks = checks.filter(k => k.id !== b.dataset.cd); saveChecks(); openChecklist(); });
+      const add = () => { const t = $('ckNew').value.trim(); if (!t) return; checks.push({ id:'u' + Date.now().toString(36), g:'我的項目', t, done:false }); saveChecks(); openChecklist(); };
+      $('ckAdd').onclick = add; $('ckNew').onkeydown = e => { if (e.key === 'Enter') add(); };
+      $('ckReset').onclick = () => { checks.forEach(c => c.done = false); saveChecks(); openChecklist(); };
+      $('ckDefault').onclick = () => { checks = CHECK_DEFAULT.map((c,i) => ({ id:'d' + i, g:c[0], t:c[1], done:false })); saveChecks(); openChecklist(); };
+    });
+}
+
+// ---------- 📏 尺寸換算 ----------
+const SHOE_W = [[220,'5','35'],[225,'5.5','35.5'],[230,'6','36.5'],[235,'6.5','37'],[240,'7','37.5'],[245,'7.5','38'],[250,'8','39'],[255,'8.5','39.5'],[260,'9','40']];
+const SHOE_M = [[245,'6.5','39'],[250,'7','40'],[255,'7.5','40.5'],[260,'8','41'],[265,'8.5','42'],[270,'9','42.5'],[275,'9.5','43'],[280,'10','44'],[285,'10.5','44.5'],[290,'11','45']];
+const TOP_M = [['85','XS'],['90','S'],['95','M'],['100','L'],['105','XL'],['110','XXL']];
+const TOP_W = [['44','XS'],['55','S'],['66','M'],['77','L'],['88','XL']];
+function openSizes(){
+  openPanel(`<h2>📏 尺寸換算</h2>
+    <div class="group">👟 鞋子</div>
+    <div class="addr">韓國鞋碼＝腳長（公釐），例如 24 公分就是 240。量腳長最準。</div>
+    <div class="fx"><label>你的腳長（公分）<input type="number" inputmode="decimal" id="szFoot" step="0.1" placeholder="例如 24.3"></label></div>
+    <div class="fare" id="szOut"></div>
+    <div class="sizes"><table><tr><th>女鞋 韓國</th><th>美國</th><th>歐洲</th></tr>${SHOE_W.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table>
+      <table><tr><th>男鞋 韓國</th><th>美國</th><th>歐洲</th></tr>${SHOE_M.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table></div>
+    <div class="group">👕 衣服</div>
+    <div class="sizes"><table><tr><th>男裝／中性 韓國</th><th>國際</th></tr>${TOP_M.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
+      <table><tr><th>女裝 韓國</th><th>國際</th></tr>${TOP_W.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table></div>
+    <div class="group">👖 褲子腰圍</div>
+    <div class="fx"><label>腰圍（英吋）<input type="number" inputmode="decimal" id="szWaist" placeholder="例如 30"></label><span>⇄</span><label>腰圍（公分）<input type="number" inputmode="decimal" id="szWaistCm" placeholder="例如 76"></label></div>
+    <div class="addr">韓國褲子常標英吋（26～36）或公分。各品牌版型不同，對照表僅供參考，最好現場試穿（입어 봐도 돼요?）。</div>`, () => {
+      $('szFoot').oninput = () => { const cm = +$('szFoot').value; if (!cm) { $('szOut').innerHTML = ''; return; }
+        const mm = Math.ceil(cm * 10 / 5) * 5; $('szOut').innerHTML = `建議韓國鞋碼 <b>${mm}</b>，想穿鬆一點可選 <b>${mm + 5}</b>`; };
+      $('szWaist').oninput = () => { const v = +$('szWaist').value; $('szWaistCm').value = v ? Math.round(v * 2.54) : ''; };
+      $('szWaistCm').oninput = () => { const v = +$('szWaistCm').value; $('szWaist').value = v ? (v / 2.54).toFixed(1) : ''; };
+    });
+}
+
+$('phraseBtn').onclick = openPhrases;
+$('hotelBtn').onclick = openHotel;
 $('menuBtn').onclick = openMenu;
 // 開頁時處理同步連結（#import=）與分享地點連結（#p=）——放在最後，確保所有功能都已載入
 checkImportHash(); checkPlaceHash();
