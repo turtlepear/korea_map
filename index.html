@@ -4328,21 +4328,40 @@ $('layerBtn').onclick = () => {
 const OVERPASS_EPS = ['https://maps.mail.ru/osm/tools/overpass/api/interpreter', 'https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
 const ovpCool = {};   // 失敗的伺服器暫停使用到這個時間
 let ovpPref = (() => { try { return localStorage.getItem('kmap_ovp') || OVERPASS_EPS[0]; } catch(e) { return OVERPASS_EPS[0]; } })();
-async function overpass(query, timeout = 30000){
-  const order = [ovpPref, ...OVERPASS_EPS.filter(e => e !== ovpPref)];
+async function overpass(query, timeout = 60000){
   const now = Date.now();
-  const usable = order.filter(e => !(ovpCool[e] > now));
-  let lastErr = null;
-  for (const ep of usable.length ? usable : order) {
-    try {
-      const r = await fetchT(ep + '?data=' + encodeURIComponent(query), timeout);
-      if (!r.ok) { ovpCool[ep] = Date.now() + ([429, 406].includes(r.status) ? 60e3 : 30e3); lastErr = new Error('HTTP ' + r.status); continue; }
-      const j = await r.json();
-      if (ep !== ovpPref) { ovpPref = ep; try { localStorage.setItem('kmap_ovp', ep); } catch(e) {} }
-      return j;
-    } catch(e) { ovpCool[ep] = Date.now() + 30e3; lastErr = e; }
-  }
-  throw lastErr || new Error('overpass');
+  const order = [ovpPref, ...OVERPASS_EPS.filter(e => e !== ovpPref)];
+  const list = order.filter(e => !(ovpCool[e] > now)).concat(order.filter(e => ovpCool[e] > now));   // 暫停中的放最後
+  return new Promise((resolve, reject) => {
+    let done = false, idx = 0, active = 0, lastErr = null, tHedge = null;
+    const ctrls = [];
+    const finish = (ok, val) => {
+      if (done) return; done = true; clearTimeout(tAll); clearTimeout(tHedge);
+      ctrls.forEach(c => { try { c.abort(); } catch(e) {} });
+      ok ? resolve(val) : reject(val);
+    };
+    const launch = () => {
+      if (done || idx >= list.length) return;
+      const ep = list[idx++], c = new AbortController(); ctrls.push(c); active++;
+      fetch(ep + '?data=' + encodeURIComponent(query), { signal:c.signal })
+        .then(async r => {
+          if (!r.ok) { ovpCool[ep] = Date.now() + ([429, 406].includes(r.status) ? 60e3 : 30e3); throw new Error('HTTP ' + r.status); }
+          const j = await r.json();
+          if (ep !== ovpPref) { ovpPref = ep; try { localStorage.setItem('kmap_ovp', ep); } catch(e) {} }
+          finish(true, j);
+        })
+        .catch(e => {
+          if (done) return;
+          active--; lastErr = e;
+          if (idx < list.length) launch(); else if (!active) finish(false, lastErr);
+        });
+    };
+    // 先問第一台；12 秒沒回應就同時問下一台（伺服器常常很慢），誰先回來用誰
+    launch();
+    const hedge = () => { if (!done && idx < list.length) { launch(); tHedge = setTimeout(hedge, 12000); } };
+    tHedge = setTimeout(hedge, 12000);
+    const tAll = setTimeout(() => finish(false, lastErr || new Error('timeout')), timeout);
+  });
 }
 
 // ---------- 附近搜尋（Overpass） ----------
@@ -4368,9 +4387,9 @@ document.querySelectorAll('#nearby .chip').forEach(chip => chip.onclick = async 
   const c = map.getCenter(); const r = Math.min(1500, Math.max(300, map.distance(map.getBounds().getNorthEast(), c)));
   const around = `(around:${Math.round(r)},${c.lat},${c.lng})`;
   const query = `[out:json][timeout:20];(${NEARBY[k].q.split(';').filter(Boolean).map(s=>s+around+';').join('')});out center 60;`;
-  toast('搜尋附近…');
+  toast('搜尋附近…（資料伺服器較慢，約 5～30 秒）');
   try {
-    const data = await overpass(query, 30000);
+    const data = await overpass(query, 60000);
     if (!data.elements.length) return toast('這附近找不到，試著拖動或縮小地圖');
     data.elements.forEach(el => {
       const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon; if (lat==null) return;
@@ -4920,7 +4939,7 @@ async function loadSubwayRegion(reg){
   if (cached && Date.now() - cached.time < 60 * 86400e3) return subway.loaded[reg.id] = cached;
   const b = reg.bbox.join(',');
   const q = `[out:json][timeout:120];relation["route"~"^(subway|light_rail)$"](${b});out geom;node["railway"="station"](if:t["station"]=="subway"||t["subway"]=="yes"||t["station"]=="light_rail"||t["light_rail"]=="yes")(${b});out;`;
-  const j = await overpass(q, 120000);
+  const j = await overpass(q, 240000);
   const lines = [], stops = [], seen = new Set();
   for (const el of j.elements) {
     if (el.type !== 'relation') continue;
@@ -5113,7 +5132,7 @@ async function fetchExits(lat, lng, r = 700){
   if (exitCache[key]) return exitCache[key];
   const q = `[out:json][timeout:25];(node["railway"="subway_entrance"](around:${r},${lat},${lng});node["railway"="train_station_entrance"](around:${r},${lat},${lng}););out;` +
             `node["railway"="station"](around:${r + 700},${lat},${lng});out;`;
-  const j = await overpass(q, 30000);
+  const j = await overpass(q, 60000);
   const stations = j.elements.filter(e => e.tags?.railway === 'station' && e.tags.name).map(e => ({
     lat:e.lat, lng:e.lon, ko:e.tags['name:ko'] || e.tags.name, zh:e.tags['name:zh-Hant'] || e.tags['name:zh'] || null }));
   const exits = j.elements.filter(e => /entrance/.test(e.tags?.railway || '')).map(e => {
