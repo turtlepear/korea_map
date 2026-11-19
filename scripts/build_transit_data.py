@@ -49,10 +49,10 @@ def dist(a_lat, a_lng, b_lat, b_lng):
 
 
 LINE_ZH = [  # 韓文路線名（部分比對）→ 中文
-    ("공항철도", "機場鐵路"), ("경의", "京義中央線"), ("수인분당", "水仁盆唐線"), ("신분당", "新盆唐線"),
+    ("공항철도", "機場鐵路"), ("경의", "京義中央線"), ("수인", "水仁盆唐線"), ("신분당", "新盆唐線"),
     ("경춘", "京春線"), ("경강", "京江線"), ("서해", "西海線"), ("우이신설", "牛耳新設線"), ("신림", "新林線"),
     ("김포", "金浦黃金線"), ("의정부", "議政府輕軌"), ("용인", "龍仁輕軌"), ("에버라인", "龍仁輕軌"),
-    ("GTX-A", "GTX-A"), ("GTX-C", "GTX-C"), ("동해", "東海線"), ("부산김해", "釜山金海輕軌"),
+    ("GTX-A", "GTX-A"), ("GTX-C", "GTX-C"), ("광역급행철도 A", "GTX-A"), ("광역급행철도 B", "GTX-B"), ("광역급행철도 C", "GTX-C"), ("동해", "東海線"), ("부산김해", "釜山金海輕軌"),
     ("셔틀트레인", "機場航廈電車"), ("자기부상", "仁川機場磁浮"),
 ]
 CITY_ZH = {"인천": "仁川", "부산": "釜山", "대구": "大邱", "광주": "光州", "대전": "大田"}
@@ -61,7 +61,7 @@ CITY_ZH = {"인천": "仁川", "부산": "釜山", "대구": "大邱", "광주":
 def line_label(tags):
     import re
     ref = (tags.get("ref") or "").strip()
-    name = (tags.get("name:ko") or tags.get("name") or "").split(":")[0].split("(")[0].strip()
+    name = (tags.get("name:ko") or tags.get("name") or "").split(":")[0].split("(")[0].replace("·", "").strip()
     m = re.search(r"(인천|부산|대구|광주|대전)\D*?(\d)\s*호선", name)
     if m:
         return f"{CITY_ZH[m.group(1)]}{m.group(2)}號線"
@@ -134,7 +134,7 @@ def build_region(rid, bbox):
             continue
         t = e["tags"]; ls = {}
         for s in stops:
-            if abs(s[0] - e["lat"]) < 0.004 and abs(s[1] - e["lon"]) < 0.005 and dist(s[0], s[1], e["lat"], e["lon"]) < 300:
+            if abs(s[0] - e["lat"]) < 0.006 and abs(s[1] - e["lon"]) < 0.007 and dist(s[0], s[1], e["lat"], e["lon"]) < 450:
                 ls[s[2]] = s[3]
         is_metro = t.get("station") in ("subway", "light_rail") or t.get("subway") == "yes" or t.get("light_rail") == "yes"
         if not ls and not is_metro:
