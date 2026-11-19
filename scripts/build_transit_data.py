@@ -106,8 +106,10 @@ def build_region(rid, bbox):
     b = ",".join(str(x) for x in bbox)
     print(f"[{rid}] lines + stations", file=sys.stderr)
     j = overpass(
-        f'[out:json][timeout:240];relation["route"~"^(subway|light_rail)$"]({b});out geom;'
-        f'node["railway"="station"](if:t["station"]=="subway"||t["subway"]=="yes"||t["station"]=="light_rail"||t["light_rail"]=="yes")({b});out;'
+        f'[out:json][timeout:240];(relation["route"~"^(subway|light_rail)$"]({b});'
+        f'relation["route"="train"]["network"~"수도권|광역|Seoul Metropolitan|공항철도"]({b});'
+        f'relation["route"="train"]["name"~"공항철도|경의|중앙선|수인|분당|경춘|경강|서해선|GTX"]({b}););out geom;'
+        f'node["railway"="station"]({b});out;'
     )
     lines, stops, seen = [], [], set()
     for el in j["elements"]:
@@ -134,6 +136,9 @@ def build_region(rid, bbox):
         for s in stops:
             if abs(s[0] - e["lat"]) < 0.004 and abs(s[1] - e["lon"]) < 0.005 and dist(s[0], s[1], e["lat"], e["lon"]) < 300:
                 ls[s[2]] = s[3]
+        is_metro = t.get("station") in ("subway", "light_rail") or t.get("subway") == "yes" or t.get("light_rail") == "yes"
+        if not ls and not is_metro:
+            continue
         stations.append({"lat": e["lat"], "lng": e["lon"], "ko": t.get("name:ko") or t["name"],
                          "zh": t.get("name:zh-Hant") or t.get("name:zh"), "en": t.get("name:en"),
                          "lines": [{"l": k, "c": v} for k, v in ls.items()]})
