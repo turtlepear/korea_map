@@ -5134,10 +5134,12 @@ function exitRef(t){
 }
 function stationBase(n){ return (n || '').replace(/\s*\d+(-\d+)?\s*번\s*출\S*.*$/, '').replace(/\s*(출입구|出口|exit).*$/i, '').trim(); }
 const staticExits = {};
-async function loadStaticExits(regId){
-  if (staticExits[regId] !== undefined) return staticExits[regId];
-  staticExits[regId] = null;
-  try { const r = await fetchT(`data/exits-${regId}.json`, 20000); if (r.ok) staticExits[regId] = (await r.json()).exits || null; } catch(e) {}
+function loadStaticExits(regId){
+  // 同時發生的查詢共用同一次讀檔（存 Promise），避免第二個查詢誤以為沒有資料
+  if (!(regId in staticExits)) staticExits[regId] = (async () => {
+    try { const r = await fetchT(`data/exits-${regId}.json`, 20000); if (r.ok) return (await r.json()).exits || null; } catch(e) {}
+    return null;
+  })();
   return staticExits[regId];
 }
 async function fetchExits(lat, lng, r = 700){
