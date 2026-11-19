@@ -48,15 +48,33 @@ def dist(a_lat, a_lng, b_lat, b_lng):
     return 2 * r * math.asin(math.sqrt(h))
 
 
+LINE_ZH = [  # 韓文路線名（部分比對）→ 中文
+    ("공항철도", "機場鐵路"), ("경의", "京義中央線"), ("수인분당", "水仁盆唐線"), ("신분당", "新盆唐線"),
+    ("경춘", "京春線"), ("경강", "京江線"), ("서해", "西海線"), ("우이신설", "牛耳新設線"), ("신림", "新林線"),
+    ("김포", "金浦黃金線"), ("의정부", "議政府輕軌"), ("용인", "龍仁輕軌"), ("에버라인", "龍仁輕軌"),
+    ("GTX-A", "GTX-A"), ("GTX-C", "GTX-C"), ("동해", "東海線"), ("부산김해", "釜山金海輕軌"),
+    ("셔틀트레인", "機場航廈電車"), ("자기부상", "仁川機場磁浮"),
+]
+CITY_ZH = {"인천": "仁川", "부산": "釜山", "대구": "大邱", "광주": "光州", "대전": "大田"}
+
+
 def line_label(tags):
+    import re
     ref = (tags.get("ref") or "").strip()
+    name = (tags.get("name:ko") or tags.get("name") or "").split(":")[0].split("(")[0].strip()
+    m = re.search(r"(인천|부산|대구|광주|대전)\D*?(\d)\s*호선", name)
+    if m:
+        return f"{CITY_ZH[m.group(1)]}{m.group(2)}號線"
     if ref.isdigit():
         return ref + "號線"
-    name = tags.get("name:zh") or tags.get("name") or ""
-    for pre in ("서울 지하철", "서울 도시철도", "부산 도시철도", "대구 도시철도", "광주 도시철도", "대전 도시철도"):
+    for ko, zh in LINE_ZH:
+        if ko in name:
+            return zh
+    if tags.get("name:zh"):
+        return tags["name:zh"].split(":")[0].split("(")[0].strip()
+    for pre in ("서울 지하철", "서울 도시철도", "수도권 전철"):
         name = name.replace(pre, "")
-    name = name.split("(")[0].strip()
-    return ref or name
+    return name.strip() or ref
 
 
 def norm(s):
