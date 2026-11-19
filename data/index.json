@@ -1,0 +1,30 @@
+{
+ "updated": "2026-11-19",
+ "regions": {
+  "seoul": {
+   "stations": 552,
+   "segments": 1541,
+   "exits": 3024
+  },
+  "busan": {
+   "stations": 131,
+   "segments": 62,
+   "exits": 788
+  },
+  "daegu": {
+   "stations": 61,
+   "segments": 48,
+   "exits": 401
+  },
+  "gwangju": {
+   "stations": 20,
+   "segments": 21,
+   "exits": 95
+  },
+  "daejeon": {
+   "stations": 22,
+   "segments": 3,
+   "exits": 122
+  }
+ }
+}
