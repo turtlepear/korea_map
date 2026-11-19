@@ -1112,6 +1112,20 @@ return maplibregl$1;
   body.dark .leaflet-tooltip { background:var(--bg); color:var(--t); border-color:var(--line); }
   body.dark .qr { background:#fff; }
   .r.weak { opacity:.7; }
+  .hol { background:#fce8e6; color:#a50e0e; border-radius:8px; padding:6px 10px; font-size:13px; margin:6px 0; } body.dark .hol { background:#3c1f1d; color:#f28b82; }
+  .tdwx { background:var(--soft); border-radius:8px; padding:6px 10px; font-size:14px; margin:6px 0; } .tdwx b { color:#d93025; font-weight:normal; margin-left:4px; }
+  .warnt { color:#d93025 !important; }
+  .aps .apo { border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:6px 0; font-size:13px; line-height:1.55; } .aps .apo b { font-size:15px; } .aps small { color:var(--m); }
+  .ckps { display:flex; flex-wrap:wrap; gap:4px 12px; margin:4px 0 6px; } .ckp { display:inline-flex; align-items:center; gap:4px; font-size:14px; }
+  .medc { width:100%; max-width:520px; text-align:left; } .medc .mh { font-size:28px; font-weight:bold; color:#d93025; text-align:center; margin-bottom:10px; } .medc .mh small { display:block; font-size:14px; color:#5f6368; font-weight:normal; }
+  .medc .mr { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid #dadce0; font-size:20px; } .medc .mr span { color:#5f6368; font-size:16px; white-space:nowrap; } .medc .mr span small { display:block; font-size:11px; }
+  .medc .mr b { text-align:right; word-break:keep-all; } .medc .mr b small { display:block; font-size:13px; font-weight:normal; color:#5f6368; }
+  .medc .mf { margin-top:14px; font-size:18px; font-weight:bold; text-align:center; } .medc .mf small { display:block; font-size:13px; font-weight:normal; color:#5f6368; }
+  .dyi { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px; } .dyi > div { flex:1; } .dyi small { color:var(--m); margin-left:6px; font-size:12px; }
+  .dyi img { width:64px; height:64px; object-fit:cover; border-radius:8px; flex:none; } .dyi .dyn { width:64px; height:64px; display:flex; align-items:center; justify-content:center; background:var(--soft); border-radius:8px; font-size:24px; flex:none; }
+  .budget { margin:6px 0; } .budget .bt { font-size:13px; }
+  .fxrec { margin:6px 0; font-size:13px; } .fxrec summary { cursor:pointer; color:var(--c); }
+
   #phraseBtn { bottom:308px; } #hotelBtn { bottom:364px; }
   @media (max-height: 640px) { #hotelBtn { display:none; } }
   .mg { font-size:12px; font-weight:bold; color:var(--m); margin:10px 0 2px; }
@@ -3962,7 +3976,8 @@ function renderSheet(){
       <button id="driverBtn">🚕 給司機看</button>
       <button id="taxiBtn">🚖 叫計程車</button>
       <button id="shareBtn">🔗 分享</button>
-      <button class="wide" id="hotelSetBtn">${hotel && hotel.lat === p.lat && hotel.lng === p.lng ? '🏨 這是我的飯店 ✓' : '🏨 設為我的飯店'}</button>
+      <button id="diaryBtn">📔 打卡</button>
+      <button id="hotelSetBtn">${hotel && hotel.lat === p.lat && hotel.lng === p.lng ? '🏨 這是我的飯店 ✓' : '🏨 設為我的飯店'}</button>
     </div>
     <div class="addr" style="margin-top:10px">💡 Naver 導航需安裝 Naver Map App；Kakao 連結手機電腦都能開。</div>`;
   $('favToggle').onclick = () => toggleFav(p);
@@ -3972,6 +3987,7 @@ function renderSheet(){
   $('taxiBtn').onclick = () => openTaxi(p);
   $('shareBtn').onclick = () => sharePlace(p);
   $('hotelSetBtn').onclick = () => { setHotel(p); renderSheet(); };
+  $('diaryBtn').onclick = () => checkinDialog({ ...p });
   bindFavCat(p); bindExitRows($('exitBox'));
   if ($('wxOpen')) $('wxOpen').onclick = () => openWeather(p.lat, p.lng, p.name);
   loadWeatherFor(p); loadExitsFor(p);
@@ -4041,6 +4057,7 @@ function geoErrMsg(err){
   return ({1:'定位權限被拒絕：請到瀏覽器設定允許此網頁使用位置', 2:'目前抓不到位置訊號，請到戶外或開啟 Wi-Fi 再試', 3:'定位逾時，請再試一次'})[err?.code] || '無法取得位置';
 }
 function onPos(pos){
+  if (typeof tracking !== 'undefined' && tracking) onTrackPos(pos);
   myPos = [pos.coords.latitude, pos.coords.longitude];
   const acc = Math.min(pos.coords.accuracy, 2000);
   if (!myMarker) {
@@ -4124,7 +4141,7 @@ function drawRoute(r, mode){
   const ll = r.geometry.coordinates.map(c => [c[1], c[0]]);
   L.polyline(ll, { color:'#fff', weight:9, opacity:.9 }).addTo(routeLayer);
   L.polyline(ll, { color:MODES[mode].color, weight:6, dashArray:MODES[mode].dash }).addTo(routeLayer);
-  map.fitBounds(L.latLngBounds(ll), { paddingTopLeft:[20,120], paddingBottomRight:[20, window.innerWidth < 700 ? window.innerHeight*0.55 : 40] });
+  map.fitBounds(L.latLngBounds(ll), { maxZoom:17, paddingTopLeft:[20,120], paddingBottomRight:[20, window.innerWidth < 700 ? window.innerHeight*0.55 : 40] });
 }
 function transitLinks(){
   const A = route.start, B = route.end;
@@ -4157,7 +4174,7 @@ async function showMode(mode){
   route.mode = mode;
   if (mode === 'transit') {
     route.sel = null; drawRoute(null);
-    map.fitBounds(L.latLngBounds([[route.start.lat,route.start.lng],[route.end.lat,route.end.lng]]).pad(0.3));
+    map.fitBounds(L.latLngBounds([[route.start.lat,route.start.lng],[route.end.lat,route.end.lng]]).pad(0.3), { maxZoom:17 });
     renderRoute('🚇 查詢大眾運輸中…（約需 2～5 秒）');
     await fetchTransit();
     if (!route.active || route.mode !== 'transit') return;
@@ -4341,7 +4358,7 @@ function drawTransit(it){
       L.circleMarker([l.to.lat, l.to.lon], { radius:6, color:col, weight:3, fillColor:'#fff', fillOpacity:1 }).addTo(routeLayer).bindTooltip(`${l.to.name} 下車`);
     }
   });
-  if (all.length) map.fitBounds(L.latLngBounds(all), { paddingTopLeft:[20,120], paddingBottomRight:[20, window.innerWidth < 700 ? window.innerHeight*0.55 : 40] });
+  if (all.length) map.fitBounds(L.latLngBounds(all), { maxZoom:17, paddingTopLeft:[20,120], paddingBottomRight:[20, window.innerWidth < 700 ? window.innerHeight*0.55 : 40] });
 }
 function bindTransitUI(){
   const res = route.data.transit;
@@ -4484,16 +4501,18 @@ function openMenu(){
   const dark = document.body.classList.contains('dark');
   const G = (title, items) => `<div class="mg">${title}</div><div class="menu">${items.map(([a, e, t, badge]) => `<button data-a="${a}"><span>${e}</span>${t}${badge ? `<em>${badge}</em>` : ''}</button>`).join('')}</div>`;
   openPanel(`<h2>☰ 更多功能</h2>
-    ${G('🗺️ 地圖與行程', [['trip','📅','行程規劃'], ['hotel','🏨','回飯店'], ['subway','🚇','地鐵路線圖', subway.on ? '開' : ''], ['wx','☁️','天氣／空氣'],
+    ${G('🗺️ 地圖與行程', [['trip','📅','行程規劃'], ['hotel','🏨','回飯店'], ['airport','✈️','機場交通'], ['holi','🎌','韓國假日'], ['subway','🚇','地鐵路線圖', subway.on ? '開' : ''], ['wx','☁️','天氣／空氣'],
       ['offline','📥','離線地圖'], ['sync','🔄','收藏同步'], ['shareme','📍','分享我的位置'], ['hist','🕘','搜尋紀錄']])}
     ${G('🗣️ 語言', [['phrase','🗣️','韓文句卡'], ['convo','💬','對話翻譯'], ['ocr','📷','拍照翻譯']])}
     ${G('💰 花錢', [['expense','💰','旅費記帳'], ['tax','🧾','退稅計算'], ['shop','🛒','購物清單'], ['tools','🧰','匯率／車資／急難']])}
-    ${G('🧳 其他', [['check','✅','行前清單'], ['sizes','📏','尺寸換算'], ['dark', dark ? '☀️' : '🌙', dark ? '淺色模式' : '深色模式'], ['about','ℹ️','關於／資料來源']])}`,
+    ${G('📔 紀念', [['diary','📔','旅行日記'], ['track','🥾','今日足跡', tracking ? '記錄中' : '']])}
+    ${G('🧳 其他', [['medi','🆘','緊急資訊卡'], ['check','✅','行前清單'], ['sizes','📏','尺寸換算'], ['dark', dark ? '☀️' : '🌙', dark ? '淺色模式' : '深色模式'], ['about','ℹ️','關於／資料來源']])}`,
     el => el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => ({
       trip: openTrip, sync: openSync, subway: toggleSubway, tools: openTools, offline: openOffline,
       dark: () => { setTheme(dark ? 'light' : 'dark'); openMenu(); },
       hist: () => { closeSheet(); $('q').focus(); showHistory(); }, about: openAbout,
       wx: () => openWeather(), shareme: shareMyLocation,
+      airport: openAirport, holi: openHolidays, diary: openDiary, track: openTracks, medi: openMedical,
       hotel: openHotel, phrase: openPhrases, convo: openConvo, ocr: openOcr, expense: openExpense, tax: openTax, shop: openShop, check: openChecklist, sizes: openSizes,
     })[b.dataset.a]()));
 }
@@ -4525,7 +4544,7 @@ function packData(){
   return { v:1,
     f: favs.map(f => [f.lat, f.lng, f.name, f.ko || '', f.cat || 'other']),
     t: trip.days.map(d => ({ s:d.start, d:d.date || '', p:d.stops.map(s => [s.lat, s.lng, s.name, s.ko || '', s.stay]) })),
-    ...(exp.items.length || exp.people.length > 1 ? { x: { p:exp.people, i:exp.items.map(x => [x.id, x.t, x.amt, x.cur, x.krw, x.cat, x.note || '', x.payer, x.among]) } } : {}),
+    ...(exp.items.length || exp.people.length > 1 || exp.budget || exp.fxRec?.length ? { x: { p:exp.people, b:exp.budget || 0, r:(exp.fxRec || []).map(x => [x.id, x.t, x.twd, x.krw, x.where || '']), i:exp.items.map(x => [x.id, x.t, x.amt, x.cur, x.krw, x.cat, x.note || '', x.payer, x.among]) } } : {}),
     ...(shop.length ? { s: shop.map(x => [x.text, x.store || '', x.done ? 1 : 0]) } : {}),
     ...(hotel ? { h: [hotel.lat, hotel.lng, hotel.name, hotel.ko || '', hotel.koAddr || ''] } : {}),
     ...(myPhrases.length ? { m: myPhrases } : {}) };
@@ -4534,7 +4553,7 @@ function unpackData(o){
   return {
     favs: (o.f || []).map(a => ({ lat:a[0], lng:a[1], name:a[2], ko:a[3] || null, cat:a[4] || 'other' })),
     days: (o.t || []).map(d => ({ start:d.s || '09:00', date:d.d || '', stops:(d.p || []).map(a => ({ lat:a[0], lng:a[1], name:a[2], ko:a[3] || null, stay:a[4] ?? 60 })) })),
-    exp: o.x ? { people:o.x.p || ['我'], items:(o.x.i || []).map(a => ({ id:a[0], t:a[1], amt:a[2], cur:a[3], krw:a[4], cat:a[5], note:a[6], payer:a[7], among:a[8] })) } : null,
+    exp: o.x ? { people:o.x.p || ['我'], budget:o.x.b || 0, useMine:true, fxRec:(o.x.r || []).map(a => ({ id:a[0], t:a[1], twd:a[2], krw:a[3], where:a[4] })), items:(o.x.i || []).map(a => ({ id:a[0], t:a[1], amt:a[2], cur:a[3], krw:a[4], cat:a[5], note:a[6], payer:a[7], among:a[8] })) } : null,
     shop: (o.s || []).map((a,i) => ({ id:'i' + i + Date.now().toString(36), text:a[0], store:a[1], done:!!a[2] })),
     hotel: o.h ? { lat:o.h[0], lng:o.h[1], name:o.h[2], ko:o.h[3] || null, koAddr:o.h[4] || null } : null,
     phrases: o.m || [],
@@ -4808,7 +4827,7 @@ function tripAddDialog(p){
       el.querySelectorAll('[data-d]').forEach(b => b.onclick = () => {
         let i = b.dataset.d;
         if (i === 'new') { trip.days.push({ start:'09:00', date:'', stops:[] }); i = trip.days.length - 1; }
-        trip.days[+i].stops.push({ lat:p.lat, lng:p.lng, name:p.name, ko:p.ko || null, stay:60 });
+        trip.days[+i].stops.push({ lat:p.lat, lng:p.lng, name:p.name, ko:p.ko || null, stay:60, oh:p.tags?.opening_hours || null });
         saveTrip(); tripDay = +i; toast(`已加入 Day ${+i+1}`); showPlace(p, false);
       });
       $('taBack').onclick = () => showPlace(p, false);
@@ -4827,6 +4846,7 @@ function openTrip(){
   openPanel(`<h2>📅 行程規劃</h2>
     <div class="modes">${trip.days.map((x,i) => `<button data-day="${i}" class="${i===tripDay?'on':''}">Day ${i+1}</button>`).join('')}<button data-day="new">＋</button></div>
     <div class="tctl">📆 <input type="date" id="tdDate" value="${d.date || ''}"> 🕘 出發 <input type="time" id="tdStart" value="${d.start || '09:00'}"></div>
+    <div id="tdInfo"></div>
     ${d.stops.length ? `<div class="stops">${d.stops.map((s,i) => `
       <div class="stop"><span class="num" style="position:static">${i+1}</span>
         <span class="sn" data-go="${i}">${esc(s.name)}${s.ko && s.ko !== s.name ? `<small>${esc(s.ko)}</small>` : ''}</span>
@@ -4845,20 +4865,21 @@ function openTrip(){
         else tripDay = +b.dataset.day;
         openTrip();
       });
-      $('tdDate').onchange = e => { d.date = e.target.value; saveTrip(); };
+      $('tdDate').onchange = e => { d.date = e.target.value; saveTrip(); openTrip(); };
       $('tdStart').onchange = e => { d.start = e.target.value || '09:00'; saveTrip(); };
       el.querySelectorAll('[data-go]').forEach(b => b.onclick = () => showPlace({ ...d.stops[+b.dataset.go] }));
       el.querySelectorAll('[data-stay]').forEach(b => b.onchange = () => { d.stops[+b.dataset.stay].stay = Math.max(0, +b.value || 0); saveTrip(); });
       el.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { const i = +b.dataset.up; [d.stops[i-1], d.stops[i]] = [d.stops[i], d.stops[i-1]]; saveTrip(); openTrip(); });
       el.querySelectorAll('[data-dn]').forEach(b => b.onclick = () => { const i = +b.dataset.dn; [d.stops[i+1], d.stops[i]] = [d.stops[i], d.stops[i+1]]; saveTrip(); openTrip(); });
       el.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { d.stops.splice(+b.dataset.rm, 1); saveTrip(); openTrip(); });
-      el.querySelectorAll('[data-fav]').forEach(b => b.onclick = () => { const f = favs[+b.dataset.fav]; d.stops.push({ lat:f.lat, lng:f.lng, name:f.name, ko:f.ko || null, stay:60 }); saveTrip(); openTrip(); });
+      el.querySelectorAll('[data-fav]').forEach(b => b.onclick = () => { const f = favs[+b.dataset.fav]; d.stops.push({ lat:f.lat, lng:f.lng, name:f.name, ko:f.ko || null, stay:60, oh:f.tags?.opening_hours || null }); saveTrip(); openTrip(); });
       $('tdCalc').onclick = () => computeDay();
       $('tdOpt').onclick = () => { optimizeOrder(d); saveTrip(); openTrip(); toast('已依距離重新排序（第一站不變）'); };
       $('tdDel').onclick = () => {
         trip.days.splice(tripDay, 1); if (!trip.days.length) trip.days.push({ start:'09:00', date:'', stops:[] });
         tripDay = Math.max(0, tripDay - 1); saveTrip(); openTrip();
       };
+      fillTripInfo(d);
     });
 }
 // 最近鄰居法排序（固定第一站），再用 2-opt 改善
@@ -4949,10 +4970,13 @@ async function computeDay(){
     else if (leg.geom) L.polyline(leg.geom, { color: leg.mode === 'foot' ? '#1a73e8' : '#e8710a', weight:5, dashArray: leg.mode === 'foot' ? '2 8' : null }).addTo(tripLayer);
   });
   const total = t - (sh * 60 + sm);
+  const ocBad = rows.filter(r => r.type === 'stop' && S[r.i].oh && openCheck(S[r.i].oh, date, r.arrive, r.leave)?.bad).length;
   $('tdOut').innerHTML = `<div class="best">Day ${tripDay+1}：${hhmm(sh*60+sm)} 出發 → ${hhmm(t)} 結束，共 ${fmtTime(total*60)}</div>
+    ${ocBad ? `<div class="hol">⚠️ 有 ${ocBad} 個地點在你抵達時沒營業，建議調整順序或時間</div>` : ''}${KR_HOLIDAYS[date] ? `<div class="hol">${holidayTip(date)}</div>` : ''}
     <div class="timeline">${rows.map(r => {
       if (r.type === 'stop') { const s = S[r.i];
-        return `<div class="tl"><div class="ic"><span class="num" style="position:static;font-size:11px">${r.i+1}</span></div><div><b>${hhmm(r.arrive)}</b> 抵達 <b>${esc(s.name)}</b>${s.stay ? `<div class="ts sm">停留 ${s.stay} 分，${hhmm(r.leave)} 離開</div>` : ''}</div></div>`; }
+        const oc = s.oh ? openCheck(s.oh, date, r.arrive, r.leave) : null;
+        return `<div class="tl"><div class="ic"><span class="num" style="position:static;font-size:11px">${r.i+1}</span></div><div><b>${hhmm(r.arrive)}</b> 抵達 <b>${esc(s.name)}</b>${s.stay ? `<div class="ts sm">停留 ${s.stay} 分，${hhmm(r.leave)} 離開</div>` : ''}${oc ? `<div class="ts sm ${oc.bad ? 'warnt' : ''}">${oc.bad ? '⚠️ ' : '🕐 '}${esc(oc.msg)}</div>` : ''}</div></div>`; }
       const L1 = r.leg; let desc = '';
       if (L1.mode === 'foot') desc = `🚶 步行 ${fmtTime(L1.dur)}${L1.dist ? ' · ' + fmtDist(L1.dist) : ''}`;
       else if (L1.mode === 'car') { const f = taxiFare(L1.dist); desc = `🚕 計程車約 ${fmtTime(L1.dur)} · ${won(f.low)}～${won(f.high)}<span class="ts sm">（查不到大眾運輸，改估計程車）</span>`; }
@@ -5360,7 +5384,7 @@ async function openWeather(lat, lng, name){
   const hours = d.w.hourly.time.slice(i0, i0 + 24).filter((_, i) => i % 3 === 0).map((tm, k) => { const i = i0 + k * 3;
     return `<div><small>${tm.slice(11, 13)}時</small><span>${wmo(d.w.hourly.weather_code[i])[0]}</span><b>${Math.round(d.w.hourly.temperature_2m[i])}°</b><small>☔${d.w.hourly.precipitation_probability[i] ?? '-'}%</small></div>`; }).join('');
   const days = d.w.daily.time.map((dy, i) => { const pm = dailyPm(d, dy), wd = new Date(dy + 'T12:00:00+09:00').getDay();
-    return `<div class="wd"><span>${i === 0 ? '今天' : '週' + ZH_DAY[wd]}<small>${dy.slice(5).replace('-', '/')}</small></span><span>${wmo(d.w.daily.weather_code[i])[0]} ${wmo(d.w.daily.weather_code[i])[1]}</span>
+    return `<div class="wd"><span>${i === 0 ? '今天' : '週' + ZH_DAY[wd]}<small>${dy.slice(5).replace('-', '/')}${KR_HOLIDAYS[dy] ? ' 🎌' : ''}</small></span><span>${wmo(d.w.daily.weather_code[i])[0]} ${wmo(d.w.daily.weather_code[i])[1]}</span>
       <span>${Math.round(d.w.daily.temperature_2m_min[i])}° / <b>${Math.round(d.w.daily.temperature_2m_max[i])}°</b></span><span>☔${d.w.daily.precipitation_probability_max[i] ?? '-'}%</span>
       <span>${pm ? `<i style="color:${pm.color}">●</i>${pm.label}` : ''}</span></div>`; }).join('');
   openPanel(`<h2>☁️ ${esc(name || '天氣')}</h2>
@@ -5745,7 +5769,7 @@ async function runOcr(file){
 const EXCAT = { food:['🍜','餐飲'], trans:['🚇','交通'], shop:['🛍️','購物'], stay:['🏨','住宿'], fun:['🎫','門票娛樂'], other:['📦','其他'] };
 let exp = store.get('kmap_exp', { people:['我'], items:[] });
 function saveExp(){ store.set('kmap_exp', exp); }
-const twd = krw => fx.rate ? Math.round(krw * fx.rate) : null;
+const twd = krw => { const r = rateK2T(); return r ? Math.round(krw * r) : null; };
 const ntd = n => n == null ? '' : 'NT$' + n.toLocaleString('en-US');
 function kstDate(ts){ return new Intl.DateTimeFormat('sv-SE', { timeZone:KST_TZ }).format(new Date(ts)); }
 function settle(){
@@ -5771,6 +5795,8 @@ async function openExpense(){
   const multi = exp.people.length > 1, st = multi ? settle() : null;
   openPanel(`<h2>💰 旅費記帳</h2>
     <div class="exsum"><div><small>總花費</small><b>${won(total)}</b><span>${ntd(twd(total))}</span></div><div><small>今天</small><b>${won(todayT)}</b><span>${ntd(twd(todayT))}</span></div></div>
+    ${budgetHtml(todayT)}
+    ${fxRecHtml()}
     ${Object.keys(byCat).length ? `<div class="excat">${Object.entries(byCat).sort((a,b) => b[1]-a[1]).map(([k,v]) => `<span>${EXCAT[k][0]} ${EXCAT[k][1]} ${won(v)}</span>`).join('')}</div>` : ''}
     <div class="exadd">
       <div class="fx"><label>金額<input type="number" inputmode="decimal" id="exAmt" placeholder="0"></label>
@@ -5786,18 +5812,19 @@ async function openExpense(){
       ${days[d].sort((a,b) => b.t - a.t).map(x => `<div class="exi"><span>${EXCAT[x.cat][0]}</span><span class="en">${esc(x.note || EXCAT[x.cat][1])}${multi ? `<small>${esc(x.payer)} 付${(x.among || exp.people).length < exp.people.length ? '，分給 ' + esc((x.among || []).join('、')) : ''}</small>` : ''}</span>
         <span class="ea">${won(x.krw)}<small>${x.cur === 'TWD' ? 'NT$' + x.amt.toLocaleString('en-US') : ntd(twd(x.krw))}</small></span><button class="linkbtn" data-dx="${x.id}">🗑</button></div>`).join('')}`).join('')}
     ${exp.items.length ? `<div class="btns" style="margin-top:10px"><button id="exCopy">📋 複製帳目摘要</button><button id="exCsv">⬇️ 匯出 CSV</button><button class="wide" id="exClear">清空所有帳目</button></div>` : '<div class="addr">還沒有記錄。輸入金額、選分類，按「記一筆」。台幣會依匯率換算成韓元。</div>'}
-    <div class="addr">${fx.rate ? `匯率：1 台幣 ≈ ${(1/fx.rate).toFixed(1)} 韓元` : '⚠️ 沒有匯率資料，台幣換算暫時無法使用'}</div>`, el => {
+    <div class="addr">${rateK2T() ? `換算匯率：1 台幣 ≈ ${(1/rateK2T()).toFixed(1)} 韓元（${exp.useMine && myRate() ? '我的平均換匯' : '市場匯率'}）` : '⚠️ 沒有匯率資料，台幣換算暫時無法使用'}</div>`, el => {
+      bindExpExtras();
       let cat = 'food';
       el.querySelectorAll('[data-ec]').forEach(b => b.onclick = () => { cat = b.dataset.ec; el.querySelectorAll('[data-ec]').forEach(x => x.classList.toggle('on', x === b)); });
       $('exAdd').onclick = () => {
         const amt = +$('exAmt').value, cur = $('exCur').value;
         if (!(amt > 0)) return toast('請輸入金額');
-        if (cur === 'TWD' && !fx.rate) return toast('沒有匯率資料，請改用韓元');
-        const krw = cur === 'KRW' ? amt : Math.round(amt / fx.rate);
+        if (cur === 'TWD' && !rateK2T()) return toast('沒有匯率資料，請改用韓元，或先記錄換匯');
+        const krw = cur === 'KRW' ? amt : Math.round(amt / rateK2T());
         const among = multi ? [...el.querySelectorAll('[data-am]')].filter(c => c.checked).map(c => c.dataset.am) : null;
         if (multi && !among.length) return toast('至少要分給一個人');
         exp.items.push({ id:Date.now().toString(36), t:Date.now(), amt, cur, krw, cat, note:$('exNote').value.trim(), payer: multi ? $('exPayer').value : exp.people[0], among });
-        saveExp(); toast('已記錄 ' + won(krw)); openExpense();
+        saveExp(); toast('已記錄 ' + won(krw)); openExpense(); setTimeout(budgetWarn, 900);
       };
       $('exAddP').onclick = () => {
         const box = document.createElement('div'); box.className = 'fx';
@@ -5987,6 +6014,335 @@ function openSizes(){
       $('szWaist').oninput = () => { const v = +$('szWaist').value; $('szWaistCm').value = v ? Math.round(v * 2.54) : ''; };
       $('szWaistCm').oninput = () => { const v = +$('szWaistCm').value; $('szWaist').value = v ? (v / 2.54).toFixed(1) : ''; };
     });
+}
+
+// ====================================================================
+//  擴充功能（第四批）：行程天氣、營業時間檢查、韓國國定假日、機場交通、
+//  緊急資訊卡、旅行日記、今日足跡、每日預算、兌換紀錄
+// ====================================================================
+
+// ---------- 📆 韓國國定假日（依韓國政府公告的月曆要項；含補假） ----------
+const KR_HOLIDAYS = {
+  '2026-01-01':'新年', '2026-02-16':'春節（설날）', '2026-02-17':'春節（설날）', '2026-02-18':'春節（설날）', '2026-03-01':'三一節', '2026-03-02':'三一節補假',
+  '2026-05-01':'勞動節', '2026-05-05':'兒童節', '2026-05-24':'佛誕節', '2026-05-25':'佛誕節補假', '2026-06-03':'地方選舉日', '2026-06-06':'顯忠日',
+  '2026-07-17':'制憲節', '2026-08-15':'光復節', '2026-08-17':'光復節補假', '2026-09-24':'中秋（추석）', '2026-09-25':'中秋（추석）', '2026-09-26':'中秋（추석）',
+  '2026-10-03':'開天節', '2026-10-05':'開天節補假', '2026-10-09':'韓文節', '2026-12-25':'聖誕節',
+  '2027-01-01':'新年', '2027-02-06':'春節（설날）', '2027-02-07':'春節（설날）', '2027-02-08':'春節（설날）', '2027-02-09':'春節補假', '2027-03-01':'三一節',
+  '2027-05-01':'勞動節', '2027-05-03':'勞動節補假', '2027-05-05':'兒童節', '2027-05-13':'佛誕節', '2027-06-06':'顯忠日', '2027-07-17':'制憲節', '2027-07-19':'制憲節補假',
+  '2027-08-15':'光復節', '2027-08-16':'光復節補假', '2027-09-14':'中秋（추석）', '2027-09-15':'中秋（추석）', '2027-09-16':'中秋（추석）',
+  '2027-10-03':'開天節', '2027-10-04':'開天節補假', '2027-10-09':'韓文節', '2027-10-11':'韓文節補假', '2027-12-25':'聖誕節', '2027-12-27':'聖誕節補假',
+};
+const BIG_HOLIDAY = /春節|中秋/;
+function holidayTip(date){
+  const h = KR_HOLIDAYS[date]; if (!h) return '';
+  return BIG_HOLIDAY.test(h)
+    ? `🎎 ${h}：韓國大節日，傳統市場、許多餐廳與小店休息，景福宮等古宮通常開放但人潮多，交通與返鄉車潮擁擠`
+    : `🎌 ${h}：國定假日，銀行、公家機關休息；熱門景點和商圈人比較多`;
+}
+function weekdayOf(date){ return new Date(date + 'T12:00:00+09:00').getDay(); }
+
+// ---------- ☁️ 行程每天的天氣 ----------
+const dailyWxCache = {};
+async function dailyForecast(lat, lng){
+  const key = `${lat.toFixed(1)},${lng.toFixed(1)}`, c = dailyWxCache[key];
+  if (c && Date.now() - c.t < 3 * 3600e3) return c.d;
+  const d = await (await fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=16&timezone=Asia%2FSeoul`, 10000)).json();
+  if (!d?.daily) throw new Error('wx');
+  dailyWxCache[key] = { t:Date.now(), d }; return d;
+}
+async function fillTripInfo(d){
+  const box = $('tdInfo'); if (!box) return;
+  const date = d.date || kstNowParts().date, parts = [];
+  const h = holidayTip(date); if (h) parts.push(`<div class="hol">${h}</div>`);
+  if (!d.date) parts.push('<div class="addr">設定日期後，會顯示當天天氣、假日，並檢查店家營業時間。</div>');
+  box.innerHTML = parts.join('');
+  if (!d.date) return;
+  const ref = d.stops[0] || { lat:map.getCenter().lat, lng:map.getCenter().lng };
+  try {
+    const w = await dailyForecast(ref.lat, ref.lng), i = w.daily.time.indexOf(date);
+    if (!$('tdInfo')) return;
+    if (i >= 0) {
+      const [e, t] = wmo(w.daily.weather_code[i]), rain = w.daily.precipitation_probability_max[i];
+      box.insertAdjacentHTML('afterbegin', `<div class="tdwx">${e} ${t} · ${Math.round(w.daily.temperature_2m_min[i])}°／${Math.round(w.daily.temperature_2m_max[i])}° · ☔ ${rain ?? '-'}%${rain >= 60 ? ' <b>記得帶傘</b>' : ''}${w.daily.temperature_2m_min[i] <= 0 ? ' <b>很冷，注意保暖</b>' : ''}</div>`);
+    } else if (date > w.daily.time[w.daily.time.length - 1]) box.insertAdjacentHTML('afterbegin', '<div class="addr">☁️ 天氣預報只到 16 天後，接近出發日再來看。</div>');
+  } catch(e) {}
+}
+// 營業時間檢查：抵達到離開這段時間是否營業
+function openCheck(oh, date, from, to){
+  const p = parseOH(oh); if (!p) return null;
+  const dow = weekdayOf(date), ranges = ohDay(p, dow), yr = ohDay(p, (dow + 6) % 7);
+  if (KR_HOLIDAYS[date] && /PH\s*off/i.test(oh)) return { bad:true, msg:`國定假日（${KR_HOLIDAYS[date]}）公休` };
+  if (!ranges.length && !yr.some(([a,b]) => b <= a)) return { bad:true, msg:`週${ZH_DAY[dow]}公休` };
+  const inR = m => ranges.some(([a,b]) => { const e = b <= a ? b + 1440 : b; return m >= a && m < e; }) || yr.some(([a,b]) => b <= a && m < b);
+  const txt = ranges.map(([a,b]) => hhmm(a) + '–' + (b === 1440 ? '24:00' : hhmm(b))).join('、');
+  if (!inR(from)) return { bad:true, msg:`${hhmm(from)} 抵達時沒營業（當天 ${txt || '公休'}）` };
+  if (!inR(Math.max(from, to - 1))) return { bad:true, msg:`停留到 ${hhmm(to)} 前會打烊（當天 ${txt}）` };
+  return { bad:false, msg:`營業中（${txt}）` };
+}
+
+// ---------- ✈️ 機場交通 ----------
+const AIRPORTS = {
+  icn1: { name:'仁川機場 第一航廈', ko:'인천국제공항 제1여객터미널', lat:37.4473, lng:126.4524 },
+  icn2: { name:'仁川機場 第二航廈', ko:'인천국제공항 제2여객터미널', lat:37.4691, lng:126.4336 },
+  gmp:  { name:'金浦機場', ko:'김포국제공항', lat:37.5622, lng:126.8013 },
+};
+let airportSel = 'icn1';
+function openAirport(){
+  const ap = AIRPORTS[airportSel], icn = airportSel !== 'gmp';
+  let taxi = '';
+  const dest = hotel || (myPos ? { lat:myPos[0], lng:myPos[1] } : null);
+  if (dest) { const d = map.distance([ap.lat, ap.lng], [dest.lat, dest.lng]) * 1.3; const f = taxiFare(d, 12); taxi = `到${hotel ? '你的飯店' : '你的位置'}約 ${fmtDist(d)}，跳表約 ${won(f.low)}～${won(f.high)}（另加過路費；深夜加成）`; }
+  const opts = icn ? [
+    ['🚄 機場鐵路 直達車', '到首爾站約 43 分（第二航廈約 51 分），中途不停', '約 ₩13,000（以官網為準）', '首爾站發車 06:00～23:00；機場第二航廈發車 05:16～22:40', '要先買票、對號入座；只到首爾站'],
+    ['🚇 機場鐵路 普通車', '到首爾站約 60 分，停弘大入口、孔德等站', '首爾站→第一航廈 ₩4,750（刷交通卡）', '第二航廈發車 05:08～23:32', '最便宜；到弘大、孔德、首爾站很方便'],
+    ['🚌 機場巴士（利木津）', '到明洞、東大門、江南、弘大等約 60～90 分', '₩17,000', '大多 05:00～23:00', '行李放車底，常停在飯店附近；第二航廈 2026/3/5 起要先在 B1 售票處買票'],
+    ['🌙 深夜巴士 N6000', '經松亭站、鹽倉站到高速巴士客運站', '₩17,000', '深夜班次', '班機很晚抵達時的選擇'],
+    ['🚕 計程車', taxi || '設定飯店或開定位後會估算車資', '依距離跳表', '24 小時', '行李多、人數多、深夜最方便；搭乘處在 1 樓入境大廳外'],
+  ] : [
+    ['🚇 地鐵／機場鐵路', '金浦機場站有 5號線、9號線、機場鐵路等，到市區約 20～40 分', '一般地鐵票價', '約 05:30～24:00', '最方便，直接轉地鐵到各區'],
+    ['🚌 機場巴士', '往明洞、首爾站、江南等', '依路線', '依路線', '行李多時方便'],
+    ['🚕 計程車', taxi || '設定飯店或開定位後會估算車資', '依距離跳表', '24 小時', '離市區近，車資比仁川便宜很多'],
+  ];
+  openPanel(`<h2>✈️ 機場交通</h2>
+    <div class="modes">${Object.entries(AIRPORTS).map(([k,a]) => `<button data-ap="${k}" class="${k === airportSel ? 'on' : ''}">${a.name.replace('仁川機場 ', '仁川 ')}</button>`).join('')}</div>
+    <div class="aps">${opts.map(o => `<div class="apo"><b>${o[0]}</b><div>⏱ ${esc(o[1])}</div><div>💰 ${esc(o[2])} · 🕘 ${esc(o[3])}</div><small>💡 ${esc(o[4])}</small></div>`).join('')}</div>
+    <div class="btns">
+      <button class="go wide" id="apToHotel">🧭 ${hotel ? '從機場到我的飯店' : '從機場出發規劃路線'}</button>
+      ${hotel ? '<button class="wide" id="apFromHotel">🧭 從我的飯店到機場</button>' : ''}
+      <button id="apShow">📍 在地圖上看機場</button><button id="apTaxi">🚖 叫車到機場</button>
+    </div>
+    <div class="addr">${hotel ? '' : '💡 先設定「🏨 我的飯店」，就能一鍵規劃機場到飯店的路線。'}時間和票價會調整，出發前請以機場鐵路、機場巴士官網為準。</div>`, el => {
+      el.querySelectorAll('[data-ap]').forEach(b => b.onclick = () => { airportSel = b.dataset.ap; openAirport(); });
+      $('apToHotel').onclick = () => {
+        route.start = { lat:ap.lat, lng:ap.lng, name:ap.name, ko:ap.ko }; route.data = {};
+        if (hotel) openRoute({ lat:hotel.lat, lng:hotel.lng, name:hotel.name, ko:hotel.ko });
+        else { toast('已把機場設為起點，請搜尋目的地後按「🧭 路線」'); closeSheet(); map.setView([ap.lat, ap.lng], 13); }
+      };
+      if ($('apFromHotel')) $('apFromHotel').onclick = () => { route.start = { lat:hotel.lat, lng:hotel.lng, name:hotel.name, ko:hotel.ko }; route.data = {}; openRoute({ lat:ap.lat, lng:ap.lng, name:ap.name, ko:ap.ko }); };
+      $('apShow').onclick = () => showPlace({ lat:ap.lat, lng:ap.lng, name:ap.name, ko:ap.ko });
+      $('apTaxi').onclick = () => openTaxi({ lat:ap.lat, lng:ap.lng, name:ap.name, ko:ap.ko });
+    });
+}
+
+// ---------- 🆘 緊急資訊卡（只存在這支手機，不會同步或上傳） ----------
+const MED_COND = [['糖尿病','당뇨병'],['高血壓','고혈압'],['氣喘','천식'],['心臟病','심장병'],['癲癇','뇌전증'],['懷孕中','임신 중']];
+const ALLERGY = [['花生','땅콩'],['堅果','견과류'],['海鮮','해산물'],['蝦蟹','갑각류'],['蛋','달걀'],['牛奶','우유'],['小麥','밀'],['盤尼西林','페니실린'],['阿斯匹靈','아스피린'],['止痛藥（NSAID）','진통소염제']];
+let medi = store.get('kmap_medi', { name:'', blood:'', allergy:[], allergyOther:'', allergyOtherKo:'', cond:[], condOther:'', condOtherKo:'', meds:'', medsKo:'', contact:'', phone:'', insurer:'', passport:'' });
+function saveMedi(){ store.set('kmap_medi', medi); }
+function openMedical(){
+  const ck = (arr, list, key) => list.map(([zh, ko]) => `<label class="ckp"><input type="checkbox" data-${key}="${esc(zh)}" ${arr.includes(zh) ? 'checked' : ''}>${esc(zh)}</label>`).join('');
+  openPanel(`<h2>🆘 緊急資訊卡</h2>
+    <div class="addr">先填好，緊急時按「顯示韓文卡」給醫護人員看。🔒 資料只存在這支手機，不會上傳，也不會放進同步連結。</div>
+    <div class="fx"><label>英文姓名（同護照）<input id="mdName" value="${esc(medi.name)}" placeholder="WANG XIAO MING"></label>
+      <label style="flex:0;min-width:100px">血型<select id="mdBlood">${['','A','B','O','AB'].map(b => `<option ${medi.blood === b ? 'selected' : ''}>${b}</option>`).join('')}</select></label></div>
+    <div class="group">過敏</div><div class="ckps">${ck(medi.allergy, ALLERGY, 'al')}</div>
+    <div class="fx"><label>其他過敏（中文，會自動翻成韓文）<input id="mdAlO" value="${esc(medi.allergyOther)}" placeholder="例如：奇異果"></label></div>
+    <div class="group">疾病與用藥</div><div class="ckps">${ck(medi.cond, MED_COND, 'cd')}</div>
+    <div class="fx"><label>其他疾病（中文）<input id="mdCdO" value="${esc(medi.condOther)}"></label></div>
+    <div class="fx"><label>正在服用的藥（中文）<input id="mdMeds" value="${esc(medi.meds)}" placeholder="例如：降血壓藥"></label></div>
+    <div class="group">聯絡資訊</div>
+    <div class="fx"><label>緊急聯絡人<input id="mdCt" value="${esc(medi.contact)}" placeholder="例如：媽媽 王美麗"></label><label>電話（含國碼）<input id="mdPh" value="${esc(medi.phone)}" placeholder="+886 912 345 678"></label></div>
+    <div class="fx"><label>旅遊保險公司／緊急電話<input id="mdIns" value="${esc(medi.insurer)}"></label><label>護照號碼（選填）<input id="mdPp" value="${esc(medi.passport)}"></label></div>
+    <div class="btns"><button class="go" id="mdSave">💾 儲存</button><button id="mdShow">🇰🇷 顯示韓文卡</button></div>`, el => {
+      $('mdSave').onclick = async () => {
+        Object.assign(medi, { name:$('mdName').value.trim(), blood:$('mdBlood').value, contact:$('mdCt').value.trim(), phone:$('mdPh').value.trim(), insurer:$('mdIns').value.trim(), passport:$('mdPp').value.trim(),
+          allergy:[...el.querySelectorAll('[data-al]')].filter(c => c.checked).map(c => c.dataset.al), cond:[...el.querySelectorAll('[data-cd]')].filter(c => c.checked).map(c => c.dataset.cd) });
+        for (const [k, id] of [['allergyOther','mdAlO'], ['condOther','mdCdO'], ['meds','mdMeds']]) {
+          const v = $(id).value.trim();
+          if (v !== medi[k] || (v && !medi[k + 'Ko'])) { medi[k] = v; medi[k + 'Ko'] = v ? (await translate(v, 'zh', 'ko')) || '' : ''; }
+        }
+        saveMedi(); toast('已儲存' + ((medi.allergyOther && !medi.allergyOtherKo) || (medi.meds && !medi.medsKo) ? '（沒網路，自填的項目暫時沒翻成韓文）' : ''));
+      };
+      $('mdShow').onclick = () => { $('mdSave').click(); setTimeout(showMedicalCard, 300); };
+    });
+}
+function showMedicalCard(){
+  const m = medi, row = (ko, zh, v) => v ? `<div class="mr"><span>${ko}<small>${zh}</small></span><b>${v}</b></div>` : '';
+  const ko = (list, sel) => sel.map(z => (list.find(x => x[0] === z) || [z, z])[1]);
+  const al = [...ko(ALLERGY, m.allergy), m.allergyOtherKo || m.allergyOther].filter(Boolean).join(', ');
+  const cd = [...ko(MED_COND, m.cond), m.condOtherKo || m.condOther].filter(Boolean).join(', ');
+  const el = $('bigCard');
+  el.innerHTML = `<div class="medc"><div class="mh">🆘 응급 의료 정보<small>緊急醫療資訊</small></div>
+    ${row('이름', '姓名', esc(m.name))}${row('국적', '國籍', '대만 (Taiwan)')}${row('혈액형', '血型', m.blood ? esc(m.blood) + '형' : '')}
+    ${row('알레르기', '過敏', esc(al) || '없음')}${row('지병', '疾病', esc(cd))}${row('복용 중인 약', '用藥', esc(m.medsKo || m.meds))}
+    ${row('비상 연락처', '緊急聯絡人', esc([m.contact, m.phone].filter(Boolean).join(' ')))}${row('여행자 보험', '保險', esc(m.insurer))}
+    ${row('여권 번호', '護照號碼', esc(m.passport))}${hotel ? row('숙소', '住宿', esc(hotel.ko || hotel.name) + (hotel.koAddr ? '<small>' + esc(hotel.koAddr) + '</small>' : '')) : ''}
+    <div class="mf">한국어를 못합니다. 통역이 필요합니다. (1330)<small>我不會說韓文，需要翻譯（觀光翻譯熱線 1330）</small></div></div>
+    <div class="bb"><button id="bcClose">✕ 關閉</button></div>`;
+  el.style.display = 'flex';
+  $('bcClose').onclick = () => el.style.display = 'none';
+}
+
+// ---------- 📔 旅行日記（打卡＋照片；照片存在這支手機的瀏覽器） ----------
+let diary = store.get('kmap_diary', []);   // [{id, t, lat, lng, name, ko, note, photo:boolean}]
+const diaryLayer = L.layerGroup();
+let diaryShown = false;
+function saveDiary(){ store.set('kmap_diary', diary); }
+async function resizePhoto(file, max = 1280){
+  const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = URL.createObjectURL(file); });
+  const s = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+  c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  URL.revokeObjectURL(img.src);
+  return await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.8));
+}
+const photoUrls = {};
+async function photoUrl(id){ if (photoUrls[id]) return photoUrls[id]; const b = await idb.get('photo-' + id); return b ? (photoUrls[id] = URL.createObjectURL(b)) : null; }
+function checkinDialog(p){
+  const at = p || (myPos ? { lat:myPos[0], lng:myPos[1], name:'我在這裡' } : null);
+  if (!at) { toast('請先按 📍 定位，或從地點頁按「📔 打卡」'); return; }
+  openPanel(`<h2>📔 打卡</h2><div class="addr">📍 ${esc(at.name)}${at.ko && at.ko !== at.name ? ' · ' + esc(at.ko) : ''}</div>
+    <textarea id="dyNote" class="exnote" rows="3" placeholder="寫一句話：好吃、好玩、心情…"></textarea>
+    <label class="filebtn">📷 加一張照片（選填）<input type="file" id="dyPhoto" accept="image/*" capture="environment" hidden></label>
+    <div id="dyPrev"></div>
+    <div class="btns" style="margin-top:8px"><button class="go wide" id="dySave">✅ 打卡</button></div>`, () => {
+      let file = null;
+      $('dyPhoto').onchange = e => { file = e.target.files[0]; if (file) $('dyPrev').innerHTML = `<img class="ocrimg" src="${URL.createObjectURL(file)}">`; };
+      $('dySave').onclick = async () => {
+        const id = Date.now().toString(36);
+        let photo = false;
+        if (file) { try { await idb.set('photo-' + id, await resizePhoto(file)); photo = true; } catch(e) { toast('照片儲存失敗'); } }
+        diary.push({ id, t:Date.now(), lat:+at.lat.toFixed(6), lng:+at.lng.toFixed(6), name:at.name, ko:at.ko || null, note:$('dyNote').value.trim(), photo });
+        saveDiary(); if (diaryShown) drawDiary(); toast('📔 已打卡'); openDiary();
+      };
+    });
+}
+async function drawDiary(){
+  diaryLayer.clearLayers();
+  const pts = diary.slice().sort((a,b) => a.t - b.t);
+  if (pts.length > 1) L.polyline(pts.map(x => [x.lat, x.lng]), { color:'#e8710a', weight:3, dashArray:'6 6', opacity:.8 }).addTo(diaryLayer);
+  pts.forEach((x,i) => L.marker([x.lat, x.lng], { icon:numIcon(i + 1, '#e8710a'), zIndexOffset:400 }).addTo(diaryLayer)
+    .bindPopup(`<b>${esc(x.name)}</b><br><small>${new Date(x.t).toLocaleString('zh-TW', { timeZone:KST_TZ, hour12:false })}</small>${x.note ? '<br>' + esc(x.note) : ''}${x.photo ? `<br><img data-ph="${x.id}" style="max-width:180px;border-radius:6px;margin-top:4px">` : ''}`)
+    .on('popupopen', async e => { const im = e.popup.getElement()?.querySelector('[data-ph]'); if (im) im.src = await photoUrl(im.dataset.ph); }));
+}
+async function openDiary(){
+  const days = {}; diary.forEach(x => (days[kstDate(x.t)] ||= []).push(x));
+  openPanel(`<h2>📔 旅行日記</h2>
+    <div class="btns"><button class="go" id="dyNew">📍 在目前位置打卡</button><button id="dyMap">${diaryShown ? '🙈 隱藏地圖足跡' : '🗺️ 在地圖上看足跡'}</button></div>
+    ${diary.length ? Object.keys(days).sort().reverse().map(d => `<div class="group">${d.slice(5).replace('-','/')}（週${ZH_DAY[weekdayOf(d)]}）· ${days[d].length} 個地點</div>
+      ${days[d].sort((a,b) => a.t - b.t).map(x => `<div class="dyi">${x.photo ? `<img data-ph="${x.id}" alt="">` : '<span class="dyn">📍</span>'}<div><b>${esc(x.name)}</b><small>${new Date(x.t).toLocaleTimeString('zh-TW', { timeZone:KST_TZ, hour:'2-digit', minute:'2-digit', hour12:false })}</small>${x.note ? `<div>${esc(x.note)}</div>` : ''}</div><button class="linkbtn" data-dd="${x.id}">🗑</button></div>`).join('')}`).join('')
+      + `<div class="btns" style="margin-top:10px"><button class="wide" id="dyExport">📤 匯出成相簿網頁</button></div>`
+      : '<div class="addr">在去過的地方打卡，可以加照片和一句話。地點頁的「📔 打卡」或上面的按鈕都可以。照片只存在這支手機。</div>'}`, el => {
+      $('dyNew').onclick = () => checkinDialog();
+      $('dyMap').onclick = () => { diaryShown = !diaryShown; if (diaryShown) { diaryLayer.addTo(map); drawDiary(); if (diary.length) map.fitBounds(L.latLngBounds(diary.map(x => [x.lat, x.lng])).pad(0.2), { maxZoom:16 }); } else map.removeLayer(diaryLayer); openDiary(); };
+      el.querySelectorAll('img[data-ph]').forEach(async im => { im.src = await photoUrl(im.dataset.ph) || ''; });
+      el.querySelectorAll('[data-dd]').forEach(b => b.onclick = async () => { const id = b.dataset.dd; diary = diary.filter(x => x.id !== id); saveDiary(); try { const db = await idb.open(); db.transaction('kv','readwrite').objectStore('kv').delete('photo-' + id); } catch(e) {} if (diaryShown) drawDiary(); openDiary(); });
+      if ($('dyExport')) $('dyExport').onclick = exportAlbum;
+    });
+}
+async function exportAlbum(){
+  toast('產生相簿中…');
+  const blobToData = b => new Promise(ok => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(b); });
+  const items = [];
+  for (const x of diary.slice().sort((a,b) => a.t - b.t)) {
+    let img = ''; if (x.photo) { const b = await idb.get('photo-' + x.id); if (b) img = await blobToData(b); }
+    items.push({ ...x, img });
+  }
+  const days = {}; items.forEach(x => (days[kstDate(x.t)] ||= []).push(x));
+  const html = `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>我的韓國旅行相簿</title>
+<style>body{font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;max-width:760px;margin:0 auto;padding:20px;color:#202124;background:#faf8f5}h1{text-align:center}h2{border-bottom:2px solid #e8710a;padding-bottom:4px;margin-top:32px}
+.it{background:#fff;border-radius:12px;padding:12px 14px;margin:12px 0;box-shadow:0 1px 4px rgba(0,0,0,.1)}.it img{width:100%;border-radius:8px;margin-top:8px}.it small{color:#5f6368}.it a{color:#1a73e8;font-size:13px}</style></head><body>
+<h1>🇰🇷 我的韓國旅行相簿</h1><p style="text-align:center;color:#5f6368">${items.length ? kstDate(items[0].t) + ' ～ ' + kstDate(items[items.length - 1].t) : ''} · ${items.length} 個地點</p>
+${Object.keys(days).sort().map(d => `<h2>${d}（週${ZH_DAY[weekdayOf(d)]}）</h2>` + days[d].map(x => `<div class="it"><b>📍 ${esc(x.name)}</b>${x.ko && x.ko !== x.name ? ` <small>${esc(x.ko)}</small>` : ''}<br><small>${new Date(x.t).toLocaleTimeString('zh-TW', { timeZone:KST_TZ, hour:'2-digit', minute:'2-digit', hour12:false })}</small> · <a href="https://map.kakao.com/link/map/${encodeURIComponent(x.ko || x.name)},${x.lat},${x.lng}">地圖</a>${x.note ? `<p>${esc(x.note)}</p>` : ''}${x.img ? `<img src="${x.img}">` : ''}</div>`).join('')).join('')}
+</body></html>`;
+  if (!downloadFile(`korea-album-${kstNowParts().date}.html`, html, 'text/html')) toast('此瀏覽器不支援下載');
+}
+
+// ---------- 🥾 今日足跡（網頁開著時記錄 GPS 軌跡） ----------
+let tracks = store.get('kmap_tracks', {});   // { 'YYYY-MM-DD': [[lat,lng,t], ...] }
+let tracking = store.get('kmap_tracking', false);
+const trackLayer = L.layerGroup().addTo(map);
+let trackLine = null;
+function trackDist(pts){ let s = 0; for (let i = 1; i < pts.length; i++) s += map.distance([pts[i-1][0], pts[i-1][1]], [pts[i][0], pts[i][1]]); return s; }
+function onTrackPos(pos){
+  if (!tracking || pos.coords.accuracy > 60) return;
+  const d = kstNowParts().date, arr = tracks[d] ||= [], p = [+pos.coords.latitude.toFixed(6), +pos.coords.longitude.toFixed(6), Date.now()];
+  const last = arr[arr.length - 1];
+  if (last && map.distance([last[0], last[1]], [p[0], p[1]]) < Math.max(15, pos.coords.accuracy * 0.6)) return;
+  arr.push(p);
+  const keys = Object.keys(tracks).sort(); while (keys.length > 30) delete tracks[keys.shift()];   // 最多保留 30 天
+  store.set('kmap_tracks', tracks); drawTrack();
+}
+function drawTrack(){
+  trackLayer.clearLayers(); trackLine = null;
+  const arr = tracks[kstNowParts().date]; if (!arr?.length || !tracking) return;
+  trackLine = L.polyline(arr.map(p => [p[0], p[1]]), { color:'#a142f4', weight:4, opacity:.75 }).addTo(trackLayer);
+}
+function setTracking(on){
+  tracking = on; store.set('kmap_tracking', on);
+  if (on) { startWatch(); toast('🥾 開始記錄足跡（網頁要開著才能記錄）'); } else toast('已停止記錄足跡');
+  drawTrack();
+}
+function openTracks(){
+  const today = kstNowParts().date, keys = Object.keys(tracks).sort().reverse();
+  openPanel(`<h2>🥾 今日足跡</h2>
+    <div class="exsum"><div><small>今天走了</small><b>${fmtDist(trackDist(tracks[today] || []))}</b><span>${(tracks[today] || []).length} 個記錄點</span></div>
+      <div><small>狀態</small><b>${tracking ? '🟢 記錄中' : '⚪ 未記錄'}</b><span>${tracking ? '網頁開著時持續記錄' : ''}</span></div></div>
+    <div class="btns"><button class="go wide" id="tkToggle">${tracking ? '⏸ 停止記錄' : '▶️ 開始記錄足跡'}</button></div>
+    <div class="addr">⚠️ 網頁的限制：手機螢幕關掉或切到別的 App 時，瀏覽器會暫停定位，那段路就不會記到。記錄時建議把網頁開在前景。</div>
+    ${keys.length ? `<div class="group">每天的足跡</div>${keys.map(k => `<div class="exi"><span>🥾</span><span class="en">${k.slice(5).replace('-','/')}（週${ZH_DAY[weekdayOf(k)]}）</span><span class="ea">${fmtDist(trackDist(tracks[k]))}</span><button class="linkbtn" data-tv="${k}">看</button><button class="linkbtn" data-td="${k}">🗑</button></div>`).join('')}` : ''}`, el => {
+      $('tkToggle').onclick = () => { setTracking(!tracking); openTracks(); };
+      el.querySelectorAll('[data-tv]').forEach(b => b.onclick = () => {
+        const pts = tracks[b.dataset.tv]; if (!pts?.length) return;
+        trackLayer.clearLayers(); L.polyline(pts.map(p => [p[0], p[1]]), { color:'#a142f4', weight:4 }).addTo(trackLayer);
+        map.fitBounds(L.latLngBounds(pts.map(p => [p[0], p[1]])).pad(0.2), { maxZoom:17 }); closeSheet();
+      });
+      el.querySelectorAll('[data-td]').forEach(b => b.onclick = () => { delete tracks[b.dataset.td]; store.set('kmap_tracks', tracks); drawTrack(); openTracks(); });
+    });
+}
+if (tracking && navigator.geolocation) { try { startWatch(); } catch(e) {} drawTrack(); }
+
+// ---------- 💰 每日預算、兌換紀錄 ----------
+if (!exp.budget) exp.budget = 0;
+if (!exp.fxRec) exp.fxRec = [];      // [{id, t, twd, krw, where}]
+if (exp.useMine === undefined) exp.useMine = true;
+function myRate(){   // 1 韓元 = ? 台幣（依自己換匯的平均）
+  const s = exp.fxRec.reduce((a,x) => [a[0] + x.twd, a[1] + x.krw], [0, 0]);
+  return s[1] > 0 ? s[0] / s[1] : null;
+}
+function rateK2T(){ return (exp.useMine && myRate()) || fx.rate || null; }
+function budgetHtml(todayT){
+  if (!exp.budget) return `<div class="addr">💡 <button class="linkbtn" id="bgSet">設定每日預算</button>，花超過會提醒你。</div>`;
+  const pct = todayT / exp.budget, col = pct > 1 ? '#d93025' : pct > 0.8 ? '#e8710a' : '#188038';
+  return `<div class="budget"><div class="bt">今天預算 ${won(exp.budget)} · 已用 ${Math.round(pct * 100)}%${pct > 1 ? ` · <b style="color:#d93025">超支 ${won(todayT - exp.budget)}</b>` : ` · 還剩 ${won(exp.budget - todayT)}`} <button class="linkbtn" id="bgSet">修改</button></div>
+    <div class="prog"><div style="width:${Math.min(100, pct * 100)}%;background:${col}"></div></div></div>`;
+}
+function fxRecHtml(){
+  const r = myRate();
+  return `<details class="fxrec"><summary>💱 我的換匯紀錄${r ? `：平均 1 台幣 = ${(1 / r).toFixed(2)} 韓元` : ''}</summary>
+    ${exp.fxRec.map(x => `<div class="exi"><span>💱</span><span class="en">${esc(x.where || '換匯')}<small>${kstDate(x.t)} · 1 台幣 = ${(x.krw / x.twd).toFixed(2)} 韓元</small></span><span class="ea">NT$${x.twd.toLocaleString('en-US')}<small>→ ${won(x.krw)}</small></span><button class="linkbtn" data-fd="${x.id}">🗑</button></div>`).join('')}
+    <div class="fx"><label>付出台幣<input type="number" inputmode="decimal" id="frT" placeholder="10000"></label><label>拿到韓元<input type="number" inputmode="numeric" id="frK" placeholder="430000"></label></div>
+    <div class="fx"><label>在哪換（選填）<input id="frW" placeholder="例如：明洞換錢所"></label><button id="frAdd">＋ 記錄</button></div>
+    <label class="ckp"><input type="checkbox" id="frUse" ${exp.useMine ? 'checked' : ''}> 記帳換算時，用我的平均匯率（沒有紀錄時才用市場匯率）</label></details>`;
+}
+function bindExpExtras(){
+  if ($('bgSet')) $('bgSet').onclick = () => {
+    const box = document.createElement('div'); box.className = 'fx';
+    box.innerHTML = `<label>每日預算（韓元）<input type="number" inputmode="numeric" id="bgVal" value="${exp.budget || ''}" placeholder="例如 100000"></label><button id="bgOk">儲存</button>`;
+    $('bgSet').closest('div').after(box); $('bgVal').focus();
+    $('bgOk').onclick = () => { exp.budget = Math.max(0, +$('bgVal').value || 0); saveExp(); openExpense(); };
+  };
+  if ($('frAdd')) $('frAdd').onclick = () => {
+    const t = +$('frT').value, k = +$('frK').value; if (!(t > 0 && k > 0)) return toast('請輸入台幣和韓元金額');
+    exp.fxRec.push({ id:Date.now().toString(36), t:Date.now(), twd:t, krw:k, where:$('frW').value.trim() }); saveExp(); openExpense();
+    setTimeout(() => { const d = document.querySelector('.fxrec'); if (d) d.open = true; }, 50);
+  };
+  document.querySelectorAll('[data-fd]').forEach(b => b.onclick = () => { exp.fxRec = exp.fxRec.filter(x => x.id !== b.dataset.fd); saveExp(); openExpense(); setTimeout(() => { const d = document.querySelector('.fxrec'); if (d) d.open = true; }, 50); });
+  if ($('frUse')) $('frUse').onchange = e => { exp.useMine = e.target.checked; saveExp(); openExpense(); };
+}
+function budgetWarn(){
+  if (!exp.budget) return;
+  const today = kstNowParts().date, t = exp.items.filter(x => kstDate(x.t) === today).reduce((s,x) => s + x.krw, 0);
+  if (t > exp.budget) toast(`⚠️ 今天已超出預算 ${won(t - exp.budget)}`);
+  else if (t > exp.budget * 0.8) toast(`今天已用掉預算的 ${Math.round(t / exp.budget * 100)}%`);
+}
+
+function openHolidays(){
+  const today = kstNowParts().date, up = Object.entries(KR_HOLIDAYS).filter(([d]) => d >= today).slice(0, 24);
+  openPanel(`<h2>🎌 韓國國定假日</h2>
+    <div class="addr">春節、中秋連假很多店家休息、交通擁擠；其他國定假日銀行和公家機關休息，景點人比較多。行程規劃選了日期也會自動提醒。</div>
+    ${up.length ? up.map(([d,n]) => `<div class="exi"><span>${BIG_HOLIDAY.test(n) ? '🎎' : '🎌'}</span><span class="en">${esc(n)}<small>週${ZH_DAY[weekdayOf(d)]}</small></span><span class="ea">${d.replace(/-/g,'/')}</span></div>`).join('')
+      : '<div class="addr">目前只收錄到 2027 年底。</div>'}
+    <div class="addr">依韓國政府公布的 2026、2027 年月曆要項（含補假）；臨時公休日以政府公告為準。</div>`);
 }
 
 $('phraseBtn').onclick = openPhrases;
