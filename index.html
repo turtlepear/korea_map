@@ -6863,7 +6863,7 @@ ${x.photos ? `<div class="ph">${x.places.flatMap(p => photoKeys(p)).filter(k => 
 function setMapLang(l){
   if (!MAP_LANGS[l]) return;
   mapLang = l; store.set('kmap_maplang', l);
-  layers.forEach(x => { const m = x.l.getMaplibreMap?.(); if (m && m._hooked) applyLabels(m); });
+  layers.forEach(x => { const m = x.l.getMaplibreMap?.(); if (m && m._hooked) { applyLabels(m); try { m.triggerRepaint(); } catch(e) {} } });
   $('langBtn').textContent = MAP_LANGS[l].s;
 }
 function openMapLang(){
