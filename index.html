@@ -6483,7 +6483,8 @@ async function openRainPlan(i, arrive, leave){
     const name = t['name:zh'] || t['name:zh-Hant'] || t['name:en'] || t.name; if (lat == null || !name || seen.has(name)) return; seen.add(name);
     list.push({ lat, lng, name, ko:t['name:ko'] || t.name, en:t['name:en'], tags:t, dist:map.distance([s.lat, s.lng], [lat, lng]) });
   });
-  list.sort((a,b) => a.dist - b.dist);
+  const W = t => /^(museum|aquarium)$/.test(t.tourism || '') || /^(mall|department_store)$/.test(t.shop || '') ? 1 : t.tourism === 'gallery' || /지하상가|지하쇼핑/.test(t.name || '') ? 1.3 : t.amenity === 'cinema' ? 1.8 : 2.5;
+  list.sort((a,b) => a.dist * W(a.tags) - b.dist * W(b.tags));
   const top = list.slice(0, 15);
   openPanel(`<h2>☔ 雨天備案</h2>
     <div class="addr">「${esc(s.name)}」${hhmm(arrive)}～${hhmm(leave)} 可能下雨，附近的室內景點：</div>
@@ -6555,9 +6556,44 @@ async function reverseName(lat, lng){
   try {
     const d = await (await fetchT(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&namedetails=1&accept-language=zh-TW,zh,en`, 10000)).json();
     const nd = d.namedetails || {}, a = d.address || {};
-    const zh = nd['name:zh-Hant'] || nd['name:zh-TW'] || nd['name:zh'] || d.name || a.amenity || a.tourism || a.shop || a.neighbourhood || a.quarter || a.suburb || a.city_district || a.road;
-    return { name: zh || null, ko: nd['name:ko'] || nd.name || null };
+    const good = /^(tourism|historic|leisure)$/.test(d.category) || (d.category === 'amenity' && /^(restaurant|cafe|fast_food|bar|pub|food_court|marketplace|place_of_worship)$/.test(d.type)) || (d.category === 'shop' && /^(mall|department_store)$/.test(d.type)) || d.category === 'railway';
+    const nm = good ? (nd['name:zh-Hant'] || nd['name:zh-TW'] || nd['name:zh'] || nd['name:en'] || d.name) : null;
+    return { name: nm || a.suburb || a.neighbourhood || a.quarter || a.city_district || a.city || null, ko: good ? (nd['name:ko'] || nd.name || null) : null };
   } catch(e) { return {}; }
+}
+// 照片地點命名：1) 自己的行程／收藏／飯店／日記 2) Overpass：在哪個景區裡、附近 100 公尺的景點 3) Nominatim
+function ownPlaceNear(lat, lng){
+  const c = [...trip.days.flatMap(d => d.stops), ...favs, ...(hotel ? [hotel] : []), ...diary.filter(x => !x.auto)];
+  let best = null, bd = 150;
+  for (const p of c) { const d = map.distance([lat, lng], [p.lat, p.lng]); if (d < bd) { bd = d; best = p; } }
+  return best ? { name:best.name, ko:best.ko || null } : null;
+}
+const zhName = t => t['name:zh-Hant'] || t['name:zh-TW'] || t['name:zh'] || t['name:en'] || t.name;
+const MAJOR_HIST = /^(castle|palace|fort|city_gate|citywalls|monument|memorial|archaeological_site|tomb|ruins|manor|church|temple|shrine)$/;
+async function placeNames(points){
+  const res = points.map(([la, lo]) => ownPlaceNear(la, lo));
+  const todo = points.map((p, k) => k).filter(k => !res[k]);
+  if (todo.length) {
+    const q = '[out:json][timeout:40];' + todo.map(k => { const [la, lo] = points[k];
+      return `is_in(${la},${lo})->.a${k};(area.a${k}["tourism"]["name"];area.a${k}["historic"]["name"];area.a${k}["leisure"~"^(park|garden|nature_reserve)$"]["name"];area.a${k}["amenity"="marketplace"]["name"];area.a${k}["shop"="mall"]["name"];)->.r${k};.r${k} out tags;make sep i=${k},p=in;out;`
+        + `(nwr(around:100,${la},${lo})["name"]["tourism"~"^(attraction|museum|viewpoint|gallery|theme_park|zoo|aquarium)$"];nwr(around:100,${la},${lo})["name"]["historic"];);out tags center 20;make sep i=${k},p=near;out;`; }).join('');
+    try {
+      const j = await overpass(q, 70000), parts = {}; let buf = [];
+      for (const e of j.elements || []) { if (e.type === 'sep') { parts[e.tags.i + e.tags.p] = buf; buf = []; } else buf.push(e); }
+      for (const k of todo) {
+        const [la, lo] = points[k], ins = parts[k + 'in'] || [], near = parts[k + 'near'] || [];
+        const pick = (arr, f) => arr.filter(e => f(e.tags || {})).sort((a,b) => !!zhName(b.tags) - !!zhName(a.tags))[0];
+        const nearBest = near.map(e => { const t = e.tags || {}, lat = e.lat ?? e.center?.lat, lng = e.lon ?? e.center?.lon; if (lat == null) return null;
+            const w = /^(attraction|museum|theme_park|zoo|aquarium)$/.test(t.tourism || '') ? 1 : t.tourism === 'gallery' ? 1.3 : MAJOR_HIST.test(t.historic || '') ? 1.2 : t.tourism === 'viewpoint' ? 1.6 : 2.5;
+            return { e, s:map.distance([la, lo], [lat, lng]) * w + 5 }; }).filter(Boolean).sort((a,b) => a.s - b.s)[0]?.e;
+        const e = pick(ins, t => t.tourism && t.tourism !== 'information') || pick(ins, t => MAJOR_HIST.test(t.historic || '')) || nearBest
+          || pick(ins, t => t.leisure || t.amenity || t.shop) || pick(ins, t => t.historic);
+        if (e) res[k] = { name:zhName(e.tags), ko:e.tags['name:ko'] || e.tags.name || null };
+      }
+    } catch(e) {}
+  }
+  for (const k of points.map((p, k) => k).filter(k => !res[k])) { res[k] = await reverseName(points[k][0], points[k][1]); await sleep(1100); }
+  return res.map(r => ({ name:r?.name || '照片地點', ko:r?.ko || null }));
 }
 let importBusy = false;
 async function importPhotos(files){
@@ -6606,22 +6642,21 @@ async function importPhotos(files){
       <select id="ipLoose" class="ipsel"><option value="skip">略過這些照片</option>${myPos ? '<option value="me">放在我目前的位置</option>' : ''}<option value="center">放在地圖中心（先把地圖移到那裡）</option></select>
       <div class="addr">有些手機選照片時會自動移除位置資訊。開著「🥾 今日足跡」時拍的照片，可以用拍攝時間比對出位置。</div>` : ''}
     <div class="btns" style="margin-top:8px"><button class="go wide" id="ipGo">✅ 匯入日記</button></div><div class="addr" id="ipProg"></div>`, el => {
-      let cancelled = false;
-      (async () => {   // 依序查地名（Nominatim 每秒最多 1 次）
-        for (const [k, g] of groups.entries()) {
-          if (g.merge) continue; if (cancelled || !document.querySelector(`[data-ign="${k}"]`)) return;
-          const r = await reverseName(g.loc[0], g.loc[1]); g.name = r.name || '照片地點'; g.ko = r.ko;
-          const b = document.querySelector(`[data-ign="${k}"]`); if (b) b.textContent = '📍 ' + g.name;
-          await sleep(1100);
-        }
-      })();
+      const need = groups.filter(g => !g.merge);
+      const namesReady = need.length ? placeNames(need.map(g => g.loc)).then(rs => rs.forEach((r, n) => {
+        const g = need[n]; g.name = r.name; g.ko = r.ko;
+        const b = document.querySelector(`[data-ign="${groups.indexOf(g)}"]`); if (b) b.textContent = '📍 ' + g.name;
+      })) : Promise.resolve();
+      if (need.length) $('ipProg').textContent = '查詢地名中…（約 10～40 秒，可以先勾選）';
+      namesReady.then(() => { if ($('ipProg') && !importBusy) $('ipProg').textContent = ''; });
       $('ipGo').onclick = async () => {
-        cancelled = true; importBusy = true; $('ipGo').disabled = true;
+        importBusy = true; $('ipGo').disabled = true;
+        $('ipProg').textContent = '等待地名查詢完成…'; await Promise.race([namesReady, sleep(60000)]);
         const chosen = groups.filter((g, k) => el.querySelector(`[data-ig="${k}"]`)?.checked);
         const lv = $('ipLoose')?.value;
         if (loose.length && lv && lv !== 'skip') {
           const c = lv === 'me' && myPos ? myPos : [map.getCenter().lat, map.getCenter().lng];
-          const r = await reverseName(c[0], c[1]);
+          const own = ownPlaceNear(c[0], c[1]), r = own || await reverseName(c[0], c[1]);
           chosen.push({ loc:c, t:loose[0].t, items:loose, name:r.name || (lv === 'me' ? '我在這裡' : '照片地點'), ko:r.ko });
         }
         const total = chosen.reduce((s, g) => s + g.items.length, 0); let done = 0, fail = 0, newCnt = 0;
