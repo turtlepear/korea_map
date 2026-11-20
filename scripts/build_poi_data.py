@@ -10,8 +10,8 @@
 
 輸出格式：{"time":..., "fields":[...], "items":[[lat,lng,s,w,n,e,zh,ko,kind,oh], ...]}
   s,w,n,e：範圍（只有面狀的景點才有，點狀為 null）
-  kind：t 主要景點（景點、博物館、主題樂園、動物園、水族館）、g 美術館、v 觀景點、
-        h 古蹟、p 公園／庭園、m 市場／商場、d 百貨公司、c 電影院
+  kind：t 景點／主題樂園／動物園、u 博物館／水族館、g 美術館、v 觀景點、h 古蹟、
+        p 公園／庭園、m 傳統市場、l 購物中心、d 百貨公司、c 電影院
   oh：營業時間（只有室內類才保留）
 """
 import json, math, os, sys, time, urllib.parse, urllib.request
@@ -36,7 +36,8 @@ area["ISO3166-1"="KR"][admin_level=2]->.kr;
 );
 out tags bb;
 """
-MAJOR_T = {"attraction", "museum", "theme_park", "zoo", "aquarium"}
+MAJOR_T = {"attraction", "theme_park", "zoo"}
+MUSEUM = {"museum", "aquarium"}
 SMALL_PARK = ("어린이공원", "소공원", "쌈지공원", "근린공원")
 
 
@@ -65,11 +66,13 @@ def diag_m(s, w, n, e):
 def kind_of(t):
     tour, hist = t.get("tourism", ""), t.get("historic", "")
     if tour in MAJOR_T: return "t"
+    if tour in MUSEUM: return "u"
     if hist: return "h"
     if tour == "gallery": return "g"
     if t.get("shop") == "department_store": return "d"
     if t.get("amenity") == "cinema": return "c"
-    if t.get("amenity") == "marketplace" or t.get("shop") == "mall": return "m"
+    if t.get("shop") == "mall": return "l"
+    if t.get("amenity") == "marketplace": return "m"
     if t.get("leisure") in ("park", "garden"): return "p"
     if tour == "viewpoint": return "v"
     return None
@@ -109,7 +112,7 @@ def main():
         if key in seen:
             continue
         seen.add(key)
-        oh = t.get("opening_hours") if k in ("t", "g", "d", "c", "m") else None
+        oh = t.get("opening_hours") if k in ("t", "u", "g", "d", "c", "l", "m") else None
         items.append([r5(lat), r5(lng), *[r5(x) for x in bb], zh if zh and zh != ko else None, ko, k, oh])
     if len(items) < 1000:
         raise RuntimeError(f"too few items ({len(items)}), keeping old data")
