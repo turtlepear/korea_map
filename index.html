@@ -6472,17 +6472,23 @@ function indoorEmoji(t){ return t.tourism === 'museum' ? '🏛️' : t.tourism =
 async function openRainPlan(i, arrive, leave){
   const d = trip.days[tripDay], s = d.stops[i]; if (!s) return;
   const date = d.date || kstNowParts().date;
-  openPanel(`<h2>☔ 雨天備案</h2><div class="addr">「${esc(s.name)}」是戶外景點，${hhmm(arrive)}～${hhmm(leave)} 可能下雨。正在找 1.5 公里內的室內景點…（約 5～30 秒）</div>`);
-  const around = `(around:1500,${s.lat},${s.lng})`;
-  let els = [];
-  try { els = (await overpass(`[out:json][timeout:25];(${INDOOR_Q.map(q => q + around + ';').join('')});out center tags 60;`, 60000)).elements || []; }
-  catch(e) { openPanel(`<h2>☔ 雨天備案</h2><div class="addr">⚠️ 查詢失敗，請稍後再試</div><div class="btns"><button class="wide" id="rpBack">← 回行程</button></div>`, () => $('rpBack').onclick = openTrip); return; }
-  const seen = new Set(), list = [];
-  els.forEach(el => {
-    const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon, t = el.tags || {};
-    const name = t['name:zh'] || t['name:zh-Hant'] || t['name:en'] || t.name; if (lat == null || !name || seen.has(name)) return; seen.add(name);
-    list.push({ lat, lng, name, ko:t['name:ko'] || t.name, en:t['name:en'], tags:t, dist:map.distance([s.lat, s.lng], [lat, lng]) });
-  });
+  openPanel(`<h2>☔ 雨天備案</h2><div class="addr">「${esc(s.name)}」是戶外景點，${hhmm(arrive)}～${hhmm(leave)} 可能下雨。正在找 1.5 公里內的室內景點…</div>`);
+  await loadPoi();
+  let list = poiIndoorNear(s.lat, s.lng);
+  if (!list) {
+    $('sheetBody').querySelector('.addr').insertAdjacentText('beforeend', '（約 5～30 秒）');
+    const around = `(around:1500,${s.lat},${s.lng})`;
+    let els = [];
+    try { els = (await overpass(`[out:json][timeout:25];(${INDOOR_Q.map(q => q + around + ';').join('')});out center tags 60;`, 60000)).elements || []; }
+    catch(e) { openPanel(`<h2>☔ 雨天備案</h2><div class="addr">⚠️ 查詢失敗，請稍後再試</div><div class="btns"><button class="wide" id="rpBack">← 回行程</button></div>`, () => $('rpBack').onclick = openTrip); return; }
+    list = [];
+    els.forEach(el => {
+      const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon, t = el.tags || {};
+      const name = t['name:zh'] || t['name:zh-Hant'] || t['name:en'] || t.name; if (lat == null || !name) return;
+      list.push({ lat, lng, name, ko:t['name:ko'] || t.name, en:t['name:en'], tags:t, dist:map.distance([s.lat, s.lng], [lat, lng]) });
+    });
+  }
+  { const seen = new Set(); list = list.filter(p => !seen.has(p.ko || p.name) && seen.add(p.ko || p.name)); }
   const W = t => /^(museum|aquarium)$/.test(t.tourism || '') || /^(mall|department_store)$/.test(t.shop || '') ? 1 : t.tourism === 'gallery' || /지하상가|지하쇼핑/.test(t.name || '') ? 1.3 : t.amenity === 'cinema' ? 1.8 : 2.5;
   list.sort((a,b) => a.dist * W(a.tags) - b.dist * W(b.tags));
   const top = list.slice(0, 15);
@@ -6502,6 +6508,48 @@ async function openRainPlan(i, arrive, leave){
 }
 function reopenTripCalc(){ openTrip(); setTimeout(() => $('tdCalc')?.click(), 60); }
 
+// ---------- 📦 景點範圍資料（data/poi-kr.json，GitHub Actions 每週更新） ----------
+let poiData = null, poiLoading = null;
+function loadPoi(){
+  if (poiData) return Promise.resolve(poiData);
+  return poiLoading ||= (async () => {
+    try { const r = await fetchT('data/poi-kr.json', 30000); if (r.ok) { const d = await r.json(); if (d.items?.length) return poiData = d; } } catch(e) {}
+    poiLoading = null; return null;
+  })();
+}
+const POI_W = { t:1, u:1, h:1.2, g:1.3, l:1.3, d:1.3, m:1.4, v:1.6, c:2, p:2.2 };
+function poiAt(lat, lng){
+  if (!poiData) return null;
+  const cosl = Math.cos(lat * Math.PI / 180), M = 0.00025;
+  let inMajor = null, inMajorA = Infinity, inMinor = null, inMinorA = Infinity, near = null, nearS = Infinity;
+  for (const it of poiData.items) {
+    const [la, lo, s, w, n, e, , , k] = it;
+    if (s != null && lat >= s - M && lat <= n + M && lng >= w - M && lng <= e + M) {   // 在這個景點的範圍裡
+      const dg = Math.hypot((n - s) * 111320, (e - w) * 111320 * cosl), a = (n - s) * (e - w);
+      if ('tuh'.includes(k)) { if (dg < 3000 && a < inMajorA) { inMajorA = a; inMajor = it; } }
+      else if (dg < 4000 && a < inMinorA) { inMinorA = a; inMinor = it; }
+      continue;
+    }
+    const dy = (la - lat) * 111320; if (dy > 150 || dy < -150) continue;
+    const dx = (lo - lng) * 111320 * cosl; if (dx > 150 || dx < -150) continue;
+    const d = Math.hypot(dx, dy); if (d > 120) continue;
+    const sc = (d + 5) * (POI_W[k] || 2); if (sc < nearS) { nearS = sc; near = it; }
+  }
+  const it = inMajor || near || inMinor;
+  return it ? { name:it[6] || it[7], ko:it[7] } : null;
+}
+const POI_TAGS = { u:{ tourism:'museum' }, g:{ tourism:'gallery' }, l:{ shop:'mall' }, d:{ shop:'department_store' }, c:{ amenity:'cinema' } };
+function poiIndoorNear(lat, lng, r = 1500){
+  if (!poiData) return null;
+  const out = [];
+  for (const it of poiData.items) {
+    const k = it[8]; if (!POI_TAGS[k]) continue;
+    if (Math.abs(it[0] - lat) > 0.02 || Math.abs(it[1] - lng) > 0.025) continue;
+    const d = map.distance([lat, lng], [it[0], it[1]]); if (d > r) continue;
+    out.push({ lat:it[0], lng:it[1], name:it[6] || it[7], ko:it[7], tags:{ ...POI_TAGS[k], name:it[7], ...(it[9] ? { opening_hours:it[9] } : {}) }, dist:d });
+  }
+  return out;
+}
 // ---------- 📷 讀照片 EXIF（拍攝時間、GPS） ----------
 async function readExif(file){
   const v = new DataView(await file.slice(0, 256 * 1024).arrayBuffer());
@@ -6572,7 +6620,9 @@ const zhName = t => t['name:zh-Hant'] || t['name:zh-TW'] || t['name:zh'] || t['n
 const MAJOR_HIST = /^(castle|palace|fort|city_gate|citywalls|monument|memorial|archaeological_site|tomb|ruins|manor|church|temple|shrine)$/;
 async function placeNames(points){
   const res = points.map(([la, lo]) => ownPlaceNear(la, lo));
-  const todo = points.map((p, k) => k).filter(k => !res[k]);
+  const pd = res.every(Boolean) ? null : await loadPoi();
+  if (pd) res.forEach((r, k) => { if (!r) res[k] = poiAt(points[k][0], points[k][1]); });
+  const todo = pd ? [] : points.map((p, k) => k).filter(k => !res[k]);   // 沒有景點資料時才即時查 Overpass
   if (todo.length) {
     const q = '[out:json][timeout:40];' + todo.map(k => { const [la, lo] = points[k];
       return `is_in(${la},${lo})->.a${k};(area.a${k}["tourism"]["name"];area.a${k}["historic"]["name"];area.a${k}["leisure"~"^(park|garden|nature_reserve)$"]["name"];area.a${k}["amenity"="marketplace"]["name"];area.a${k}["shop"="mall"]["name"];)->.r${k};.r${k} out tags;make sep i=${k},p=in;out;`
