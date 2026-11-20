@@ -1,9 +1,9 @@
 {
- "updated": "2026-11-19",
+ "updated": "2026-11-20",
  "regions": {
   "seoul": {
-   "stations": 715,
-   "segments": 3144,
+   "stations": 701,
+   "segments": 3128,
    "exits": 3024
   },
   "busan": {
