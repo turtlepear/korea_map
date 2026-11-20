@@ -1224,6 +1224,28 @@ return maplibregl$1;
   #driver .say { margin-top:28px; font-size:18px; color:var(--m); }
   #toast { position:fixed; left:50%; bottom:90px; transform:translateX(-50%); background:#323232; color:#fff; padding:9px 16px; border-radius:20px; font-size:14px; z-index:4000; display:none; }
   .dist { display:inline-block; background:#e8f0fe; color:var(--c); font-size:12px; border-radius:10px; padding:2px 8px; margin-left:4px; }
+  .ob { display:inline-block; font-size:11px; font-weight:normal; border-radius:8px; padding:1px 6px; vertical-align:2px; margin-left:4px; }
+  .ob-open { background:#e6f4ea; color:#137333; } .ob-soon { background:#fef7e0; color:#b06000; } .ob-opening { background:#e8f0fe; color:#1967d2; } .ob-closed { background:#f1f3f4; color:#80868b; }
+  body.dark .ob-open { background:#1e3a29; color:#81c995; } body.dark .ob-soon { background:#3d3218; color:#fdd663; } body.dark .ob-opening { background:#1c2b45; color:#8ab4f8; } body.dark .ob-closed { background:#303134; color:#9aa0a6; }
+  .oh .soon { color:#b06000; font-weight:600; }
+  .nbi { font-size:22px; line-height:1; transform:translate(-50%,-100%); position:absolute; filter:drop-shadow(0 1px 2px rgba(0,0,0,.4)); } .nbi.nbc { opacity:.45; }
+  .obd { position:absolute; right:-3px; top:-2px; width:9px; height:9px; border-radius:50%; border:1.5px solid #fff; } .obd.ob-open { background:#1e8e3e; } .obd.ob-soon { background:#f29900; } .obd.ob-opening { background:#1a73e8; } .obd.ob-closed { background:#9aa0a6; }
+  .hrs { display:flex; gap:4px; overflow-x:auto; padding:4px 0 6px; } .hrs div { flex:none; display:flex; flex-direction:column; align-items:center; min-width:42px; font-size:12px; background:var(--soft); border-radius:8px; padding:4px 2px; } .hrs small { color:var(--m); font-size:10px; } .hrs .wet { background:#d2e3fc; } body.dark .hrs .wet { background:#1c3a5e; }
+  .tdwx.rainy, .ts.rainy { color:#1967d2; } body.dark .tdwx.rainy, body.dark .ts.rainy { color:#8ab4f8; }
+  .rpi { display:flex; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); } .rpi > div:first-child { flex:1; cursor:pointer; } .rpi b { display:block; font-size:14px; } .rpi small { display:block; color:var(--m); font-size:12px; } .okt { color:#137333 !important; }
+  .rpb { display:flex; flex-direction:column; gap:4px; } .rpb button { font-size:12px; padding:4px 8px; border:1px solid var(--line); border-radius:14px; background:var(--card); color:var(--t); cursor:pointer; white-space:nowrap; }
+  .ipg { display:flex; gap:10px; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:14px; } .ipg img { width:52px; height:52px; object-fit:cover; border-radius:8px; } .ipg small { display:block; color:var(--m); font-size:12px; } .ipg > div { flex:1; }
+  .ipl { display:flex; flex-wrap:wrap; gap:4px; margin:4px 0; } .ipl img { width:44px; height:44px; object-fit:cover; border-radius:6px; } .ipl span { align-self:center; color:var(--m); font-size:13px; }
+  .ipsel { width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; font-size:15px; background:var(--card); color:var(--t); margin:4px 0; }
+  .dyth { position:relative; flex:none; cursor:pointer; } .dyth i { position:absolute; right:3px; bottom:3px; background:rgba(0,0,0,.65); color:#fff; font-style:normal; font-size:11px; border-radius:8px; padding:0 5px; }
+  .gal img { width:100%; border-radius:10px; margin:4px 0; display:block; }
+  .rvsum { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:8px 0; } .rvsum > div { background:var(--soft); border-radius:10px; padding:8px 4px; text-align:center; } .rvsum b { display:block; font-size:20px; color:#e8710a; } .rvsum b small { font-size:12px; color:inherit; } .rvsum > div > small { color:var(--m); font-size:12px; }
+  .rvhi { font-size:13px; line-height:1.8; background:#fff4e5; border-radius:10px; padding:6px 10px; margin:6px 0; } body.dark .rvhi { background:#3d2d18; }
+  .rvday { border:1px solid var(--line); border-radius:12px; padding:10px; margin:10px 0; } .rvh { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; } .rvh span { font-size:13px; color:var(--m); }
+  .rvmap { width:100%; height:auto; display:block; } body.dark .rvmap rect { fill:#2b2f36; }
+  .rvpl { padding-left:22px; margin:6px 0; font-size:14px; } .rvpl li { margin:3px 0; } .rvpl small { color:var(--m); } .rvpl div { font-size:13px; color:var(--m); }
+  .rvst span { display:inline-block; background:var(--soft); border-radius:10px; padding:2px 8px; margin:3px 4px 0 0; font-size:12px; }
+  .rvph { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-top:6px; } .rvph img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:6px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -3854,7 +3876,7 @@ async function search(raw){
       const sub = [n.ko && n.ko!==title ? n.ko : null, n.en && n.en!==title ? n.en : null].filter(Boolean).join(' · ');
       const div = document.createElement('div'); div.className = 'r res' + (weak ? ' weak' : '');
       div.innerHTML = (label ? `<span class="near">${label}</span>` : '') + (weak && !label ? `<span class="near w">⚠️ 名稱不太相符</span>` : '') +
-        `<b>${esc(title)}${distTag(+d.lat,+d.lon)}</b>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}<small>${esc(d.display_name)}</small>`;
+        `<b>${esc(title)}${distTag(+d.lat,+d.lon)}${obHtml(d.extratags?.opening_hours)}</b>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}<small>${esc(d.display_name)}</small>`;
       div.onclick = () => { box.style.display='none'; const pl = { lat:+d.lat, lng:+d.lon, name:title, ko:n.ko, en:n.en, zh:n.zh, addr:d.display_name, tags:d.extratags || {}, near: (label || weak) ? (terms.ko || q) : null }; addHistPlace(pl); showPlace(pl); };
       found.push({ score, el:div });
     });
@@ -4458,10 +4480,10 @@ document.querySelectorAll('#nearby .chip').forEach(chip => chip.onclick = async 
       const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon; if (lat==null) return;
       const t = el.tags || {};
       const name = t['name:zh'] || t['name:en'] || t.name || NEARBY[k].e;
-      L.marker([lat,lng], { icon: icon(NEARBY[k].e, 22) }).addTo(nearbyLayer)
+      L.marker([lat,lng], { icon: nearbyIcon(NEARBY[k].e, t.opening_hours) }).addTo(nearbyLayer)
         .on('click', () => showPlace({ lat, lng, name, ko: t['name:ko'] || t.name, en: t['name:en'], tags: t }));
     });
-    toast(`找到 ${data.elements.length} 個地點`);
+    { const oc = data.elements.map(el => el.tags?.opening_hours && openBadge(el.tags.opening_hours)).filter(Boolean); toast(`找到 ${data.elements.length} 個地點${oc.length ? `（${oc.filter(b => b.k === 'open' || b.k === 'soon').length} 個營業中，灰色為已打烊）` : ''}`); }
   } catch(e) { toast('附近搜尋失敗，稍後再試'); }
 });
 
@@ -4505,14 +4527,14 @@ function openMenu(){
       ['offline','📥','離線地圖'], ['sync','🔄','收藏同步'], ['shareme','📍','分享我的位置'], ['hist','🕘','搜尋紀錄']])}
     ${G('🗣️ 語言', [['phrase','🗣️','韓文句卡'], ['convo','💬','對話翻譯'], ['ocr','📷','拍照翻譯']])}
     ${G('💰 花錢', [['expense','💰','旅費記帳'], ['tax','🧾','退稅計算'], ['shop','🛒','購物清單'], ['tools','🧰','匯率／車資／急難']])}
-    ${G('📔 紀念', [['diary','📔','旅行日記'], ['track','🥾','今日足跡', tracking ? '記錄中' : '']])}
+    ${G('📔 紀念', [['diary','📔','旅行日記'], ['track','🥾','今日足跡', tracking ? '記錄中' : ''], ['review','🧾','旅程回顧']])}
     ${G('🧳 其他', [['medi','🆘','緊急資訊卡'], ['check','✅','行前清單'], ['sizes','📏','尺寸換算'], ['dark', dark ? '☀️' : '🌙', dark ? '淺色模式' : '深色模式'], ['about','ℹ️','關於／資料來源']])}`,
     el => el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => ({
       trip: openTrip, sync: openSync, subway: toggleSubway, tools: openTools, offline: openOffline,
       dark: () => { setTheme(dark ? 'light' : 'dark'); openMenu(); },
       hist: () => { closeSheet(); $('q').focus(); showHistory(); }, about: openAbout,
       wx: () => openWeather(), shareme: shareMyLocation,
-      airport: openAirport, holi: openHolidays, diary: openDiary, track: openTracks, medi: openMedical,
+      airport: openAirport, holi: openHolidays, diary: openDiary, track: openTracks, review: openReview, medi: openMedical,
       hotel: openHotel, phrase: openPhrases, convo: openConvo, ocr: openOcr, expense: openExpense, tax: openTax, shop: openShop, check: openChecklist, sizes: openSizes,
     })[b.dataset.a]()));
 }
@@ -4692,7 +4714,7 @@ function placeDetails(p){
   const oh = t.opening_hours;
   if (oh) {
     const st = ohStatus(oh);
-    if (st) out.push(`<details class="oh"><summary><span class="${st.open ? 'open' : 'closed'}">${st.open ? '● 營業中' : '● 已打烊'}</span>
+    if (st) out.push(`<details class="oh"><summary>${(() => { const b = openBadge(oh); return b?.k === 'soon' ? '<span class="soon">● 即將打烊</span>' : b?.t === '國定假日公休' ? '<span class="closed">● 國定假日公休</span>' : `<span class="${st.open ? 'open' : 'closed'}">${st.open ? '● 營業中' : '● 已打烊'}</span>`; })()}
         ${st.allDay ? '· 24 小時營業' : st.open && st.closes ? `· ${st.closes} 結束` : (!st.open && st.opensNext ? `· 今天 ${st.opensNext} 開門` : '')} <small>（今日 ${esc(st.today)}）</small></summary>
         <div class="week">${st.week.map(w => `<div class="${w.isToday ? 'today' : ''}"><span>週${ZH_DAY[w.d]}</span><span>${esc(w.txt)}</span></div>`).join('')}</div>
         <small>韓國時間；國定假日可能不同</small></details>`);
@@ -4827,7 +4849,7 @@ function tripAddDialog(p){
       el.querySelectorAll('[data-d]').forEach(b => b.onclick = () => {
         let i = b.dataset.d;
         if (i === 'new') { trip.days.push({ start:'09:00', date:'', stops:[] }); i = trip.days.length - 1; }
-        trip.days[+i].stops.push({ lat:p.lat, lng:p.lng, name:p.name, ko:p.ko || null, stay:60, oh:p.tags?.opening_hours || null });
+        trip.days[+i].stops.push({ lat:p.lat, lng:p.lng, name:p.name, ko:p.ko || null, stay:60, oh:p.tags?.opening_hours || null, io:placeIO(p) });
         saveTrip(); tripDay = +i; toast(`已加入 Day ${+i+1}`); showPlace(p, false);
       });
       $('taBack').onclick = () => showPlace(p, false);
@@ -4872,7 +4894,7 @@ function openTrip(){
       el.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { const i = +b.dataset.up; [d.stops[i-1], d.stops[i]] = [d.stops[i], d.stops[i-1]]; saveTrip(); openTrip(); });
       el.querySelectorAll('[data-dn]').forEach(b => b.onclick = () => { const i = +b.dataset.dn; [d.stops[i+1], d.stops[i]] = [d.stops[i], d.stops[i+1]]; saveTrip(); openTrip(); });
       el.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { d.stops.splice(+b.dataset.rm, 1); saveTrip(); openTrip(); });
-      el.querySelectorAll('[data-fav]').forEach(b => b.onclick = () => { const f = favs[+b.dataset.fav]; d.stops.push({ lat:f.lat, lng:f.lng, name:f.name, ko:f.ko || null, stay:60, oh:f.tags?.opening_hours || null }); saveTrip(); openTrip(); });
+      el.querySelectorAll('[data-fav]').forEach(b => b.onclick = () => { const f = favs[+b.dataset.fav]; d.stops.push({ lat:f.lat, lng:f.lng, name:f.name, ko:f.ko || null, stay:60, oh:f.tags?.opening_hours || null, io:placeIO(f) }); saveTrip(); openTrip(); });
       $('tdCalc').onclick = () => computeDay();
       $('tdOpt').onclick = () => { optimizeOrder(d); saveTrip(); openTrip(); toast('已依距離重新排序（第一站不變）'); };
       $('tdDel').onclick = () => {
@@ -4970,13 +4992,17 @@ async function computeDay(){
     else if (leg.geom) L.polyline(leg.geom, { color: leg.mode === 'foot' ? '#1a73e8' : '#e8710a', weight:5, dashArray: leg.mode === 'foot' ? '2 8' : null }).addTo(tripLayer);
   });
   const total = t - (sh * 60 + sm);
+  let wxH = null;
+  if (S.length) { try { wxH = hourlyOf(await dailyForecast(S[0].lat, S[0].lng), date); } catch(e) {} }
+  if (id !== tripCalcId || !$('tdOut')) return;
+  const wetOut = wxH ? rows.filter(r => r.type === 'stop' && (S[r.i].io || placeIO(S[r.i])) === 'out' && wxH.some(h => h.h >= Math.floor(r.arrive / 60) && h.h <= Math.floor((r.leave - 1) / 60) && isWet(h))).length : 0;
   const ocBad = rows.filter(r => r.type === 'stop' && S[r.i].oh && openCheck(S[r.i].oh, date, r.arrive, r.leave)?.bad).length;
   $('tdOut').innerHTML = `<div class="best">Day ${tripDay+1}：${hhmm(sh*60+sm)} 出發 → ${hhmm(t)} 結束，共 ${fmtTime(total*60)}</div>
-    ${ocBad ? `<div class="hol">⚠️ 有 ${ocBad} 個地點在你抵達時沒營業，建議調整順序或時間</div>` : ''}${KR_HOLIDAYS[date] ? `<div class="hol">${holidayTip(date)}</div>` : ''}
+    ${ocBad ? `<div class="hol">⚠️ 有 ${ocBad} 個地點在你抵達時沒營業，建議調整順序或時間</div>` : ''}${KR_HOLIDAYS[date] ? `<div class="hol">${holidayTip(date)}</div>` : ''}${wetOut ? `<div class="tdwx rainy">☔ 有 ${wetOut} 個戶外景點會遇到雨，可以按「找室內備案」換成附近的室內景點</div>` : ''}
     <div class="timeline">${rows.map(r => {
       if (r.type === 'stop') { const s = S[r.i];
         const oc = s.oh ? openCheck(s.oh, date, r.arrive, r.leave) : null;
-        return `<div class="tl"><div class="ic"><span class="num" style="position:static;font-size:11px">${r.i+1}</span></div><div><b>${hhmm(r.arrive)}</b> 抵達 <b>${esc(s.name)}</b>${s.stay ? `<div class="ts sm">停留 ${s.stay} 分，${hhmm(r.leave)} 離開</div>` : ''}${oc ? `<div class="ts sm ${oc.bad ? 'warnt' : ''}">${oc.bad ? '⚠️ ' : '🕐 '}${esc(oc.msg)}</div>` : ''}</div></div>`; }
+        return `<div class="tl"><div class="ic"><span class="num" style="position:static;font-size:11px">${r.i+1}</span></div><div><b>${hhmm(r.arrive)}</b> 抵達 <b>${esc(s.name)}</b>${s.stay ? `<div class="ts sm">停留 ${s.stay} 分，${hhmm(r.leave)} 離開</div>` : ''}${oc ? `<div class="ts sm ${oc.bad ? 'warnt' : ''}">${oc.bad ? '⚠️ ' : '🕐 '}${esc(oc.msg)}</div>` : ''}${stopWx(s, r, wxH, date)}</div></div>`; }
       const L1 = r.leg; let desc = '';
       if (L1.mode === 'foot') desc = `🚶 步行 ${fmtTime(L1.dur)}${L1.dist ? ' · ' + fmtDist(L1.dist) : ''}`;
       else if (L1.mode === 'car') { const f = taxiFare(L1.dist); desc = `🚕 計程車約 ${fmtTime(L1.dur)} · ${won(f.low)}～${won(f.high)}<span class="ts sm">（查不到大眾運輸，改估計程車）</span>`; }
@@ -4984,6 +5010,7 @@ async function computeDay(){
       return `<div class="tl ${L1.mode === 'foot' ? 'walk' : ''} legrow" data-leg="${r.i}"><div class="ic">↓</div><div>${desc}${L1.est ? '<span class="ts sm">（估計值）</span>' : ''}<div class="ts sm linkish">看詳細路線 ›</div></div></div>`;
     }).join('')}</div>
     <div class="addr">${d.date ? '' : '⚠️ 沒有設定日期，大眾運輸用今天的班次計算。'}1.2 公里內建議步行，較遠的用大眾運輸，查不到才改估計程車。</div>`;
+  $('tdOut').querySelectorAll('[data-rain]').forEach(b => b.onclick = e => { e.stopPropagation(); const [i, a, l] = b.dataset.rain.split('|').map(Number); openRainPlan(i, a, l); });
   $('tdOut').querySelectorAll('[data-leg]').forEach(el => el.onclick = () => {
     const i = +el.dataset.leg, A = S[i], B = S[i+1];
     route.start = { lat:A.lat, lng:A.lng, name:A.name, ko:A.ko }; route.data = {};
@@ -5390,7 +5417,7 @@ async function openWeather(lat, lng, name){
   openPanel(`<h2>☁️ ${esc(name || '天氣')}</h2>
     <div class="wxnow"><span class="big">${e}</span><div><b>${Math.round(c.temperature_2m)}°C</b> ${t}<br><small>體感 ${Math.round(c.apparent_temperature)}° · 濕度 ${c.relative_humidity_2m}% · 風速 ${Math.round(c.wind_speed_10m)} km/h</small></div></div>
     ${aq ? `<div class="aq" style="border-color:${aq.color}"><b style="color:${aq.color}">空氣品質：${aq.label}（${aq.ko}）</b><br><small>PM2.5 ${Math.round(d.a.current.pm2_5)} · PM10 ${Math.round(d.a.current.pm10)} ㎍/㎥（韓國環境部分級）${aq.tip ? '<br>😷 ' + aq.tip : ''}</small></div>` : ''}
-    <div class="group">接下來 24 小時</div><div class="hours">${hours}</div>
+    <div class="group">接下來 24 小時</div>${rainNext(d.w, i0)}<div class="hours">${hours}</div>
     <div class="group">7 天預報 <small style="font-weight:normal;color:var(--m)">（空氣品質僅前 3 天）</small></div><div class="days">${days}</div>
     <div class="addr">日出 ${d.w.daily.sunrise[0].slice(11)} · 日落 ${d.w.daily.sunset[0].slice(11)} · 資料：<a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo.com</a>（CC BY 4.0）</div>`);
 }
@@ -6046,7 +6073,7 @@ const dailyWxCache = {};
 async function dailyForecast(lat, lng){
   const key = `${lat.toFixed(1)},${lng.toFixed(1)}`, c = dailyWxCache[key];
   if (c && Date.now() - c.t < 3 * 3600e3) return c.d;
-  const d = await (await fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=16&timezone=Asia%2FSeoul`, 10000)).json();
+  const d = await (await fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=temperature_2m,precipitation_probability,weather_code,precipitation&forecast_days=16&timezone=Asia%2FSeoul`, 10000)).json();
   if (!d?.daily) throw new Error('wx');
   dailyWxCache[key] = { t:Date.now(), d }; return d;
 }
@@ -6064,6 +6091,8 @@ async function fillTripInfo(d){
     if (i >= 0) {
       const [e, t] = wmo(w.daily.weather_code[i]), rain = w.daily.precipitation_probability_max[i];
       box.insertAdjacentHTML('afterbegin', `<div class="tdwx">${e} ${t} · ${Math.round(w.daily.temperature_2m_min[i])}°／${Math.round(w.daily.temperature_2m_max[i])}° · ☔ ${rain ?? '-'}%${rain >= 60 ? ' <b>記得帶傘</b>' : ''}${w.daily.temperature_2m_min[i] <= 0 ? ' <b>很冷，注意保暖</b>' : ''}</div>`);
+      const H = hourlyOf(w, date);
+      if (H) { const st = +(d.start || '09:00').slice(0, 2); box.querySelector('.tdwx').insertAdjacentHTML('afterend', rainSummary(H, Math.min(st, 9), 22) + hourStrip(H, Math.min(st, 9), 22)); }
     } else if (date > w.daily.time[w.daily.time.length - 1]) box.insertAdjacentHTML('afterbegin', '<div class="addr">☁️ 天氣預報只到 16 天後，接近出發日再來看。</div>');
   } catch(e) {}
 }
@@ -6211,21 +6240,23 @@ async function drawDiary(){
   const pts = diary.slice().sort((a,b) => a.t - b.t);
   if (pts.length > 1) L.polyline(pts.map(x => [x.lat, x.lng]), { color:'#e8710a', weight:3, dashArray:'6 6', opacity:.8 }).addTo(diaryLayer);
   pts.forEach((x,i) => L.marker([x.lat, x.lng], { icon:numIcon(i + 1, '#e8710a'), zIndexOffset:400 }).addTo(diaryLayer)
-    .bindPopup(`<b>${esc(x.name)}</b><br><small>${new Date(x.t).toLocaleString('zh-TW', { timeZone:KST_TZ, hour12:false })}</small>${x.note ? '<br>' + esc(x.note) : ''}${x.photo ? `<br><img data-ph="${x.id}" style="max-width:180px;border-radius:6px;margin-top:4px">` : ''}`)
+    .bindPopup(`<b>${esc(x.name)}</b><br><small>${new Date(x.t).toLocaleString('zh-TW', { timeZone:KST_TZ, hour12:false })}</small>${x.note ? '<br>' + esc(x.note) : ''}${x.photo ? `<br><img data-ph="${x.id}" style="max-width:180px;border-radius:6px;margin-top:4px">${x.more ? `<br><small>共 ${x.more + 1} 張照片</small>` : ''}` : ''}`)
     .on('popupopen', async e => { const im = e.popup.getElement()?.querySelector('[data-ph]'); if (im) im.src = await photoUrl(im.dataset.ph); }));
 }
 async function openDiary(){
   const days = {}; diary.forEach(x => (days[kstDate(x.t)] ||= []).push(x));
   openPanel(`<h2>📔 旅行日記</h2>
-    <div class="btns"><button class="go" id="dyNew">📍 在目前位置打卡</button><button id="dyMap">${diaryShown ? '🙈 隱藏地圖足跡' : '🗺️ 在地圖上看足跡'}</button></div>
+    <div class="btns"><button class="go" id="dyNew">📍 在目前位置打卡</button><label class="filebtn" style="margin:0">🖼️ 匯入照片（自動定位）<input type="file" id="dyImport" accept="image/*" multiple hidden></label><button id="dyMap">${diaryShown ? '🙈 隱藏地圖足跡' : '🗺️ 在地圖上看足跡'}</button></div>
     ${diary.length ? Object.keys(days).sort().reverse().map(d => `<div class="group">${d.slice(5).replace('-','/')}（週${ZH_DAY[weekdayOf(d)]}）· ${days[d].length} 個地點</div>
-      ${days[d].sort((a,b) => a.t - b.t).map(x => `<div class="dyi">${x.photo ? `<img data-ph="${x.id}" alt="">` : '<span class="dyn">📍</span>'}<div><b>${esc(x.name)}</b><small>${new Date(x.t).toLocaleTimeString('zh-TW', { timeZone:KST_TZ, hour:'2-digit', minute:'2-digit', hour12:false })}</small>${x.note ? `<div>${esc(x.note)}</div>` : ''}</div><button class="linkbtn" data-dd="${x.id}">🗑</button></div>`).join('')}`).join('')
+      ${days[d].sort((a,b) => a.t - b.t).map(x => `<div class="dyi">${x.photo ? `<span class="dyth" data-gal="${x.id}"><img data-ph="${x.id}" alt="">${x.more ? `<i>+${x.more}</i>` : ''}</span>` : '<span class="dyn">📍</span>'}<div><b>${esc(x.name)}</b><small>${new Date(x.t).toLocaleTimeString('zh-TW', { timeZone:KST_TZ, hour:'2-digit', minute:'2-digit', hour12:false })}</small>${x.note ? `<div>${esc(x.note)}</div>` : ''}</div><button class="linkbtn" data-dd="${x.id}">🗑</button></div>`).join('')}`).join('')
       + `<div class="btns" style="margin-top:10px"><button class="wide" id="dyExport">📤 匯出成相簿網頁</button></div>`
       : '<div class="addr">在去過的地方打卡，可以加照片和一句話。地點頁的「📔 打卡」或上面的按鈕都可以。照片只存在這支手機。</div>'}`, el => {
       $('dyNew').onclick = () => checkinDialog();
+      $('dyImport').onchange = e => importPhotos([...e.target.files]);
+      el.querySelectorAll('[data-gal]').forEach(b => b.onclick = () => openGallery(b.dataset.gal));
       $('dyMap').onclick = () => { diaryShown = !diaryShown; if (diaryShown) { diaryLayer.addTo(map); drawDiary(); if (diary.length) map.fitBounds(L.latLngBounds(diary.map(x => [x.lat, x.lng])).pad(0.2), { maxZoom:16 }); } else map.removeLayer(diaryLayer); openDiary(); };
       el.querySelectorAll('img[data-ph]').forEach(async im => { im.src = await photoUrl(im.dataset.ph) || ''; });
-      el.querySelectorAll('[data-dd]').forEach(b => b.onclick = async () => { const id = b.dataset.dd; diary = diary.filter(x => x.id !== id); saveDiary(); try { const db = await idb.open(); db.transaction('kv','readwrite').objectStore('kv').delete('photo-' + id); } catch(e) {} if (diaryShown) drawDiary(); openDiary(); });
+      el.querySelectorAll('[data-dd]').forEach(b => b.onclick = async () => { const id = b.dataset.dd, old = diary.find(x => x.id === id); if (photoKeys(old).length > 1 && !confirm(`刪除「${old.name}」和 ${photoKeys(old).length} 張照片？`)) return; diary = diary.filter(x => x.id !== id); saveDiary(); try { const db = await idb.open(), os = db.transaction('kv','readwrite').objectStore('kv'); photoKeys(old || { id, photo:true }).forEach(k => os.delete(k)); } catch(e) {} if (diaryShown) drawDiary(); openDiary(); });
       if ($('dyExport')) $('dyExport').onclick = exportAlbum;
     });
 }
@@ -6234,15 +6265,15 @@ async function exportAlbum(){
   const blobToData = b => new Promise(ok => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(b); });
   const items = [];
   for (const x of diary.slice().sort((a,b) => a.t - b.t)) {
-    let img = ''; if (x.photo) { const b = await idb.get('photo-' + x.id); if (b) img = await blobToData(b); }
-    items.push({ ...x, img });
+    const imgs = []; for (const k of photoKeys(x)) { const b = await idb.get(k); if (b) imgs.push(await blobToData(b)); }
+    items.push({ ...x, imgs });
   }
   const days = {}; items.forEach(x => (days[kstDate(x.t)] ||= []).push(x));
   const html = `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>我的韓國旅行相簿</title>
 <style>body{font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;max-width:760px;margin:0 auto;padding:20px;color:#202124;background:#faf8f5}h1{text-align:center}h2{border-bottom:2px solid #e8710a;padding-bottom:4px;margin-top:32px}
 .it{background:#fff;border-radius:12px;padding:12px 14px;margin:12px 0;box-shadow:0 1px 4px rgba(0,0,0,.1)}.it img{width:100%;border-radius:8px;margin-top:8px}.it small{color:#5f6368}.it a{color:#1a73e8;font-size:13px}</style></head><body>
 <h1>🇰🇷 我的韓國旅行相簿</h1><p style="text-align:center;color:#5f6368">${items.length ? kstDate(items[0].t) + ' ～ ' + kstDate(items[items.length - 1].t) : ''} · ${items.length} 個地點</p>
-${Object.keys(days).sort().map(d => `<h2>${d}（週${ZH_DAY[weekdayOf(d)]}）</h2>` + days[d].map(x => `<div class="it"><b>📍 ${esc(x.name)}</b>${x.ko && x.ko !== x.name ? ` <small>${esc(x.ko)}</small>` : ''}<br><small>${new Date(x.t).toLocaleTimeString('zh-TW', { timeZone:KST_TZ, hour:'2-digit', minute:'2-digit', hour12:false })}</small> · <a href="https://map.kakao.com/link/map/${encodeURIComponent(x.ko || x.name)},${x.lat},${x.lng}">地圖</a>${x.note ? `<p>${esc(x.note)}</p>` : ''}${x.img ? `<img src="${x.img}">` : ''}</div>`).join('')).join('')}
+${Object.keys(days).sort().map(d => `<h2>${d}（週${ZH_DAY[weekdayOf(d)]}）</h2>` + days[d].map(x => `<div class="it"><b>📍 ${esc(x.name)}</b>${x.ko && x.ko !== x.name ? ` <small>${esc(x.ko)}</small>` : ''}<br><small>${new Date(x.t).toLocaleTimeString('zh-TW', { timeZone:KST_TZ, hour:'2-digit', minute:'2-digit', hour12:false })}</small> · <a href="https://map.kakao.com/link/map/${encodeURIComponent(x.ko || x.name)},${x.lat},${x.lng}">地圖</a>${x.note ? `<p>${esc(x.note)}</p>` : ''}${x.imgs.map(u => `<img src="${u}">`).join('')}</div>`).join('')).join('')}
 </body></html>`;
   if (!downloadFile(`korea-album-${kstNowParts().date}.html`, html, 'text/html')) toast('此瀏覽器不支援下載');
 }
@@ -6343,6 +6374,384 @@ function openHolidays(){
     ${up.length ? up.map(([d,n]) => `<div class="exi"><span>${BIG_HOLIDAY.test(n) ? '🎎' : '🎌'}</span><span class="en">${esc(n)}<small>週${ZH_DAY[weekdayOf(d)]}</small></span><span class="ea">${d.replace(/-/g,'/')}</span></div>`).join('')
       : '<div class="addr">目前只收錄到 2027 年底。</div>'}
     <div class="addr">依韓國政府公布的 2026、2027 年月曆要項（含補假）；臨時公休日以政府公告為準。</div>`);
+}
+
+// ====================================================================
+//  第五批：營業中標記、每小時天氣＋雨天備案、照片自動定位、旅程回顧
+// ====================================================================
+
+// ---------- 🕐 營業狀態標記（營業中／即將打烊／已打烊） ----------
+function openBadge(oh, at){
+  const p = parseOH(oh); if (!p) return null;
+  const now = at || kstNowParts(), date = now.date, mins = now.mins, dow = now.dow ?? weekdayOf(date);
+  if (KR_HOLIDAYS[date] && /PH\s*off/i.test(oh)) return { k:'closed', t:'國定假日公休' };
+  const today = ohDay(p, dow), yest = ohDay(p, (dow + 6) % 7);
+  if (p.all || today.some(([a,b]) => a === 0 && b === 1440) && ohDay(p, (dow + 1) % 7).some(([a]) => a === 0)) return { k:'open', t:'24 小時營業' };
+  let closeAt = null;
+  for (const [a,b] of today) { const e = b <= a ? b + 1440 : b; if (mins >= a && mins < e) closeAt = Math.max(closeAt ?? 0, e); }
+  for (const [a,b] of yest) if (b <= a && mins < b) closeAt = Math.max(closeAt ?? 0, b);
+  const fmtC = m => m === 1440 ? '24:00' : m > 1440 ? '隔天 ' + hhmm(m - 1440) : hhmm(m);
+  if (closeAt != null) {
+    const left = closeAt - mins;
+    if (left <= 60) return { k:'soon', t:`即將打烊（${fmtC(closeAt)}）`, left };
+    return { k:'open', t:`營業中 · 到 ${fmtC(closeAt)}` };
+  }
+  const next = today.map(r => r[0]).filter(a => a > mins).sort((a,b) => a - b)[0];
+  if (next != null) return next - mins <= 60 ? { k:'opening', t:`快開門（${hhmm(next)}）` } : { k:'closed', t:`尚未營業 · ${hhmm(next)} 開門` };
+  return { k:'closed', t: today.length ? '今天已打烊' : '今天公休' };
+}
+function obHtml(oh){ const b = oh && openBadge(oh); return b ? ` <span class="ob ob-${b.k}">${b.t}</span>` : ''; }
+function nearbyIcon(e, oh){
+  const b = oh && openBadge(oh);
+  return L.divIcon({ className:'', iconSize:[0,0], html:`<div class="nbi${b && b.k === 'closed' ? ' nbc' : ''}">${e}${b ? `<i class="obd ob-${b.k}"></i>` : ''}</div>` });
+}
+
+// ---------- ☔ 每小時天氣 ----------
+const RAIN_CODES = new Set([51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99]), SNOW_CODES = new Set([71,73,75,77,85,86]);
+function hourlyOf(w, date){
+  if (!w?.hourly) return null;
+  const out = [];
+  w.hourly.time.forEach((t, i) => { if (t.startsWith(date)) out.push({ h:+t.slice(11, 13), t:w.hourly.temperature_2m[i], pp:w.hourly.precipitation_probability[i], code:w.hourly.weather_code[i], mm:w.hourly.precipitation[i] }); });
+  return out.length ? out : null;
+}
+const isWet = h => (h.pp ?? 0) >= 50 || (h.mm ?? 0) >= 0.5;
+function wetWord(hs){ return hs.some(h => SNOW_CODES.has(h.code)) ? '下雪' : '下雨'; }
+function rainSpans(H, from = 7, to = 23){
+  const spans = []; let cur = null;
+  for (const h of H.filter(h => h.h >= from && h.h <= to)) {
+    if (isWet(h)) { if (cur && cur.e === h.h - 1) { cur.e = h.h; cur.hs.push(h); } else spans.push(cur = { s:h.h, e:h.h, hs:[h] }); }
+  }
+  return spans;
+}
+function rainSummary(H, from = 7, to = 23){
+  const sp = rainSpans(H, from, to);
+  if (!sp.length) return `<div class="tdwx">🌤 ${from}～${to} 點降雨機率都不高</div>`;
+  const hrs = sp.reduce((s, x) => s + x.e - x.s + 1, 0), all = sp.flatMap(x => x.hs), w = wetWord(all), mx = Math.max(...all.map(h => h.pp ?? 0));
+  if (hrs >= 12) return `<div class="tdwx rainy">☔ 幾乎整天都可能${w}（最高 ${mx}%），以室內行程為主比較好</div>`;
+  return `<div class="tdwx rainy">☔ ${sp.map(x => `${String(x.s).padStart(2,'0')}:00～${String(x.e + 1).padStart(2,'0')}:00`).join('、')} 可能${w}（最高 ${mx}%）</div>`;
+}
+function hourStrip(H, from = 7, to = 23){
+  return `<div class="hrs">${H.filter(h => h.h >= from && h.h <= to).map(h => `<div class="${isWet(h) ? 'wet' : ''}"><small>${h.h}時</small><span>${wmo(h.code)[0]}</span><b>${Math.round(h.t)}°</b><small>☔${h.pp ?? '-'}%</small></div>`).join('')}</div>`;
+}
+function rainNext(w, i0){
+  const H = w.hourly.time.slice(i0, i0 + 24).map((t, k) => ({ t, pp:w.hourly.precipitation_probability[i0 + k], mm:w.hourly.precipitation?.[i0 + k], code:w.hourly.weather_code[i0 + k] }));
+  const k = H.findIndex(isWet);
+  if (k < 0) return '<div class="tdwx">🌤 接下來 24 小時不太會下雨</div>';
+  if (k === 0) { const e = H.findIndex(h => !isWet(h)); return `<div class="tdwx rainy">☔ 現在可能正在${wetWord([H[0]])}${e > 0 ? `，約 ${H[e].t.slice(11, 13)} 點後轉小` : '，會持續一段時間'}</div>`; }
+  let e = k; while (e + 1 < H.length && isWet(H[e + 1])) e++;
+  return `<div class="tdwx rainy">☔ 約 ${H[k].t.slice(11, 13)} 點開始可能${wetWord(H.slice(k, e + 1))}（${H[k].pp ?? '-'}%），到 ${e + 1 < H.length ? H[e + 1].t.slice(11, 13) + ' 點' : '明天'}左右</div>`;
+}
+// 某一站停留期間的天氣
+function stopWx(s, r, H, date){
+  if (!H) return '';
+  const a = Math.floor(r.arrive / 60), b = Math.min(23, Math.floor((Math.max(r.arrive, r.leave - 1)) / 60));
+  const hs = H.filter(h => h.h >= a && h.h <= b); if (!hs.length) return '';
+  const worst = hs.reduce((m, h) => (h.pp ?? 0) > (m.pp ?? 0) ? h : m, hs[0]);
+  if (hs.some(isWet)) {
+    const out = (s.io || placeIO(s)) === 'out';
+    return `<div class="ts sm rainy">☔ ${String(worst.h).padStart(2,'0')}:00 前後可能${wetWord(hs)}（${worst.pp ?? '-'}%）${out ? ` · 戶外景點 <button class="linkbtn" data-rain="${r.i}|${r.arrive}|${r.leave}">找室內備案</button>` : ''}</div>`;
+  }
+  const lo = Math.round(Math.min(...hs.map(h => h.t))), hi = Math.round(Math.max(...hs.map(h => h.t)));
+  return `<div class="ts sm">${wmo(hs[0].code)[0]} ${lo === hi ? lo + '°' : lo + '°～' + hi + '°'} · ☔${worst.pp ?? '-'}%</div>`;
+}
+
+// ---------- 🏛️ 室內／戶外判斷 ----------
+const IN_RE = /博物館|美術館|水族館|百貨|商場|購物中心|地下街|咖啡|餐廳|紀念館|展覽|電影|劇場|室內|超市|免稅|outlet|mall|museum|gallery|aquarium|박물관|미술관|기념관|아쿠아리움|백화점|몰|지하상가|카페|식당|영화관|극장|면세점|전시/i;
+const OUT_RE = /宮|公園|山|峰|海邊|海水浴場|海灘|沙灘|島|村|城郭|城牆|塔|橋|瀑布|步道|樹林|植物園|動物園|樂園|遊樂|市場|夜市|街|路|溪|川|江|湖|港|寺|陵|palace|park|mountain|beach|island|village|tower|bridge|trail|market|temple|궁|공원|산$|봉|해변|해수욕장|섬|마을|성곽|탑|다리|폭포|둘레길|수목원|동물원|랜드|시장|거리|길$|천$|강$|호수|항$|사$|릉/i;
+function placeIO(p){
+  const t = p.tags || {}, nm = [p.name, p.ko, p.en].filter(Boolean).join(' ');
+  if (/^(museum|gallery|aquarium)$/.test(t.tourism || '') || t.shop || /^(restaurant|cafe|fast_food|cinema|theatre|arts_centre|bar|pub|food_court)$/.test(t.amenity || '') || t.indoor === 'yes') return 'in';
+  if (/^(viewpoint|theme_park|zoo|camp_site|picnic_site)$/.test(t.tourism || '') || /^(park|garden|nature_reserve|beach_resort|playground)$/.test(t.leisure || '') || t.natural
+      || /^(castle|fort|city_gate|archaeological_site|monument|memorial|tomb|ruins)$/.test(t.historic || '') || t.amenity === 'marketplace') return 'out';
+  if (IN_RE.test(nm)) return 'in';
+  if (OUT_RE.test(nm)) return 'out';
+  return null;
+}
+const INDOOR_Q = ['nwr["tourism"~"^(museum|gallery|aquarium)$"]', 'nwr["shop"~"^(mall|department_store)$"]', 'nwr["amenity"~"^(cinema|theatre|arts_centre)$"]', 'nwr["name"~"지하상가|지하쇼핑"]'];
+function indoorEmoji(t){ return t.tourism === 'museum' ? '🏛️' : t.tourism === 'gallery' || t.amenity === 'arts_centre' ? '🖼️' : t.tourism === 'aquarium' ? '🐠' : t.amenity === 'cinema' ? '🎬' : t.amenity === 'theatre' ? '🎭' : '🛍️'; }
+async function openRainPlan(i, arrive, leave){
+  const d = trip.days[tripDay], s = d.stops[i]; if (!s) return;
+  const date = d.date || kstNowParts().date;
+  openPanel(`<h2>☔ 雨天備案</h2><div class="addr">「${esc(s.name)}」是戶外景點，${hhmm(arrive)}～${hhmm(leave)} 可能下雨。正在找 1.5 公里內的室內景點…（約 5～30 秒）</div>`);
+  const around = `(around:1500,${s.lat},${s.lng})`;
+  let els = [];
+  try { els = (await overpass(`[out:json][timeout:25];(${INDOOR_Q.map(q => q + around + ';').join('')});out center tags 60;`, 60000)).elements || []; }
+  catch(e) { openPanel(`<h2>☔ 雨天備案</h2><div class="addr">⚠️ 查詢失敗，請稍後再試</div><div class="btns"><button class="wide" id="rpBack">← 回行程</button></div>`, () => $('rpBack').onclick = openTrip); return; }
+  const seen = new Set(), list = [];
+  els.forEach(el => {
+    const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon, t = el.tags || {};
+    const name = t['name:zh'] || t['name:zh-Hant'] || t['name:en'] || t.name; if (lat == null || !name || seen.has(name)) return; seen.add(name);
+    list.push({ lat, lng, name, ko:t['name:ko'] || t.name, en:t['name:en'], tags:t, dist:map.distance([s.lat, s.lng], [lat, lng]) });
+  });
+  list.sort((a,b) => a.dist - b.dist);
+  const top = list.slice(0, 15);
+  openPanel(`<h2>☔ 雨天備案</h2>
+    <div class="addr">「${esc(s.name)}」${hhmm(arrive)}～${hhmm(leave)} 可能下雨，附近的室內景點：</div>
+    ${top.length ? top.map((p, k) => { const oc = p.tags.opening_hours ? openCheck(p.tags.opening_hours, date, arrive, leave) : null;
+      return `<div class="rpi"><div data-rs="${k}"><b>${indoorEmoji(p.tags)} ${esc(p.name)}</b><small>${fmtDist(p.dist)}${p.ko && p.ko !== p.name ? ' · ' + esc(p.ko) : ''}</small>${oc ? `<small class="${oc.bad ? 'warnt' : 'okt'}">${oc.bad ? '⚠️ ' : '🕐 '}${esc(oc.msg)}</small>` : ''}</div>
+        <div class="rpb"><button data-rr="${k}">🔁 換掉</button><button data-ra="${k}">➕ 加在後面</button></div></div>`; }).join('')
+      : '<div class="addr">附近 1.5 公里內找不到博物館、商場等室內景點，可以考慮把這站移到不下雨的時段。</div>'}
+    <div class="btns" style="margin-top:8px"><button class="wide" id="rpBack">← 回行程</button></div>`, el => {
+      $('rpBack').onclick = openTrip;
+      const mk = p => ({ lat:p.lat, lng:p.lng, name:p.name, ko:p.ko || null, stay:s.stay, oh:p.tags.opening_hours || null, io:'in' });
+      el.querySelectorAll('[data-rs]').forEach(b => b.onclick = () => showPlace(top[+b.dataset.rs]));
+      el.querySelectorAll('[data-rr]').forEach(b => b.onclick = () => { d.stops[i] = mk(top[+b.dataset.rr]); saveTrip(); toast(`已把「${s.name}」換成「${top[+b.dataset.rr].name}」`); reopenTripCalc(); });
+      el.querySelectorAll('[data-ra]').forEach(b => b.onclick = () => { d.stops.splice(i + 1, 0, mk(top[+b.dataset.ra])); saveTrip(); toast('已加入行程'); reopenTripCalc(); });
+    });
+}
+function reopenTripCalc(){ openTrip(); setTimeout(() => $('tdCalc')?.click(), 60); }
+
+// ---------- 📷 讀照片 EXIF（拍攝時間、GPS） ----------
+async function readExif(file){
+  const v = new DataView(await file.slice(0, 256 * 1024).arrayBuffer());
+  if (v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return {};
+  let o = 2;
+  while (o + 10 < v.byteLength) {
+    const m = v.getUint16(o); if ((m & 0xFF00) !== 0xFF00) break;
+    if (m === 0xFFE1 && v.getUint32(o + 4) === 0x45786966) return parseTiff(v, o + 10);
+    if (m === 0xFFDA) break;
+    o += 2 + v.getUint16(o + 2);
+  }
+  return {};
+}
+function parseTiff(v, t){
+  const le = v.getUint16(t) === 0x4949, u16 = p => v.getUint16(p, le), u32 = p => v.getUint32(p, le), N = v.byteLength;
+  const ifd = off => { const r = {}, p = t + off; if (!off || p + 2 > N) return r; const n = u16(p); for (let i = 0; i < n; i++) { const e = p + 2 + i * 12; if (e + 12 > N) break; r[u16(e)] = { type:u16(e + 2), cnt:u32(e + 4), vo:e + 8 }; } return r; };
+  const SZ = { 1:1, 2:1, 3:2, 4:4, 5:8, 7:1, 9:4, 10:8 };
+  const val = en => {
+    if (!en) return null; const { type, cnt, vo } = en, sz = (SZ[type] || 1) * cnt, p = sz > 4 ? t + u32(vo) : vo;
+    if (p + sz > N) return null;
+    if (type === 2) { let s = ''; for (let i = 0; i < cnt; i++) { const c = v.getUint8(p + i); if (!c) break; s += String.fromCharCode(c); } return s.trim(); }
+    if (type === 5 || type === 10) { const a = []; for (let i = 0; i < cnt; i++) { const nu = type === 5 ? u32(p + i * 8) : v.getInt32(p + i * 8, le), de = type === 5 ? u32(p + i * 8 + 4) : v.getInt32(p + i * 8 + 4, le); a.push(de ? nu / de : 0); } return a; }
+    return type === 3 ? u16(p) : type === 4 ? u32(p) : v.getUint8(p);
+  };
+  const out = {}, i0 = ifd(u32(t + 4)), ex = i0[0x8769] ? ifd(val(i0[0x8769])) : {};
+  const dto = val(ex[0x9003]) || val(i0[0x0132]), off = val(ex[0x9011]) || val(ex[0x9010]);
+  if (dto && /^\d{4}:\d\d:\d\d \d\d:\d\d:\d\d/.test(dto)) {
+    const ms = Date.parse(dto.slice(0, 10).replace(/:/g, '-') + 'T' + dto.slice(11, 19) + (/^[+-]\d\d:\d\d$/.test(off || '') ? off : '+09:00'));
+    if (!isNaN(ms)) { out.t = ms; out.tz = /^[+-]\d\d:\d\d$/.test(off || ''); }
+  }
+  if (i0[0x8825]) {
+    const g = ifd(val(i0[0x8825])), la = val(g[2]), lo = val(g[4]);
+    if (la?.length === 3 && lo?.length === 3) {
+      let lat = la[0] + la[1] / 60 + la[2] / 3600, lng = lo[0] + lo[1] / 60 + lo[2] / 3600;
+      if (val(g[1]) === 'S') lat = -lat; if (val(g[3]) === 'W') lng = -lng;
+      if ((lat || lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) { out.lat = lat; out.lng = lng; }
+    }
+    const gd = val(g[0x1D]), gt = val(g[7]);   // GPS 時間是 UTC，沒有時區資訊時用它最準
+    if (gd && gt?.length === 3 && !out.tz) { const ms = Date.parse(gd.replace(/:/g, '-') + 'T' + gt.map(x => String(Math.floor(x)).padStart(2, '0')).join(':') + 'Z'); if (!isNaN(ms)) out.t = ms; }
+  }
+  return out;
+}
+// 用足跡（GPS 軌跡）依時間找位置：前後 15 分鐘內最接近的點
+function trackAt(t){
+  const arr = tracks[kstDate(t)]; if (!arr?.length) return null;
+  let best = null, bd = Infinity;
+  for (const p of arr) { const d = Math.abs(p[2] - t); if (d < bd) { bd = d; best = p; } }
+  return bd <= 15 * 60e3 ? [best[0], best[1]] : null;
+}
+function photoKeys(x){ return x?.photo ? ['photo-' + x.id, ...Array.from({ length:x.more || 0 }, (_, i) => `photo-${x.id}-${i + 1}`)] : []; }
+async function reverseName(lat, lng){
+  try {
+    const d = await (await fetchT(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&namedetails=1&accept-language=zh-TW,zh,en`, 10000)).json();
+    const nd = d.namedetails || {}, a = d.address || {};
+    const zh = nd['name:zh-Hant'] || nd['name:zh-TW'] || nd['name:zh'] || d.name || a.amenity || a.tourism || a.shop || a.neighbourhood || a.quarter || a.suburb || a.city_district || a.road;
+    return { name: zh || null, ko: nd['name:ko'] || nd.name || null };
+  } catch(e) { return {}; }
+}
+let importBusy = false;
+async function importPhotos(files){
+  if (!files.length || importBusy) return;
+  files = files.filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|heic|webp)$/i.test(f.name));
+  openPanel(`<h2>🖼️ 匯入照片</h2><div class="addr" id="ipProg">讀取 ${files.length} 張照片的拍攝時間和位置…</div>`);
+  const items = [];
+  for (const f of files) {
+    let ex = {}; try { ex = await readExif(f); } catch(e) {}
+    const t = ex.t || f.lastModified || Date.now(); let loc = null, src = null;
+    if (ex.lat != null) { loc = [ex.lat, ex.lng]; src = 'gps'; }
+    else if ((loc = trackAt(t))) src = 'track';
+    items.push({ f, t, loc, src, noTime:!ex.t });
+  }
+  items.sort((a,b) => a.t - b.t);
+  // 有位置的照片：距離 150 公尺內、間隔 1 小時內的放在同一個地點
+  const groups = [];
+  for (const it of items.filter(i => i.loc)) {
+    const g = groups[groups.length - 1];
+    if (g && it.t - g.tEnd <= 3600e3 && map.distance(g.loc, it.loc) <= 150) { g.items.push(it); g.tEnd = it.t; }
+    else groups.push({ loc:it.loc, t:it.t, tEnd:it.t, items:[it] });
+  }
+  // 沒位置的照片：拍攝時間跟某個地點相差 45 分鐘內就歸到那裡
+  const loose = [];
+  for (const it of items.filter(i => !i.loc)) {
+    let g = null, bd = Infinity;
+    for (const x of groups) { const d = Math.min(Math.abs(it.t - x.t), Math.abs(it.t - x.tEnd)); if (d < bd) { bd = d; g = x; } }
+    const dy = diary.reduce((m, x) => { const d = Math.abs(x.t - it.t); return d < (m?.d ?? Infinity) ? { x, d } : m; }, null);
+    if (!it.noTime && g && bd <= 45 * 60e3 && (!dy || bd <= dy.d)) { it.src = 'time'; g.items.push(it); }
+    else if (!it.noTime && dy && dy.d <= 45 * 60e3) { it.src = 'time'; (groups.find(x => x.merge === dy.x) || groups[groups.push({ loc:[dy.x.lat, dy.x.lng], t:it.t, tEnd:it.t, items:[], merge:dy.x }) - 1]).items.push(it); }
+    else loose.push(it);
+  }
+  // 跟已經打卡的地點很近 → 照片加到那筆日記
+  groups.forEach(g => { if (!g.merge) g.merge = diary.find(x => Math.abs(x.t - g.t) <= 2 * 3600e3 && map.distance([x.lat, x.lng], g.loc) <= 150) || null; });
+  groups.sort((a,b) => a.t - b.t);
+  const cnt = k => items.filter(i => i.src === k).length, thumbs = new Map();
+  const th = it => { if (!thumbs.has(it)) thumbs.set(it, URL.createObjectURL(it.f)); return thumbs.get(it); };
+  const SRC = { gps:'📡 照片GPS', track:'🥾 足跡比對', time:'🕐 時間比對' };
+  const tm = t => new Date(t).toLocaleString('zh-TW', { timeZone:KST_TZ, month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+  openPanel(`<h2>🖼️ 匯入 ${items.length} 張照片</h2>
+    <div class="addr">找到 <b>${groups.length}</b> 個地點：照片GPS ${cnt('gps')} 張、足跡比對 ${cnt('track')} 張、時間比對 ${cnt('time')} 張${loose.length ? `，<b>${loose.length} 張沒有位置</b>` : ''}</div>
+    ${groups.map((g, k) => `<label class="ipg"><input type="checkbox" data-ig="${k}" checked><img src="${th(g.items[0])}" alt=""><div><b data-ign="${k}">${g.merge ? '加到「' + esc(g.merge.name) + '」' : '查詢地名中…'}</b>
+      <small>${tm(g.t)} · ${g.items.length} 張 · ${[...new Set(g.items.map(i => SRC[i.src]))].join('、')}</small></div></label>`).join('')}
+    ${loose.length ? `<div class="group">⚠️ ${loose.length} 張照片沒有位置</div>
+      <div class="ipl">${loose.slice(0, 12).map(it => `<img src="${th(it)}" alt="">`).join('')}${loose.length > 12 ? `<span>+${loose.length - 12}</span>` : ''}</div>
+      <select id="ipLoose" class="ipsel"><option value="skip">略過這些照片</option>${myPos ? '<option value="me">放在我目前的位置</option>' : ''}<option value="center">放在地圖中心（先把地圖移到那裡）</option></select>
+      <div class="addr">有些手機選照片時會自動移除位置資訊。開著「🥾 今日足跡」時拍的照片，可以用拍攝時間比對出位置。</div>` : ''}
+    <div class="btns" style="margin-top:8px"><button class="go wide" id="ipGo">✅ 匯入日記</button></div><div class="addr" id="ipProg"></div>`, el => {
+      let cancelled = false;
+      (async () => {   // 依序查地名（Nominatim 每秒最多 1 次）
+        for (const [k, g] of groups.entries()) {
+          if (g.merge) continue; if (cancelled || !document.querySelector(`[data-ign="${k}"]`)) return;
+          const r = await reverseName(g.loc[0], g.loc[1]); g.name = r.name || '照片地點'; g.ko = r.ko;
+          const b = document.querySelector(`[data-ign="${k}"]`); if (b) b.textContent = '📍 ' + g.name;
+          await sleep(1100);
+        }
+      })();
+      $('ipGo').onclick = async () => {
+        cancelled = true; importBusy = true; $('ipGo').disabled = true;
+        const chosen = groups.filter((g, k) => el.querySelector(`[data-ig="${k}"]`)?.checked);
+        const lv = $('ipLoose')?.value;
+        if (loose.length && lv && lv !== 'skip') {
+          const c = lv === 'me' && myPos ? myPos : [map.getCenter().lat, map.getCenter().lng];
+          const r = await reverseName(c[0], c[1]);
+          chosen.push({ loc:c, t:loose[0].t, items:loose, name:r.name || (lv === 'me' ? '我在這裡' : '照片地點'), ko:r.ko });
+        }
+        const total = chosen.reduce((s, g) => s + g.items.length, 0); let done = 0, fail = 0, newCnt = 0;
+        for (const [k, g] of chosen.entries()) {
+          let x = g.merge;
+          if (!x) { x = { id:Date.now().toString(36) + k, t:g.t, lat:+g.loc[0].toFixed(6), lng:+g.loc[1].toFixed(6), name:g.name || '照片地點', ko:g.ko || null, note:'', photo:false, more:0, auto:true }; diary.push(x); newCnt++; }
+          for (const it of g.items) {
+            $('ipProg').textContent = `壓縮並儲存照片 ${++done}/${total}…`;
+            try {
+              const blob = await resizePhoto(it.f);
+              if (!x.photo) { await idb.set('photo-' + x.id, blob); x.photo = true; }
+              else { x.more = (x.more || 0) + 1; await idb.set(`photo-${x.id}-${x.more}`, blob); }
+            } catch(e) { fail++; }
+          }
+          if (g.t < x.t) x.t = g.t;
+        }
+        saveDiary(); thumbs.forEach(u => URL.revokeObjectURL(u)); importBusy = false;
+        if (diaryShown) drawDiary();
+        toast(`📔 已匯入 ${done - fail} 張照片${newCnt ? `，新增 ${newCnt} 個地點` : ''}${fail ? `（${fail} 張無法讀取，HEIC 格式請先轉成 JPG）` : ''}`);
+        openDiary();
+      };
+    });
+}
+async function openGallery(id){
+  const x = diary.find(y => y.id === id); if (!x) return;
+  const keys = photoKeys(x);
+  openPanel(`<h2>📷 ${esc(x.name)}</h2><div class="addr">${new Date(x.t).toLocaleString('zh-TW', { timeZone:KST_TZ, hour12:false })} · ${keys.length} 張${x.note ? '<br>' + esc(x.note) : ''}</div>
+    <div class="gal">${keys.map(k => `<img data-pk="${k}" alt="">`).join('')}</div>
+    <div class="btns" style="margin-top:8px"><button class="wide" id="glBack">← 回日記</button></div>`, async el => {
+      $('glBack').onclick = openDiary;
+      for (const im of el.querySelectorAll('[data-pk]')) { const b = await idb.get(im.dataset.pk); if (b) im.src = URL.createObjectURL(b); }
+    });
+}
+
+// ---------- 🧾 旅程回顧 ----------
+function miniSvg(track, pts, w = 320, h = 150){
+  const all = (track || []).map(p => [p[0], p[1]]).concat(pts.map(p => [p.lat, p.lng]));
+  if (!all.length) return '';
+  let la0 = Infinity, la1 = -Infinity, lo0 = Infinity, lo1 = -Infinity;
+  all.forEach(([a, b]) => { la0 = Math.min(la0, a); la1 = Math.max(la1, a); lo0 = Math.min(lo0, b); lo1 = Math.max(lo1, b); });
+  const k = Math.cos((la0 + la1) / 2 * Math.PI / 180), pad = 14;
+  const sx = (lo1 - lo0) * k || 1e-4, sy = (la1 - la0) || 1e-4, s = Math.min((w - 2 * pad) / sx, (h - 2 * pad) / sy);
+  const ox = (w - sx * s) / 2, oy = (h - sy * s) / 2;
+  const P = (a, b) => [(ox + (b - lo0) * k * s).toFixed(1), (h - oy - (a - la0) * s).toFixed(1)];
+  const line = (track || []).length > 1 ? `<polyline points="${track.map(p => P(p[0], p[1]).join(',')).join(' ')}" fill="none" stroke="#a142f4" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>` : '';
+  const dots = pts.map((p, i) => { const [x, y] = P(p.lat, p.lng); return `<circle cx="${x}" cy="${y}" r="8" fill="#e8710a" stroke="#fff" stroke-width="2"/><text x="${x}" y="${+y + 3.5}" font-size="10" text-anchor="middle" fill="#fff" font-weight="700">${i + 1}</text>`; }).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" class="rvmap" xmlns="http://www.w3.org/2000/svg"><rect width="${w}" height="${h}" rx="10" fill="#eef3f8"/>${line}${dots}</svg>`;
+}
+function reviewData(){
+  const days = new Set();
+  diary.forEach(x => days.add(kstDate(x.t)));
+  Object.keys(tracks).forEach(d => tracks[d]?.length > 1 && days.add(d));
+  exp.items.forEach(x => days.add(kstDate(x.t)));
+  const list = [...days].sort().map(d => {
+    const places = diary.filter(x => kstDate(x.t) === d).sort((a,b) => a.t - b.t);
+    const tk = tracks[d] || [], dist = tk.length > 1 ? trackDist(tk) : 0;
+    const items = exp.items.filter(x => kstDate(x.t) === d), spend = items.reduce((s, x) => s + x.krw, 0);
+    const byCat = {}; items.forEach(x => byCat[x.cat] = (byCat[x.cat] || 0) + x.krw);
+    const photos = places.reduce((s, x) => s + photoKeys(x).length, 0);
+    return { d, places, tk, dist, spend, byCat, photos };
+  });
+  const sum = { days:list.length, places:diary.length, dist:list.reduce((s, x) => s + x.dist, 0), spend:list.reduce((s, x) => s + x.spend, 0), photos:list.reduce((s, x) => s + x.photos, 0) };
+  const cat = {}; exp.items.forEach(x => cat[x.cat] = (cat[x.cat] || 0) + x.krw);
+  sum.topCat = Object.entries(cat).sort((a,b) => b[1] - a[1])[0] || null;
+  sum.walkDay = list.slice().sort((a,b) => b.dist - a.dist)[0];
+  sum.spendDay = list.slice().sort((a,b) => b.spend - a.spend)[0];
+  return { list, sum };
+}
+async function reviewWeather(list){
+  if (!list.length) return {};
+  const ref = diary[0] || (() => { const k = list.find(x => x.tk.length); return k ? { lat:k.tk[0][0], lng:k.tk[0][1] } : null; })() || { lat:37.5665, lng:126.978 };
+  try {
+    const today = kstNowParts().date, s = list[0].d, e = list[list.length - 1].d > today ? today : list[list.length - 1].d;
+    const w = await (await fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${ref.lat}&longitude=${ref.lng}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&start_date=${s}&end_date=${e}`, 10000)).json();
+    const out = {}; (w.daily?.time || []).forEach((d, i) => out[d] = { e:wmo(w.daily.weather_code[i])[0], lo:Math.round(w.daily.temperature_2m_min[i]), hi:Math.round(w.daily.temperature_2m_max[i]) });
+    return out;
+  } catch(e) { return {}; }
+}
+const kmTxt = m => m >= 995 ? (m / 1000).toFixed(1) + ' 公里' : Math.round(m) + ' 公尺';
+const mdw = d => `${+d.slice(5, 7)}/${+d.slice(8)}（週${ZH_DAY[weekdayOf(d)]}）`;
+function reviewText(R, W){
+  const s = R.sum, nt = n => ntd(twd(n));
+  return [`🇰🇷 我的韓國旅程回顧`, R.list.length ? `${R.list[0].d} ～ ${R.list[R.list.length - 1].d}` : '',
+    `📅 ${s.days} 天 · 📍 ${s.places} 個地點 · 🥾 ${kmTxt(s.dist)} · 📷 ${s.photos} 張`, `💰 共花 ${won(s.spend)}${nt(s.spend) ? '（約 ' + nt(s.spend) + '）' : ''}`, '',
+    ...R.list.map(x => `【${mdw(x.d)}】${W[x.d] ? ` ${W[x.d].e} ${W[x.d].lo}°/${W[x.d].hi}°` : ''}\n${x.places.length ? '📍 ' + x.places.map(p => p.name).join(' → ') + '\n' : ''}${x.dist ? `🥾 走了 ${kmTxt(x.dist)}　` : ''}${x.spend ? `💰 ${won(x.spend)}` : ''}`)].join('\n').trim();
+}
+async function openReview(){
+  await loadFx();
+  const R = reviewData(), s = R.sum;
+  if (!R.list.length) { openPanel(`<h2>🧾 旅程回顧</h2><div class="addr">還沒有資料。旅行時用「📔 打卡／匯入照片」、「🥾 今日足跡」和「💰 記帳」，這裡會自動整理成每天的回顧。</div>`); return; }
+  const render = W => openPanel(`<h2>🧾 旅程回顧</h2>
+    <div class="addr">${R.list[0].d} ～ ${R.list[R.list.length - 1].d}</div>
+    <div class="rvsum"><div><b>${s.days}</b><small>天</small></div><div><b>${s.places}</b><small>地點</small></div><div><b>${kmTxt(s.dist).replace(' ', '<small>')}</small></b><small>步行</small></div><div><b>${s.photos}</b><small>照片</small></div></div>
+    <div class="exsum"><div><small>總花費</small><b>${won(s.spend)}</b><span>${ntd(twd(s.spend))}</span></div><div><small>平均每天</small><b>${won(s.spend / s.days)}</b><span>${ntd(twd(s.spend / s.days))}</span></div></div>
+    <div class="rvhi">${s.topCat ? `<div>💸 花最多在 ${EXCAT[s.topCat[0]][0]} ${EXCAT[s.topCat[0]][1]}：${won(s.topCat[1])}（${Math.round(s.topCat[1] / s.spend * 100)}%）</div>` : ''}${s.walkDay?.dist ? `<div>🥾 走最多：${mdw(s.walkDay.d)} ${kmTxt(s.walkDay.dist)}</div>` : ''}${s.spendDay?.spend ? `<div>💰 花最多：${mdw(s.spendDay.d)} ${won(s.spendDay.spend)}</div>` : ''}</div>
+    ${R.list.map((x, n) => `<div class="rvday"><div class="rvh"><b>Day ${n + 1} · ${mdw(x.d)}</b>${W[x.d] ? `<span>${W[x.d].e} ${W[x.d].lo}°/${W[x.d].hi}°</span>` : ''}</div>
+      ${miniSvg(x.tk, x.places)}
+      ${x.places.length ? `<ol class="rvpl">${x.places.map(p => `<li><b>${esc(p.name)}</b> <small>${new Date(p.t).toLocaleTimeString('zh-TW', { timeZone:KST_TZ, hour:'2-digit', minute:'2-digit', hour12:false })}${photoKeys(p).length ? ' · 📷' + photoKeys(p).length : ''}</small>${p.note ? `<div>${esc(p.note)}</div>` : ''}</li>`).join('')}</ol>` : ''}
+      <div class="rvst">${x.dist ? `<span>🥾 ${kmTxt(x.dist)}</span>` : ''}${x.spend ? `<span>💰 ${won(x.spend)}${twd(x.spend) != null ? ' · ' + ntd(twd(x.spend)) : ''}</span>` : ''}${Object.entries(x.byCat).sort((a,b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `<span>${EXCAT[k][0]} ${won(v)}</span>`).join('')}</div>
+      ${x.photos ? `<div class="rvph">${x.places.flatMap(p => photoKeys(p).map(k => [k, p.id])).slice(0, 8).map(([k, id]) => `<img data-pk="${k}" data-gal="${id}" alt="">`).join('')}</div>` : ''}</div>`).join('')}
+    <div class="btns" style="margin-top:10px"><button class="go" id="rvExport">📤 匯出回顧網頁</button><button id="rvText">📋 複製文字版</button></div>
+    <div class="addr">網頁檔包含照片，可以傳給朋友或自己保存；文字版適合貼到 LINE。</div>`, async el => {
+      $('rvExport').onclick = () => exportReview(R, W);
+      $('rvText').onclick = () => copyText(reviewText(R, W));
+      el.querySelectorAll('[data-gal]').forEach(im => im.onclick = () => openGallery(im.dataset.gal));
+      for (const im of el.querySelectorAll('img[data-pk]')) { const b = await idb.get(im.dataset.pk); if (b) im.src = URL.createObjectURL(b); }
+    });
+  render({});
+  const W = await reviewWeather(R.list);
+  if (Object.keys(W).length && document.querySelector('#rvExport')) render(W);
+}
+async function exportReview(R, W){
+  toast('產生回顧網頁中…');
+  const blobToData = b => new Promise(ok => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(b); });
+  const s = R.sum, imgs = {};
+  for (const x of R.list) for (const p of x.places) for (const k of photoKeys(p)) { const b = await idb.get(k); if (b) imgs[k] = await blobToData(b); }
+  const html = `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>我的韓國旅程回顧</title>
+<style>body{font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;max-width:760px;margin:0 auto;padding:20px;color:#202124;background:#faf8f5}h1{text-align:center;margin-bottom:4px}.sub{text-align:center;color:#5f6368}
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}.sum div{background:#fff;border-radius:12px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}.sum b{display:block;font-size:22px;color:#e8710a}.sum small{color:#5f6368}
+.hi{background:#fff4e5;border-radius:12px;padding:10px 14px;line-height:1.8}.day{background:#fff;border-radius:14px;padding:14px;margin:18px 0;box-shadow:0 1px 4px rgba(0,0,0,.1)}.dh{display:flex;justify-content:space-between;font-size:17px;margin-bottom:8px}
+svg{width:100%;height:auto}ol{padding-left:22px}li{margin:6px 0}li small{color:#5f6368}.st span{display:inline-block;background:#f1f3f4;border-radius:10px;padding:3px 9px;margin:3px 4px 0 0;font-size:13px}.ph{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:10px}.ph img{width:100%;border-radius:8px}</style></head><body>
+<h1>🇰🇷 我的韓國旅程回顧</h1><p class="sub">${R.list[0].d} ～ ${R.list[R.list.length - 1].d}</p>
+<div class="sum"><div><b>${s.days}</b><small>天</small></div><div><b>${s.places}</b><small>地點</small></div><div><b>${(s.dist / 1000).toFixed(1)}</b><small>公里</small></div><div><b>${s.photos}</b><small>照片</small></div></div>
+<div class="hi">💰 共花 <b>${won(s.spend)}</b>${twd(s.spend) != null ? `（約 ${ntd(twd(s.spend))}）` : ''}，平均每天 ${won(s.spend / s.days)}${s.topCat ? `<br>💸 花最多在 ${EXCAT[s.topCat[0]][0]} ${EXCAT[s.topCat[0]][1]}（${Math.round(s.topCat[1] / s.spend * 100)}%）` : ''}${s.walkDay?.dist ? `<br>🥾 走最多的一天：${mdw(s.walkDay.d)} ${kmTxt(s.walkDay.dist)}` : ''}</div>
+${R.list.map((x, n) => `<div class="day"><div class="dh"><b>Day ${n + 1} · ${mdw(x.d)}</b><span>${W[x.d] ? `${W[x.d].e} ${W[x.d].lo}°/${W[x.d].hi}°` : ''}</span></div>${miniSvg(x.tk, x.places, 640, 260)}
+${x.places.length ? `<ol>${x.places.map(p => `<li><b>${esc(p.name)}</b>${p.ko && p.ko !== p.name ? ` <small>${esc(p.ko)}</small>` : ''} <small>${new Date(p.t).toLocaleTimeString('zh-TW', { timeZone:KST_TZ, hour:'2-digit', minute:'2-digit', hour12:false })}</small>${p.note ? `<div>${esc(p.note)}</div>` : ''}</li>`).join('')}</ol>` : ''}
+<div class="st">${x.dist ? `<span>🥾 ${kmTxt(x.dist)}</span>` : ''}${x.spend ? `<span>💰 ${won(x.spend)}</span>` : ''}${Object.entries(x.byCat).sort((a,b) => b[1] - a[1]).map(([k, v]) => `<span>${EXCAT[k][0]} ${EXCAT[k][1]} ${won(v)}</span>`).join('')}</div>
+${x.photos ? `<div class="ph">${x.places.flatMap(p => photoKeys(p)).filter(k => imgs[k]).map(k => `<img src="${imgs[k]}" loading="lazy">`).join('')}</div>` : ''}</div>`).join('')}
+<p class="sub" style="font-size:12px">由「韓國旅遊地圖」產生 · 天氣資料 Open-Meteo.com</p></body></html>`;
+  if (!downloadFile(`korea-review-${R.list[0].d}.html`, html, 'text/html')) toast('此瀏覽器不支援下載');
 }
 
 $('phraseBtn').onclick = openPhrases;
