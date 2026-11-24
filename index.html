@@ -1014,6 +1014,9 @@ return maplibregl$1;
   .lr .near { font-weight:normal; }
   .vplat { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:6px 0; } .vplat .vp { padding:9px 6px; font-size:14px; border-radius:12px; }
   .vtop { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; } .vtop .chip { font-size:13px; }
+  .menurev { border:1px solid var(--line); border-radius:12px; padding:8px 10px; margin:8px 0; } .mrh { font-weight:700; font-size:14px; margin-bottom:2px; }
+  .vp small { display:block; font-size:11px; color:var(--m); font-weight:normal; margin-top:1px; } button.vp { cursor:pointer; font:inherit; }
+  .md { cursor:pointer; } .mdk { font-weight:700; font-size:15px; min-width:92px; } .mf { display:inline-block; font-size:11px; border-radius:8px; padding:0 5px; margin-left:4px; background:var(--soft); font-weight:normal; } .mfS { background:#fce8e6; color:#c5221f; } body.dark .mfS { background:#4a1f1c; color:#f28b82; }
   .chip.vchip { background:linear-gradient(135deg,#ff5f6d,#ffc371); color:#fff; font-weight:700; }
   .chips::-webkit-scrollbar { display:none; }
   .chip { flex:none; background:var(--bg); border:0; border-radius:16px; padding:7px 12px; font-size:13px; box-shadow:0 1px 4px rgba(0,0,0,.2); cursor:pointer; white-space:nowrap; }
@@ -4043,6 +4046,7 @@ function renderSheet(){
     <div class="addr">${p.koAddr ? '🇰🇷 '+esc(p.koAddr) : (p.addr ? esc(p.addr) : '')}</div>
     <div id="wxBox">${p._wx ? wxLineHtml(p._wx) : ''}</div>
     ${placeDetails(p)}
+    ${reviewLinksHtml(p)}
     <div id="exitBox">${p._exits ? exitsHtml(p._exits) : ''}</div>
     ${favCatChips(p)}
     <div class="btns">
@@ -4072,6 +4076,7 @@ function renderSheet(){
   $('hotelSetBtn').onclick = () => { setHotel(p); renderSheet(); };
   $('diaryBtn').onclick = () => checkinDialog({ ...p });
   $('vidBtn').onclick = () => openPlaceVideos(p);
+  bindReviewLinks();
   bindFavCat(p); bindExitRows($('exitBox'));
   if ($('wxOpen')) $('wxOpen').onclick = () => openWeather(p.lat, p.lng, p.name);
   loadWeatherFor(p); loadExitsFor(p);
@@ -4599,7 +4604,7 @@ function openMenu(){
   openPanel(`<h2>☰ 更多功能</h2>
     ${G('🗺️ 地圖與行程', [['videos','🎬','附近短影音'], ['trip','📅','行程規劃'], ['hotel','🏨','回飯店'], ['airport','✈️','機場交通'], ['holi','🎌','韓國假日'], ['subway','🚇','地鐵路線圖', subway.on ? '開' : ''], ['wx','☁️','天氣／空氣'],
       ['offline','📥','離線地圖'], ['sync','🔄','收藏同步'], ['shareme','📍','分享我的位置'], ['hist','🕘','搜尋紀錄']])}
-    ${G('🗣️ 語言', [['maplang','🌐','地圖語言', MAP_LANGS[mapLang].s], ['phrase','🗣️','韓文句卡'], ['convo','💬','對話翻譯'], ['ocr','📷','拍照翻譯']])}
+    ${G('🗣️ 語言', [['maplang','🌐','地圖語言', MAP_LANGS[mapLang].s], ['menudict','📖','菜單小字典'], ['phrase','🗣️','韓文句卡'], ['convo','💬','對話翻譯'], ['ocr','📷','拍照翻譯']])}
     ${G('💰 花錢', [['expense','💰','旅費記帳'], ['tax','🧾','退稅計算'], ['shop','🛒','購物清單'], ['tools','🧰','匯率／車資／急難']])}
     ${G('⛷️ 滑雪', [['ski','⛷️','滑雪場'], ['skimap','🎿','雪道地圖', skiOn ? '開' : ''], ['skilog','📈','滑雪紀錄'], ['skisz','📏','雪具尺寸']])}
     ${G('📔 紀念', [['diary','📔','旅行日記'], ['track','🥾','今日足跡', tracking ? '記錄中' : ''], ['review','🧾','旅程回顧']])}
@@ -4614,7 +4619,7 @@ function openMenu(){
       dark: () => { setTheme(dark ? 'light' : 'dark'); openMenu(); },
       hist: () => { closeSheet(); $('q').focus(); showHistory(); }, about: openAbout,
       wx: () => openWeather(), shareme: shareMyLocation, maplang: openMapLang,
-      videos: () => openVideos(), ski: openSki, skilog: openSkiLog, flight: openFlight, duty: openDuty, apps: openApps,
+      videos: () => openVideos(), menudict: () => openMenuDict(), ski: openSki, skilog: openSkiLog, flight: openFlight, duty: openDuty, apps: openApps,
       skimap: () => { if (skiOn) { hideSkiMap(); openMenu(); } else { closeSheet(); showSkiMap(null); if (map.getZoom() < 9) map.setView([37.5, 128.2], 9); toast('放大到滑雪場就能看到雪道'); } },
       skisz: () => { openSizes(); setTimeout(() => $('skiSz')?.scrollIntoView({ block:'start' }), 60); },
       airport: openAirport, holi: openHolidays, diary: openDiary, track: openTracks, review: openReview, medi: openMedical,
@@ -4810,7 +4815,9 @@ function placeDetails(p){
   if (web && /^https?:\/\//.test(web)) out.push(`<div class="det">🌐 <a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40))}</a></div>`);
   const ig = t['contact:instagram'];
   if (ig) out.push(`<div class="det">📷 <a href="${esc(/^https?:/.test(ig) ? ig : 'https://instagram.com/' + ig.replace(/^@/, ''))}" target="_blank" rel="noopener">Instagram</a></div>`);
-  if (t.cuisine) out.push(`<div class="det">🍽️ ${esc(t.cuisine.replace(/;/g, '、').replace(/_/g, ' '))}</div>`);
+  if (t.cuisine) out.push(`<div class="det">🍽️ ${esc(cuisineZh(t.cuisine))}</div>`);
+  const diet = [t['diet:vegetarian'] === 'yes' || t['diet:vegetarian'] === 'only' ? '🥗 有素食' : '', t['diet:vegan'] === 'yes' || t['diet:vegan'] === 'only' ? '🌱 有純素' : '', t['diet:halal'] === 'yes' || t['diet:halal'] === 'only' ? '☪️ 清真' : '', t.takeaway === 'yes' || t.takeaway === 'only' ? '🥡 可外帶' : '', t.delivery === 'yes' ? '🛵 可外送' : ''].filter(Boolean);
+  if (diet.length) out.push(`<div class="det">${diet.join('　')}</div>`);
   if (t.fee === 'yes' || t.charge) out.push(`<div class="det">🎫 ${t.charge ? esc(t.charge) : '需購票'}</div>`);
   return out.length ? `<div class="details">${out.join('')}</div>` : '';
 }
@@ -5877,12 +5884,15 @@ async function runOcr(file){
     const tr = await translate(lines.join('\n'), 'ko', 'zh');
     const zh = tr ? tr.split('\n') : [];
     const pairs = lines.map((ko, i) => [ko, zh.length === lines.length ? zh[i] : '']);
+    const found = menuFound(lines.join(' '));
     $('ocrOut').innerHTML = `<img class="ocrimg" src="${url}">
       ${tr ? '' : '<div class="addr">⚠️ 翻譯失敗（需要網路），先顯示辨識到的韓文。</div>'}
       ${!tr || zh.length === lines.length ? '' : `<div class="cvres"><div>${esc(tr)}</div></div>`}
+      ${found.length ? `<div class="group">🍽️ 菜單裡認得的菜（${found.length}）</div><div id="ocrMenu">${found.map(menuRow).join('')}</div><div class="group">逐行翻譯</div>` : ''}
       <div class="phr">${pairs.map((p,i) => `<div class="pr" data-oi="${i}"><div><b>${esc(p[1] || p[0])}</b><small>${esc(p[0])}</small></div><span class="ps">🔊</span></div>`).join('')}</div>
       <div class="addr">點一行可以放大並唸出韓文。辨識難免有錯字，翻譯僅供參考。</div>`;
     $('ocrOut').querySelectorAll('[data-oi]').forEach(r => r.onclick = () => { const p = pairs[+r.dataset.oi]; bigCard(p[0], p[1]); });
+    if (found.length) bindMenuRows($('ocrMenu'), found);
   } catch(e) { prog('⚠️ 辨識失敗：第一次使用需要網路下載辨識資料，請連上網路再試。'); }
 }
 
@@ -7688,6 +7698,122 @@ function openPlaceVideos(p, back){
   const b = document.createElement('button'); b.className = 'chip vchip'; b.textContent = '🎬 附近短影音';
   b.onclick = () => openVideos(); $('nearby').prepend(b);
 })();
+
+// ====================================================================
+//  第八批：餐廳菜單・評價（連到 Naver／Kakao／Google）＋ 菜單小字典
+// ====================================================================
+// 標記：S 辣、P 豬肉、B 牛肉、C 雞肉、F 海鮮
+const MENU_DICT = {
+  '湯・鍋': [
+    ['김치찌개','泡菜鍋','泡菜加豬肉或鮪魚一起煮','SP'], ['된장찌개','大醬湯','韓式味噌湯，常加豆腐、蔬菜',''], ['순두부찌개','嫩豆腐鍋','嫩豆腐辣湯，常有海鮮或肉','S'],
+    ['부대찌개','部隊鍋','火腿、香腸、泡麵、起司一起煮','SP'], ['감자탕','馬鈴薯排骨湯','豬脊骨燉馬鈴薯','SP'], ['삼계탕','蔘雞湯','整隻小雞塞糯米、人蔘，不辣','C'],
+    ['설렁탕','雪濃湯','乳白色牛骨湯，自己加鹽和蔥','B'], ['곰탕','牛骨湯','清燉牛肉湯','B'], ['갈비탕','牛排骨湯','清湯燉牛排骨','B'], ['육개장','辣牛肉湯','牛肉絲加蕨菜的辣湯','SB'],
+    ['해장국','解酒湯','種類多，常有牛血、豬骨或黃豆芽',''], ['순대국','血腸湯','豬骨湯加血腸、內臟','P'], ['돼지국밥','豬肉湯飯','釜山名物，豬骨湯泡飯','P'],
+    ['미역국','海帶湯','海帶煮的湯，生日必喝',''], ['김치찜','燉泡菜','整塊泡菜燉豬肉','SP'], ['닭한마리','一隻雞','整隻雞的清湯火鍋，東大門有名','C'],
+    ['닭갈비','春川辣炒雞','雞肉、年糕、高麗菜鐵板辣炒','SC'], ['찜닭','安東燉雞','醬油燉雞，配冬粉，微甜','C'], ['아귀찜','辣燉鮟鱇魚','鮟鱇魚加黃豆芽辣燉','SF'],
+    ['해물탕','海鮮湯','各種海鮮的辣湯','SF'], ['전골','火鍋','食材多的鍋類，不一定辣',''], ['국밥','湯飯','湯裡泡白飯',''],
+  ],
+  '烤肉': [
+    ['삼겹살','五花肉','最受歡迎的烤豬肉','P'], ['오겹살','帶皮五花','五花肉連皮','P'], ['목살','梅花肉','豬肩頸肉，油花較少','P'], ['항정살','松阪豬','豬頸肉，口感脆','P'],
+    ['돼지갈비','豬排骨','醃過的豬排骨','P'], ['소갈비','牛排骨','韓式牛小排','B'], ['양념갈비','醃漬排骨','醬汁醃過的排骨，偏甜',''], ['생갈비','原味排骨','沒有醃的排骨',''],
+    ['불고기','烤肉','醬油醃牛肉片，偏甜','B'], ['차돌박이','牛胸腹肉片','很薄的牛肉片，烤一下就熟','B'], ['등심','牛里肌','','B'], ['안심','牛菲力','','B'], ['한우','韓牛','韓國本土牛，價格高','B'],
+    ['곱창','小腸','牛或豬的小腸，烤或炒',''], ['대창','大腸','油脂多',''], ['막창','皺胃／豬直腸','內臟類，大邱有名',''], ['장어구이','烤鰻魚','','F'], ['생선구이','烤魚','','F'], ['조개구이','烤貝','','F'],
+  ],
+  '飯・麵': [
+    ['비빔밥','拌飯','蔬菜、蛋拌飯，辣椒醬可自己加',''], ['돌솥비빔밥','石鍋拌飯','熱石鍋裝，底部有鍋巴',''], ['김밥','紫菜包飯','韓式海苔捲',''], ['볶음밥','炒飯','',''],
+    ['제육볶음','辣炒豬肉','','SP'], ['제육덮밥','辣炒豬肉蓋飯','','SP'], ['오징어볶음','辣炒魷魚','','SF'], ['덮밥','蓋飯','',''], ['오므라이스','蛋包飯','',''], ['돈가스','豬排','韓式炸豬排，醬汁偏甜','P'],
+    ['공기밥','白飯（一碗）','很多店要另外點',''], ['주먹밥','飯糰','',''], ['죽','粥','',''], ['전복죽','鮑魚粥','','F'],
+    ['물냉면','湯冷麵','冰涼牛肉湯的蕎麥麵，可加醋和芥末','B'], ['비빔냉면','拌冷麵','辣醬拌冷麵','S'], ['냉면','冷麵','',''], ['막국수','蕎麥涼麵','江原道名物',''],
+    ['칼국수','刀切麵','手切寬麵，湯底多是海鮮或雞',''], ['수제비','麵疙瘩','',''], ['잔치국수','喜宴麵','清湯細麵',''], ['비빔국수','拌麵','','S'], ['콩국수','豆漿冷麵','夏季限定',''],
+    ['짜장면','炸醬麵','韓式黑醬，偏甜','P'], ['짬뽕','炒碼麵','海鮮辣湯麵','SF'], ['탕수육','糖醋肉','','P'], ['라면','泡麵',''], ['쫄면','Q 彈涼麵','辣醬拌','S'],
+  ],
+  '小吃・炸雞': [
+    ['떡볶이','辣炒年糕','','S'], ['순대','血腸','豬腸灌冬粉、豬血','P'], ['튀김','炸物','',''], ['어묵','魚板','也叫 오뎅','F'], ['오뎅','魚板','','F'],
+    ['호떡','糖餅','內餡是黑糖和堅果',''], ['붕어빵','鯛魚燒','',''], ['계란빵','雞蛋糕','',''], ['핫도그','韓式熱狗','外層炸麵衣，常沾糖和番茄醬','P'],
+    ['만두','餃子','',''], ['군만두','煎餃','',''], ['물만두','水餃','',''], ['파전','蔥煎餅','',''], ['해물파전','海鮮蔥煎餅','','F'], ['김치전','泡菜煎餅','','S'], ['빈대떡','綠豆煎餅','',''],
+    ['족발','豬腳','滷豬腳切片，包生菜吃','P'], ['보쌈','菜包肉','白切豬肉包泡菜、生菜','P'],
+    ['치킨','炸雞','',''], ['후라이드','原味炸雞','','C'], ['양념치킨','醬料炸雞','甜辣醬','C'], ['간장치킨','醬油炸雞','','C'], ['반반','半半','兩種口味各半',''], ['닭강정','糖醋炸雞塊','','C'],
+  ],
+  '海鮮': [
+    ['회','生魚片','','F'], ['모듬회','綜合生魚片','','F'], ['물회','涼拌生魚片湯','冰涼的辣酸湯','SF'], ['산낙지','活章魚','切塊還會動，小心噎到','F'],
+    ['간장게장','醬油醃蟹','生的，蟹膏拌飯','F'], ['양념게장','辣醃蟹','生的','SF'], ['대게','松葉蟹','','F'], ['킹크랩','帝王蟹','','F'], ['조개','貝類','','F'], ['굴','生蠔','','F'], ['새우','蝦','','F'],
+  ],
+  '甜點・飲料': [
+    ['빙수','雪花冰','',''], ['팥빙수','紅豆雪花冰','',''], ['식혜','甜米露','',''], ['수정과','肉桂薑茶','冷飲',''], ['아메리카노','美式咖啡','',''], ['아아','冰美式','「아이스 아메리카노」簡稱',''],
+    ['라떼','拿鐵','',''], ['소주','燒酒','',''], ['맥주','啤酒','',''], ['막걸리','米酒','',''], ['소맥','燒啤','燒酒加啤酒',''], ['사이다','汽水','韓國的「사이다」是雪碧類汽水，不是蘋果酒',''], ['콜라','可樂','',''],
+  ],
+  '菜單常見字': [
+    ['1인분','一人份',''], ['2인분 이상','至少點兩人份','烤肉、鍋類常見；一個人去要先問',''], ['인분','人份','',''], ['추가','加點','',''], ['사리','加料','火鍋加麵、年糕等',''],
+    ['곱빼기','大碗','',''], ['보통','普通','',''], ['맵게','辣一點','',''], ['안 맵게','不要辣','',''], ['순한맛','溫和（不太辣）','',''], ['매운맛','辣味','',''],
+    ['셀프','自助','水、小菜自己拿',''], ['무한리필','吃到飽（無限續）','',''], ['포장','外帶','',''], ['매장','內用','',''], ['세트','套餐','',''], ['정식','定食','',''],
+    ['점심특선','午間特餐','',''], ['반찬','小菜','通常免費續',''], ['대','大','',''], ['중','中','',''], ['소','小','',''], ['시가','時價','',''], ['품절','售完','',''],
+    ['인기','人氣','',''], ['추천','推薦','',''], ['국내산','韓國產','',''], ['수입산','進口','',''], ['한돈','韓國產豬肉','','P'],
+  ],
+};
+const MENU_FLAG = { S:'🌶️ 辣', P:'🐷 豬', B:'🐮 牛', C:'🐔 雞', F:'🦐 海鮮' };
+const MENU_ALL = Object.entries(MENU_DICT).flatMap(([c, a]) => a.map(x => ({ ko:x[0], zh:x[1], note:x[2] || '', f:x[3] || '', c })));
+function menuFlags(f){ return [...f].map(k => `<span class="mf mf${k}">${MENU_FLAG[k]}</span>`).join(''); }
+function menuRow(x, i){ return `<div class="exi md" data-md="${i}"><span class="mdk">${esc(x.ko)}</span><span class="en"><b>${esc(x.zh)}</b>${menuFlags(x.f)}${x.note ? `<small>${esc(x.note)}</small>` : ''}</span><span class="ea">🔊</span></div>`; }
+function bindMenuRows(el, arr){
+  el.querySelectorAll('[data-md]').forEach(r => r.onclick = () => { const x = arr[+r.dataset.md];
+    const order = x.c === '菜單常見字' ? x.ko : `${x.ko} 주세요`; bigCard(order, x.c === '菜單常見字' ? x.zh : `請給我${x.zh}`); });
+}
+let menuCat = '湯・鍋';
+function openMenuDict(q0 = ''){
+  const render = q => {
+    const qq = q.trim(), arr = qq ? MENU_ALL.filter(x => x.ko.includes(qq) || x.zh.includes(qq) || normKey(x.zh).includes(normKey(qq))) : MENU_ALL.filter(x => x.c === menuCat);
+    const list = $('mdList'); if (!list) return;
+    list.innerHTML = arr.length ? arr.map(menuRow).join('') : '<div class="addr">字典裡沒有，可以用「📷 拍照翻譯」或「🗣️ 對話翻譯」。</div>';
+    bindMenuRows(list, arr);
+  };
+  openPanel(`<h2>📖 菜單小字典</h2>
+    <div class="addr">常見韓國菜名和菜單用語。點一下會放大韓文「○○ 주세요（請給我○○）」並唸出來，直接給店員看就能點餐。</div>
+    <div class="fx"><label>搜尋（中文或韓文）<input id="mdQ" value="${esc(q0)}" placeholder="例如 冷麵、삼겹살"></label></div>
+    <div class="vtop">${Object.keys(MENU_DICT).map(c => `<button class="chip${c === menuCat ? ' on' : ''}" data-mc="${c}">${c}</button>`).join('')}</div>
+    <div class="ts sm">${Object.values(MENU_FLAG).join('　')}</div>
+    <div id="mdList"></div>
+    <div class="btns" style="margin-top:8px"><button id="mdOcr">📷 拍菜單翻譯</button></div>
+    <div class="addr">內容是一般常見做法，各家店可能不同；有過敏請用「🆘 緊急資訊卡」或句卡告訴店員。</div>`, el => {
+      el.querySelectorAll('[data-mc]').forEach(b => b.onclick = () => { menuCat = b.dataset.mc; $('mdQ').value = ''; el.querySelectorAll('[data-mc]').forEach(x => x.classList.toggle('on', x === b)); render(''); });
+      $('mdQ').oninput = e => render(e.target.value);
+      $('mdOcr').onclick = openOcr;
+      render(q0);
+    });
+}
+// 拍照翻譯：找出照片文字裡認得的菜名
+function menuFound(text){
+  const t = (text || '').replace(/\s+/g, ''), seen = new Set(), out = [];
+  const keys = MENU_ALL.filter(x => x.c !== '菜單常見字' && x.ko.length >= 2).sort((a, b) => b.ko.length - a.ko.length);
+  let rest = t;
+  for (const x of keys) { if (rest.includes(x.ko) && !seen.has(x.zh)) { seen.add(x.zh); out.push(x); rest = rest.split(x.ko).join('|'); } if (out.length >= 15) break; }
+  return out;
+}
+
+// ---------- 🍽️ 地點頁：菜單・評價 ----------
+const CUISINE = { korean:'韓式', chinese:'中式', japanese:'日式', western:'西式', italian:'義式', french:'法式', american:'美式', mexican:'墨西哥', thai:'泰式', vietnamese:'越南', indian:'印度',
+  chicken:'炸雞', fried_chicken:'炸雞', pizza:'披薩', burger:'漢堡', coffee_shop:'咖啡', noodle:'麵食', ramen:'拉麵', sushi:'壽司', seafood:'海鮮', barbecue:'燒烤', bbq:'燒烤', grill:'燒烤',
+  dessert:'甜點', bakery:'麵包', cake:'蛋糕', ice_cream:'冰淇淋', sandwich:'三明治', kebab:'沙威瑪', steak_house:'牛排', donut:'甜甜圈', tea:'茶', bubble_tea:'珍珠奶茶', breakfast:'早餐',
+  fish:'魚', meat:'肉類', pork:'豬肉', beef:'牛肉', dumpling:'餃子', soup:'湯', regional:'地方菜', international:'異國料理', fusion:'融合料理', vegetarian:'素食', vegan:'純素' };
+function cuisineZh(c){ return (c || '').split(';').map(x => x.trim()).filter(Boolean).map(x => CUISINE[x] || x.replace(/_/g, ' ')).join('、'); }
+const FOOD_PLACE_RE = /^(restaurant|cafe|fast_food|bar|pub|food_court|ice_cream|biergarten)$/;
+function isFoodPlace(p){ const t = p.tags || {}; return FOOD_PLACE_RE.test(t.amenity || '') || !!t.cuisine || /^(bakery|pastry|confectionery|coffee)$/.test(t.shop || '') || /식당|카페|커피|베이커리|국밥|치킨|고기|횟집|분식|갈비|냉면|찌개|餐廳|咖啡|食堂/.test((p.name || '') + (p.ko || '')); }
+function hotAreaKo(lat, lng){ let b = null, bd = 1300; for (const a of HOT_AREAS) { const d = map.distance([lat, lng], [a[2], a[3]]); if (d < bd) { bd = d; b = a; } } return b ? b[1] : ''; }
+function reviewLinksHtml(p){
+  const food = isFoodPlace(p), base = p.ko || p.name, area = hotAreaKo(p.lat, p.lng);
+  const q = encodeURIComponent(area && !base.includes(area) ? `${base} ${area}` : base);
+  return `<div class="menurev"><div class="mrh">${food ? '🍽️ 菜單・評價' : '⭐ 評價・照片'}</div>
+    <div class="vplat">
+      <a class="btnlink vp" href="https://map.naver.com/p/search/${q}" target="_blank" rel="noopener">🟢 Naver Map<small>${food ? '菜單價格、照片、在地評論' : '照片、在地評論'}</small></a>
+      <a class="btnlink vp" href="https://map.kakao.com/link/search/${q}" target="_blank" rel="noopener">🟡 Kakao Map<small>評分、${food ? '菜單' : '評論'}</small></a>
+      <a class="btnlink vp" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">🔵 Google 地圖<small>評論可自動翻成中文</small></a>
+      ${food ? '<button class="btnlink vp" id="mrDict">📖 菜單小字典<small>看懂韓文菜名</small></button><button class="btnlink vp" id="mrOcr">📷 拍菜單翻譯<small>辨識照片上的韓文</small></button>' : ''}
+    </div>
+    <div class="addr">評論和菜單在各平台上，按下去會搜尋這家店（同名分店請對照地址）；手機會開 App。</div></div>`;
+}
+function bindReviewLinks(){
+  if ($('mrDict')) $('mrDict').onclick = () => openMenuDict();
+  if ($('mrOcr')) $('mrOcr').onclick = openOcr;
+}
 
 $('phraseBtn').onclick = openPhrases;
 $('hotelBtn').onclick = openHotel;
