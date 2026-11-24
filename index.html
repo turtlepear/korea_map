@@ -3903,90 +3903,100 @@ async function search(raw){
   const id = ++searchId;
   const box = $('results');
   box.style.display = 'block';
-  box.innerHTML = '<div class="trbar" id="trbar"><small>🔤 翻譯中…</small></div><div id="rlocal"></div><div id="rlist"><div class="r"><small>搜尋中…</small></div></div>';
+  box.innerHTML = '<div class="trbar" id="trbar"><small>🔤 翻譯中…</small></div><div id="rlocal"></div><div id="rlist"></div>';
 
   const isAddr = looksLikeAddress(raw);
   const q = isAddr ? (cleanAddr(raw) || raw) : raw;
-  // 本機資料（熱門景點、地鐵站、景點、收藏、滑雪場）馬上列出來，不必等網路
+  // 本機資料（熱門景點、地鐵站、景點、收藏、滑雪場、常用地點）馬上列出來，不必等網路
   if (!isAddr) (localIdx ? Promise.resolve() : warmLocal()).then(() => {
     if (id !== searchId || !$('rlocal')) return;
     const arr = localMatches(raw, 5); if (!arr.length) return;
     $('rlocal').innerHTML = `<div class="hh">⚡ 常用地點</div>${arr.map(localRow).join('')}<div class="hh">🔍 地圖搜尋結果</div>`;
     bindLocal($('rlocal'), arr);
   });
-  nominatimC(q);   // 先查原文，同時翻譯
-  const { from, terms } = await getTerms(q);
-  if (id !== searchId) return;
-  renderTrBar(terms, from, isAddr && q !== raw ? `📮 已忽略樓層／房號：搜尋「${esc(q)}」` : '');
 
-  const list = $('rlist'); list.innerHTML = '';
+  const list = $('rlist');
   const status = document.createElement('div'); status.className = 'r'; status.innerHTML = '<small>搜尋中…</small>'; list.appendChild(status);
-  const seen = new Set(), found = []; let count = 0, good = 0, failed = 0, tries = 0;
-  const allTerms = [q, raw, terms.ko, terms.en, terms.zh].filter(Boolean);
+  const seen = new Set(), found = []; let tries = 0, failed = 0;
+  let from = detectLang(q), terms = { [from]: q }, allTerms = [q, raw];
+  const goodN = () => found.filter(f => !f.label && f.score >= 0.35).length;
+  // 每次有新結果就重新評分、排序、畫出來（翻譯晚到也會用新的關鍵字重新評分）
   const render = () => {
+    if (id !== searchId) return;
+    found.forEach(f => { f.score = matchScore(f.d, allTerms) - (f.label ? 0.15 : 0) + (f.d._src === 'photon' ? -0.02 : 0); });
     found.sort((x, y) => y.score - x.score);
     list.querySelectorAll('.r.res').forEach(el => el.remove());
-    found.forEach(f => list.insertBefore(f.el, status));
+    for (const f of found.slice(0, 20)) {
+      const d = f.d, n = namesOf(d), title = n.zh || n.any, weak = f.score < 0.35;
+      const sub = [n.ko && n.ko !== title ? n.ko : null, n.en && n.en !== title ? n.en : null].filter(Boolean).join(' · ');
+      const div = document.createElement('div'); div.className = 'r res' + (weak ? ' weak' : '');
+      div.innerHTML = (f.label ? `<span class="near">${f.label}</span>` : '') + (weak && !f.label ? `<span class="near w">⚠️ 名稱不太相符</span>` : '') +
+        `<b>${esc(title)}${distTag(+d.lat,+d.lon)}${obHtml(d.extratags?.opening_hours)}</b>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}<small>${esc(d.display_name)}</small>`;
+      div.onclick = () => { box.style.display = 'none'; const pl = { lat:+d.lat, lng:+d.lon, name:title, ko:n.ko, en:n.en, zh:n.zh, addr:d.display_name, tags:d.extratags || {}, near:(f.label || weak) ? (terms.ko || q) : null }; addHistPlace(pl); showPlace(pl); };
+      list.insertBefore(div, status);
+    }
   };
-
-  const run = async (query, label) => {
+  const add = (data, label) => {
+    if (id !== searchId || !data) return;
+    data.forEach(d => { const k = d.osm_type + d.osm_id; if (seen.has(k)) return; seen.add(k); found.push({ d, label, score:0 }); });
+    render();
+  };
+  const runNomi = async (query, label) => {
     tries++;
     if (id !== searchId) return false;
     status.innerHTML = `<small>搜尋中…「${esc(query)}」</small>`;
     const data = await nominatimC(query);   // 有快取就直接用；沒有就排隊（每秒最多 1 次）
     if (id !== searchId) return false;
     if (!data) { failed++; return true; }
-    data.forEach(d => {
-      const k = d.osm_type + d.osm_id; if (seen.has(k)) return; seen.add(k); count++;
-      const n = namesOf(d);
-      const title = n.zh || n.any;
-      const score = matchScore(d, allTerms) - (label ? 0.15 : 0);
-      const weak = score < 0.35;
-      if (!weak && !label) good++;
-      const sub = [n.ko && n.ko!==title ? n.ko : null, n.en && n.en!==title ? n.en : null].filter(Boolean).join(' · ');
-      const div = document.createElement('div'); div.className = 'r res' + (weak ? ' weak' : '');
-      div.innerHTML = (label ? `<span class="near">${label}</span>` : '') + (weak && !label ? `<span class="near w">⚠️ 名稱不太相符</span>` : '') +
-        `<b>${esc(title)}${distTag(+d.lat,+d.lon)}${obHtml(d.extratags?.opening_hours)}</b>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}<small>${esc(d.display_name)}</small>`;
-      div.onclick = () => { box.style.display='none'; const pl = { lat:+d.lat, lng:+d.lon, name:title, ko:n.ko, en:n.en, zh:n.zh, addr:d.display_name, tags:d.extratags || {}, near: (label || weak) ? (terms.ko || q) : null }; addHistPlace(pl); showPlace(pl); };
-      found.push({ score, el:div });
-    });
-    render();
-    return true;
+    add(data, label); return true;
   };
+  const runPhoton = async (query, label) => { tries++; const data = await photonC(query); if (id !== searchId) return; if (!data) { failed++; return; } add(data, label); };
 
-  // 1) 原文＋翻譯
-  const order = [q, ...['ko','en','zh'].filter(l => l!==from && terms[l]).map(l => terms[l])];
-  for (const x of (isAddr ? order.slice(0, 2).concat(order.filter(o => o === terms.ko)) : order).filter((v,i,a) => a.indexOf(v) === i)) {
-    if (await run(x) === false) return;
+  // 1) 原文：Nominatim 先查（不等翻譯）；韓文、英文同時用 Photon 查
+  const jobs = [runNomi(q)];
+  if (from !== 'zh') jobs.push(runPhoton(q));
+  // 2) 翻譯（常用地點用對照表，不用等機器翻譯）
+  const tr = await getTermsFast(q);
+  if (id !== searchId) return;
+  from = tr.from; terms = tr.terms; allTerms = [q, raw, terms.ko, terms.en, terms.zh].filter(Boolean);
+  renderTrBar(terms, from, isAddr && q !== raw ? `📮 已忽略樓層／房號：搜尋「${esc(q)}」` : '');
+  render();
+  if (terms.ko && terms.ko !== q) { jobs.push(runPhoton(terms.ko)); jobs.push(runNomi(terms.ko)); }
+  await Promise.all(jobs);
+  if (id !== searchId) return;
+  // 3) 還沒找到好結果，才用英文、中文再查
+  for (const l of ['en', 'zh']) {
+    if (goodN() || !terms[l] || terms[l] === q || terms[l] === terms.ko) continue;
+    if (await runNomi(terms[l]) === false) return;
   }
-
-  // 2) 地址找不到 → 逐步放寬，找附近
+  const count = found.length;
+  // 4) 地址找不到 → 逐步放寬，找附近
   const ko = terms.ko || (from === 'ko' ? q : null);
-  if (!count && isAddr && ko) {
-    for (const x of addrFallbacks(ko).filter(x => !order.includes(x))) {
-      if (await run(x, '📍 附近：' + esc(x)) === false) return;
-      if (count) break;
+  const tried = new Set([q, terms.ko, terms.en, terms.zh].filter(Boolean));
+  if (!found.length && isAddr && ko) {
+    for (const x of addrFallbacks(ko).filter(x => !tried.has(x))) {
+      if (await runNomi(x, '📍 附近：' + esc(x)) === false) return;
+      if (found.length) break;
     }
   }
-  // 3) 店名／景點名找不到 → 去掉「리조트、飯店、Resort」等通稱與空格，找同名的周邊地點
-  if (!good && !isAddr) {
-    const tried = new Set(order);
+  // 5) 店名／景點名找不到 → 去掉「리조트、飯店、Resort」等通稱與空格，找同名的周邊地點
+  if (!goodN() && !isAddr) {
     for (const x of nameFallbacks(terms).filter(x => !tried.has(x))) {
       tried.add(x);
-      const before = count;
-      if (await run(x, '📍 相關：' + esc(x)) === false) return;
-      if (count > before) break;
+      const before = found.length;
+      if (await runNomi(x, '📍 相關：' + esc(x)) === false) return;
+      if (found.length > before) break;
     }
   }
 
   if (id !== searchId) return;
   // 一律附上 Kakao/Naver 精確查詢連結（韓國地址它們最準）
-  const ex = encodeURIComponent(ko || q);
-  const links = `<div class="r exact">${count ? (isAddr ? '<small>要找精確門牌，用韓國地圖最準：</small>' : '<small>地圖資料沒有完全相符的地點，用韓國地圖查最準：</small>') : '<small>找不到結果。可以直接用韓國地圖查：</small>'}
+  const ex = encodeURIComponent(ko || q), good = goodN();
+  const links = `<div class="r exact">${found.length ? (isAddr ? '<small>要找精確門牌，用韓國地圖最準：</small>' : '<small>地圖資料沒有完全相符的地點，用韓國地圖查最準：</small>') : '<small>地圖資料裡找不到，用韓國地圖查：</small>'}
     <div class="btns" style="margin-top:6px"><a class="kakao" href="https://map.kakao.com/link/search/${ex}" target="_blank" rel="noopener">在 Kakao 地圖搜尋</a>
     <a class="naver" href="https://map.naver.com/p/search/${ex}" target="_blank" rel="noopener">在 Naver 地圖搜尋</a></div></div>`;
-  if (count) { status.remove(); if (isAddr || !good || list.querySelector('.near:not(.w)')) list.insertAdjacentHTML('beforeend', links); }
-  else { status.outerHTML = (failed === tries ? '<div class="r"><small>搜尋失敗，請檢查網路</small></div>' : '') + links; }
+  if (found.length) { status.remove(); if (isAddr || !good || list.querySelector('.near:not(.w)')) list.insertAdjacentHTML('beforeend', links); }
+  else { status.outerHTML = (failed === tries && !$('rlocal')?.querySelector('.lr') ? '<div class="r"><small>⚠️ 搜尋服務暫時連不上，請稍後再試（上面的常用地點不受影響）</small></div>' : '') + links; }
 }
 $('trBtn').onclick = () => { const q = $('q').value.trim(); if (q) translateOnly(q); };
 $('form').onsubmit = e => { e.preventDefault(); const q=$('q').value.trim(); if(q) search(q); };
@@ -7578,6 +7588,7 @@ function warmLocal(){
       add(s.zh ? stName(s.zh, '站') : stName(s.ko, '역'), stName(s.ko, '역'), s.lat, s.lng, '🚇', (s.lines || []).map(l => l.l).join('、') || '地鐵站', { en:s.en ? s.en + ' Station' : null }, 4); });
     const KN = { t:['📍','景點'], u:['🏛️','博物館'], g:['🖼️','美術館'], h:['🏯','古蹟'], p:['🌳','公園'], m:['🛒','市場'], l:['🛍️','購物中心'], d:['🏬','百貨公司'], c:['🎬','電影院'], v:['🔭','觀景點'] };
     (pd?.items || []).forEach(x => add(x[6] || x[7], x[7], x[0], x[1], KN[x[8]]?.[0] || '📍', KN[x[8]]?.[1] || '', { tags:x[9] ? { opening_hours:x[9] } : null }, 'tuhl'.includes(x[8]) ? 3 : 2));
+    it.push(...aliasLocalItems());
     localIdx = it; localIdxN = it.length; return it;
   });
 }
@@ -7600,7 +7611,7 @@ function localMatches(q, n = 8){
   }
   out.sort((a, b) => b.s - a.s);
   const seen = new Set(), res = [];
-  for (const o of out) { const k = o.x.e + normKey(o.x.name) + Math.round(o.x.lat * 60) + Math.round(o.x.lng * 60); if (seen.has(k)) continue; seen.add(k); res.push(o.x); if (res.length >= n) break; }
+  for (const o of out) { const k = (o.x.e === '🚇' ? 'st' : 'pl') + normKey(o.x.name) + Math.round(o.x.lat * 60) + Math.round(o.x.lng * 60); if (seen.has(k)) continue; seen.add(k); res.push(o.x); if (res.length >= n) break; }
   return res;
 }
 function localRow(x, i){
@@ -7879,6 +7890,88 @@ function reviewLinksHtml(p){
 function bindReviewLinks(){
   if ($('mrDict')) $('mrDict').onclick = () => openMenuDict();
   if ($('mrOcr')) $('mrOcr').onclick = openOcr;
+}
+
+// ====================================================================
+//  第九批：搜尋更快、更準
+//  1) 常用地點中韓英對照（機器翻譯常翻錯：南山塔→난산타워、現代百貨→현대적인 백화점）
+//  2) Photon（komoot）當第二個搜尋來源，和 Nominatim 同時查
+// ====================================================================
+// [中文寫法們, 韓文, 英文, 座標（可省略；有景點資料時以資料為準）]
+const ALIAS = [
+  [['南山塔','N首爾塔','首爾塔','南山首爾塔','N塔','首爾N塔'],'N서울타워','N Seoul Tower',[37.5512,126.9882]],
+  [['星空圖書館','星光圖書館','別馬當圖書館','COEX圖書館'],'별마당 도서관','Starfield Library',[37.5100,127.0601]],
+  [['現代百貨','現代百貨公司'],'현대백화점','Hyundai Department Store'],
+  [['The Hyundai','汝矣島現代百貨','現代百貨汝矣島','The Hyundai Seoul'],'더현대 서울','The Hyundai Seoul',[37.5259,126.9284]],
+  [['樂天百貨','樂天百貨公司'],'롯데백화점','Lotte Department Store'],
+  [['新世界百貨','新世界百貨公司'],'신세계백화점','Shinsegae Department Store'],
+  [['樂天免稅店'],'롯데면세점','Lotte Duty Free'], [['新羅免稅店'],'신라면세점','Shilla Duty Free'], [['新世界免稅店'],'신세계면세점','Shinsegae Duty Free'],
+  [['樂天塔','樂天世界塔','樂天大樓','樂天世界大樓'],'롯데월드타워','Lotte World Tower',[37.5126,127.1025]],
+  [['樂天世界','樂天世界探險'],'롯데월드','Lotte World',[37.5111,127.0981]],
+  [['COEX','科艾斯','COEX MALL','Starfield COEX'],'코엑스','COEX',[37.5116,127.0595]],
+  [['東大門設計廣場','DDP','東大門DDP'],'동대문디자인플라자','Dongdaemun Design Plaza',[37.5665,127.0092]],
+  [['清溪川'],'청계천','Cheonggyecheon'], [['光化門','光化門廣場'],'광화문광장','Gwanghwamun Square',[37.5725,126.9769]],
+  [['昌德宮'],'창덕궁','Changdeokgung',[37.5794,126.9910]], [['德壽宮'],'덕수궁','Deoksugung',[37.5658,126.9751]], [['昌慶宮'],'창경궁','Changgyeonggung',[37.5788,126.9950]],
+  [['宗廟'],'종묘','Jongmyo',[37.5747,126.9941]], [['青瓦台'],'청와대','Cheong Wa Dae',[37.5866,126.9748]],
+  [['國立中央博物館','中央博物館'],'국립중앙박물관','National Museum of Korea',[37.5240,126.9803]], [['戰爭紀念館'],'전쟁기념관','War Memorial of Korea',[37.5365,126.9772]],
+  [['首爾林'],'서울숲','Seoul Forest',[37.5444,127.0374]], [['汝矣島漢江公園','汝矣島公園'],'여의도한강공원','Yeouido Hangang Park',[37.5284,126.9343]],
+  [['盤浦大橋','月光彩虹噴泉','彩虹噴泉'],'반포대교','Banpo Bridge',[37.5130,126.9960]], [['63大樓','63大廈'],'63빌딩','63 Building',[37.5198,126.9402]],
+  [['梨大','梨花女大','梨花女子大學'],'이화여자대학교','Ewha Womans University',[37.5619,126.9468]],
+  [['新沙洞林蔭道','林蔭道','林蔭大道','新沙林蔭道'],'가로수길','Garosu-gil',[37.5205,127.0228]],
+  [['通仁市場'],'통인시장','Tongin Market',[37.5806,126.9701]], [['望遠市場'],'망원시장','Mangwon Market',[37.5560,126.9060]],
+  [['南大門市場'],'남대문시장','Namdaemun Market',[37.5592,126.9770]], [['廣藏市場'],'광장시장','Gwangjang Market'],
+  [['鷺梁津水產市場','鷺梁津市場','鷺梁津'],'노량진수산시장','Noryangjin Fish Market',[37.5134,126.9405]],
+  [['北村韓屋村','北村'],'북촌한옥마을','Bukchon Hanok Village'], [['益善洞','益善洞韓屋村'],'익선동','Ikseon-dong',[37.5743,126.9893]],
+  [['仁寺洞'],'인사동','Insadong'], [['三清洞'],'삼청동','Samcheong-dong'], [['梨泰院'],'이태원','Itaewon'], [['狎鷗亭'],'압구정','Apgujeong'],
+  [['弘大','弘益大學'],'홍대','Hongdae'], [['弘大入口站'],'홍대입구역','Hongik Univ. Station'], [['江南','江南站'],'강남역','Gangnam Station'],
+  [['聖水','聖水洞'],'성수동','Seongsu-dong'], [['延南洞'],'연남동','Yeonnam-dong'], [['首爾站'],'서울역','Seoul Station'],
+  [['愛寶樂園'],'에버랜드','Everland',[37.2944,127.2020]], [['南怡島'],'남이섬','Nami Island',[37.7906,127.5257]],
+  [['小法國村'],'쁘띠프랑스','Petite France'], [['晨靜樹木園'],'아침고요수목원','The Garden of Morning Calm'], [['水原華城'],'수원화성','Suwon Hwaseong Fortress'],
+  [['仁川機場','仁川國際機場'],'인천국제공항','Incheon International Airport'], [['金浦機場','金浦國際機場'],'김포국제공항','Gimpo International Airport'],
+  [['札嘎其市場','扎嘎其市場','札嘎其'],'자갈치시장','Jagalchi Market',[35.0966,129.0306]], [['海東龍宮寺','龍宮寺'],'해동용궁사','Haedong Yonggungsa',[35.1884,129.2233]],
+  [['太宗台'],'태종대','Taejongdae'], [['白淺灘文化村','白淺灘'],'흰여울문화마을','Huinnyeoul Culture Village'], [['甘川文化村','甘川洞文化村'],'감천문화마을','Gamcheon Culture Village'],
+  [['海雲台藍線公園','藍線公園','天空膠囊列車'],'해운대블루라인파크','Haeundae Blueline Park'], [['海雲台'],'해운대','Haeundae'], [['廣安里'],'광안리','Gwangalli'],
+  [['釜山站'],'부산역','Busan Station'], [['金海機場','金海國際機場'],'김해국제공항','Gimhae International Airport'], [['國際市場'],'국제시장','Gukje Market'],
+  [['涉地可支'],'섭지코지','Seopjikoji'], [['漢拏山'],'한라산','Hallasan'], [['城山日出峰'],'성산일출봉','Seongsan Ilchulbong'], [['牛島'],'우도','Udo'],
+  [['濟州機場','濟州國際機場'],'제주국제공항','Jeju International Airport'], [['偶來市場','每日偶來市場','西歸浦偶來市場'],'서귀포매일올레시장','Seogwipo Maeil Olle Market'],
+];
+const ALIAS_MAP = new Map();
+ALIAS.forEach(a => [...a[0], a[1], a[2]].forEach(v => { const k = normKey(v); if (!ALIAS_MAP.has(k)) ALIAS_MAP.set(k, a); }));
+function aliasOf(q){ return ALIAS_MAP.get(normKey(q)) || null; }
+// 先查對照表，沒有才用機器翻譯
+async function getTermsFast(q){
+  const a = aliasOf(q);
+  if (a) return { from:detectLang(q), terms:{ zh:detectLang(q) === 'zh' ? q : a[0][0], ko:a[1], en:a[2] } };
+  return getTerms(q);
+}
+// 本機索引也加入熱門商圈與對照表裡的地點
+function aliasLocalItems(){
+  const out = [], byKo = new Map((poiData?.items || []).map(x => [x[7], x]));
+  for (const a of ALIAS) {
+    const d = byKo.get(a[1]); const c = d ? [d[0], d[1]] : a[3]; if (!c) continue;
+    out.push({ name:a[0][0], ko:a[1], lat:c[0], lng:c[1], e:'⭐', sub:'常用地點', en:a[2], keys:[...new Set([...a[0], a[1], a[2]].map(normKey))], pri:6 });
+  }
+  HOT_AREAS.forEach(h => out.push({ name:h[0], ko:h[1], lat:h[2], lng:h[3], e:'🏙️', sub:'熱門商圈', keys:[normKey(h[0]), normKey(h[1])], pri:5 }));
+  return out;
+}
+
+// ---------- Photon（第二個搜尋來源；不能用中文查，所以用韓文／英文） ----------
+const phMem = new Map();
+const PH_OK = /^(tourism|amenity|shop|leisure|historic|place|railway|aeroway|aerialway|man_made|craft|healthcare|landuse|natural|waterway)$/;
+async function photonC(q){
+  const k = q.trim().toLowerCase(); if (phMem.has(k)) return phMem.get(k);
+  const c = myPos ? { lat:myPos[0], lng:myPos[1] } : map.getCenter();
+  try {
+    const j = await (await fetchT(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lat=${c.lat.toFixed(4)}&lon=${c.lng.toFixed(4)}&limit=12`, 8000)).json();
+    const T = { N:'node', W:'way', R:'relation' };
+    const out = (j.features || []).filter(f => { const p = f.properties || {};
+        return p.countrycode === 'KR' && p.name && PH_OK.test(p.osm_key) && !(p.osm_key === 'railway' && !/^(station|halt|subway_entrance)$/.test(p.osm_value)) && !(p.osm_key === 'landuse' && p.osm_value !== 'retail'); })
+      .map(f => { const p = f.properties;
+        return { osm_type:T[p.osm_type] || p.osm_type, osm_id:p.osm_id, lat:String(f.geometry.coordinates[1]), lon:String(f.geometry.coordinates[0]), name:p.name,
+          display_name:[p.name, p.street && (p.street + (p.housenumber ? ' ' + p.housenumber : '')), p.district, p.city || p.county, p.state].filter(Boolean).join(', '),
+          namedetails:{ name:p.name }, extratags:{}, category:p.osm_key, type:p.osm_value, _src:'photon' }; });
+    phMem.set(k, out); return out;
+  } catch(e) { return null; }
 }
 
 $('phraseBtn').onclick = openPhrases;

@@ -8,6 +8,7 @@
 
 ### 🔍 搜尋與地圖
 - 中／韓／英三語搜尋，自動翻譯；地址找不到會自動放寬找附近
+- 常用地點有中韓英對照表（例如 南山塔＝N서울타워），不怕機器翻譯翻錯
 - 打字時立即列出常用地點（熱門景點、全韓國約 1.4 萬個景點、地鐵站、收藏、滑雪場），繁簡字都對得到；搜尋結果存在手機 7 天，再搜一次立刻出現
 - 搜尋結果顯示「營業中／即將打烊／已打烊」
 - 附近設施快捷鍵（地鐵站、便利商店、餐廳、咖啡廳、ATM、藥局、廁所……），下方有拉條可以左右滑動
@@ -110,7 +111,7 @@
 | 功能 | 來源 | 備註 |
 |---|---|---|
 | 地圖 | [OpenFreeMap](https://openfreemap.org)、OSM France、OpenTopoMap、Esri 衛星圖 | 資料 © [OpenStreetMap](https://www.openstreetmap.org/copyright) 貢獻者 |
-| 搜尋、地名 | Nominatim | 每秒最多 1 次查詢；結果會快取 |
+| 搜尋、地名 | Nominatim、[Photon](https://photon.komoot.io)（komoot） | 兩個同時查；Nominatim 每秒最多 1 次查詢；結果會快取 |
 | 附近設施、地鐵、景點、雪道 | Overpass API | `data/` 每週預先抓好 |
 | 步行／開車／腳踏車路線 | [FOSSGIS OSRM](https://routing.openstreetmap.de/about.html) | 每秒最多 1 次查詢 |
 | 大眾運輸 | [Transitous](https://transitous.org/sources/) | 限開源、非商業、低用量使用；網頁需附聯絡方式（「關於」頁面會自動顯示這個 GitHub repo 的連結） |
