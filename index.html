@@ -3962,6 +3962,7 @@ async function search(raw){
   renderTrBar(terms, from, isAddr && q !== raw ? `📮 已忽略樓層／房號：搜尋「${esc(q)}」` : '');
   render();
   if (terms.ko && terms.ko !== q) { jobs.push(runPhoton(terms.ko)); jobs.push(runNomi(terms.ko)); }
+  if (terms.en && terms.en !== q && !isAddr) jobs.push(runPhoton(terms.en));   // Photon 不限次數，英文名也同時查
   await Promise.all(jobs);
   if (id !== searchId) return;
   // 3) 還沒找到好結果，才用英文、中文再查
