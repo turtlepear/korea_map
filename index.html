@@ -7554,7 +7554,7 @@ async function areaAt(lat, lng){
   try {
     const d = await (await fetchT(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&namedetails=1&addressdetails=1&accept-language=ko`, 10000)).json();
     const a = d.address || {}, nd = d.namedetails || {};
-    const clean = s => (s || '').replace(/\s*\d+가$/, '').replace(/(\d+)동$/, '동').replace(/\d+$/, '').trim();
+    const clean = s => (s || '').replace(/\s*\d+(가|街)$/, '').replace(/\d+(동|洞)$/, '$1').replace(/\d+$/, '').trim();
     const ko = clean(nd['name:ko'] || d.name || a.quarter || a.suburb || a.borough || a.city);
     const zh = clean(nd['name:zh-Hant'] || nd['name:zh'] || '') || ko;
     if (ko) out = { zh, ko, city:a.city || a.province || '' };
