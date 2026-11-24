@@ -4019,8 +4019,9 @@ async function fillNames(p){
   await Promise.all(['ko','zh','en'].map(async l => {
     if (p[l]) return;
     if (l === bl) { p[l] = base; return; }
-    const t = await translate(base, bl, l);
-    if (t) { p[l] = t; (p._auto ||= {})[l] = true; }
+    const known = bl === 'ko' && (l === 'zh' || l === 'en') ? autoDict[l].get(base) : null;
+    const t = known || await translate(base, bl, l);
+    if (t) { p[l] = t; (p._auto ||= {})[l] = true; if (!known && bl === 'ko' && (l === 'zh' || l === 'en') && base.length <= 40 && addAutoTr(l, base, t)) { saveDictSoon(l); refreshLabelsSoon(); } }
   }));
   p._filling = false;
   if (p.zh && detectLang(p.name||'') !== 'zh') p.name = p.zh; // 標題改用中文
@@ -6966,7 +6967,9 @@ ${x.photos ? `<div class="ph">${x.places.flatMap(p => photoKeys(p)).filter(k => 
 
 
 // ---------- 🌐 小地方自動翻譯（地圖停下來後，翻譯畫面上只有韓文的地名） ----------
-let atTimer = null, atBusy = false, atFailN = 0;
+let atTimer = null, atBusy = false, atBackoff = 0, atNext = 0, atStat = 'ok';
+const atFail = new Set();
+const AT_MAX = 3000;
 // 路名結尾的「로」常被誤翻成「往…去」：去掉「前往」，沒有「路／街」就補上
 function fixTr(k, v, lang){
   v = (v || '').trim().replace(/[。.]$/, '');
@@ -6974,43 +6977,73 @@ function fixTr(k, v, lang){
   else { v = v.replace(/^(to|towards?)\s+/i, ''); if (/로$/.test(k) && !/(-?ro|road|street|avenue|gil)$/i.test(v)) v += '-ro'; }
   return v;
 }
-const atFail = new Set();
-const AT_MAX = 3000;
-function scheduleAutoTr(m){ clearTimeout(atTimer); atTimer = setTimeout(() => autoTranslateVisible(m), 700); }
+function scheduleAutoTr(m, ms = 700){ clearTimeout(atTimer); atTimer = setTimeout(() => autoTranslateVisible(m), ms); }
+// 一次翻譯多個地名（換行分隔）；回傳 {out} 或 {err:'net'|'count'}
 async function batchTr(arr, tl){
-  const q = arr.join('\n');
   try {
-    const j = await (await fetchT(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=${tl}&dt=t&q=${encodeURIComponent(q)}`, 12000)).json();
+    const r = await fetchT(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=${tl}&dt=t&q=${encodeURIComponent(arr.join('\n'))}`, 12000);
+    if (!r.ok) return { err:'net' };
+    const j = await r.json();
     const out = j[0].map(x => x[0]).join('').split('\n').map(x => x.trim());
-    if (out.length === arr.length) return out;
-  } catch(e) {}
-  return null;
+    return out.length === arr.length ? { out } : { err:'count' };
+  } catch(e) { return { err:'net' }; }
+}
+// 行數對不上：拆成兩半再翻，直到找出有問題的那一個
+async function trSplit(arr, tl, res){
+  const r = await batchTr(arr, tl);
+  if (r.out) { arr.forEach((k, i) => res.set(k, r.out[i])); return true; }
+  if (r.err === 'net') return false;
+  if (arr.length === 1) { res.set(arr[0], null); return true; }
+  const h = Math.ceil(arr.length / 2);
+  return (await trSplit(arr.slice(0, h), tl, res)) && (await trSplit(arr.slice(h), tl, res));
+}
+// Google 連不上時的備用：MyMemory（每次只翻幾個，免費額度有限）
+async function trFallback(arr, tl, res){
+  for (const k of arr.slice(0, 6)) {
+    try {
+      const j = await (await fetchT(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(k)}&langpair=ko|${tl}`, 8000)).json();
+      const v = j.responseData?.translatedText;
+      if (v && !/MYMEMORY WARNING|INVALID|QUERY LENGTH/i.test(v)) res.set(k, v);
+    } catch(e) { break; }
+  }
+}
+let atRefreshT = null;
+function refreshLabelsSoon(){ clearTimeout(atRefreshT); atRefreshT = setTimeout(() => layers.forEach(x => { const mm = x.l.getMaplibreMap?.(); if (mm && mm._hooked) applyLabels(mm); }), 300); }
+let atSaveT = {};
+function saveDictSoon(lang){ clearTimeout(atSaveT[lang]); atSaveT[lang] = setTimeout(() => idb.set('labeldict-' + lang, [...autoDict[lang]]), 1500); }
+function addAutoTr(lang, k, v){
+  v = v && fixTr(k, v, lang);
+  if (v && v !== k && !/[가-힣]/.test(v)) { autoDict[lang].delete(k); autoDict[lang].set(k, v); while (autoDict[lang].size > AT_MAX) autoDict[lang].delete(autoDict[lang].keys().next().value); return true; }
+  atFail.add(lang + k); return false;
 }
 async function autoTranslateVisible(m){
   const lang = autoTr ? MAP_LANGS[mapLang].d : null;
-  if (!lang || atBusy || atFailN >= 5) return;
+  if (!lang || atBusy) return;
+  if (Date.now() < atNext) { scheduleAutoTr(m, atNext - Date.now() + 50); return; }
   let feats;
   try { const ids = m.getStyle().layers.filter(l => l.type === 'symbol').map(l => l.id); feats = m.queryRenderedFeatures({ layers:ids }); } catch(e) { return; }
-  const d = autoDict[lang], want = new Set();
+  const d = autoDict[lang], want = []; let len = 0;
   for (const f of feats) {
     const p = f.properties || {}, n = p.name;
-    if (typeof n !== 'string' || n.length > 40 || !/[가-힣]/.test(n) || d.has(n) || atFail.has(lang + n)) continue;
+    if (typeof n !== 'string' || n.length > 40 || !/[가-힣]/.test(n) || d.has(n) || atFail.has(lang + n) || want.includes(n)) continue;
     if (lang === 'zh' && (p['name:zh-Hant'] || p['name:zh'] || p['name:zh-Hans'])) continue;
     if (lang === 'en' && p['name:en']) continue;
-    want.add(n); if (want.size >= 60) break;
+    len += encodeURIComponent(n).length + 3; if (len > 6000) break;
+    want.push(n); if (want.length >= 40) break;
   }
-  if (!want.size) return;
+  if (!want.length) { atStat = 'ok'; return; }
   atBusy = true;
+  const tl = lang === 'zh' ? 'zh-TW' : 'en', res = new Map();
+  let ok = false;
   try {
-    const arr = [...want], out = await batchTr(arr, lang === 'zh' ? 'zh-TW' : 'en');
-    if (!out) { atFailN++; return; }
-    atFailN = 0;
-    arr.forEach((k, i) => { const v = out[i] && fixTr(k, out[i], lang); if (v && v !== k && !/[가-힣]/.test(v)) d.set(k, v); else atFail.add(lang + k); });
-    while (d.size > AT_MAX) d.delete(d.keys().next().value);
-    idb.set('labeldict-' + lang, [...d]);
-    layers.forEach(x => { const mm = x.l.getMaplibreMap?.(); if (mm && mm._hooked) applyLabels(mm); });
+    ok = await trSplit(want, tl, res);
+    if (!ok) await trFallback(want.filter(k => !res.has(k)), tl, res);
   } finally { atBusy = false; }
-  if (want.size >= 60) scheduleAutoTr(m);
+  let added = 0;
+  for (const [k, v] of res) if (v != null ? addAutoTr(lang, k, v) : (atFail.add(lang + k), false)) added++;
+  if (added) { saveDictSoon(lang); refreshLabelsSoon(); }
+  if (ok) { atBackoff = 0; atStat = 'ok'; if (want.length >= 40 || len > 6000) scheduleAutoTr(m, 300); }
+  else { atBackoff = Math.min(300e3, Math.max(15e3, atBackoff * 2)); atNext = Date.now() + atBackoff; atStat = 'wait'; scheduleAutoTr(m, atBackoff + 50); }
 }
 // 啟動時載入之前翻譯過的地名
 Promise.all(['zh', 'en'].map(async l => { const a = await idb.get('labeldict-' + l); if (Array.isArray(a)) a.forEach(([k, v]) => autoDict[l].set(k, fixTr(k, v, l))); }))
@@ -7030,7 +7063,10 @@ function openMapLang(){
     <div class="addr">切換地圖上地名、路名、站名的文字。${isVec ? '' : '<br>⚠️ 目前是「' + esc(layers[layerIdx].name) + '」，這種圖片地圖的文字無法切換，選了之後會自動換回標準地圖。'}</div>
     ${Object.entries(MAP_LANGS).map(([k, v]) => `<button class="mlo${k === mapLang ? ' on' : ''}" data-ml="${k}"><pre>${esc(v.ex)}</pre><div><b>${v.n}</b>${v.note ? `<small>${v.note}</small>` : ''}</div></button>`).join('')}
     <label class="atr"><input type="checkbox" id="mlAuto" ${autoTr ? 'checked' : ''}> <span><b>自動翻譯小地方</b><small>店家、小路、社區等只有韓文名稱的地方，自動翻成中文或英文（Google 翻譯，可能不精準；已翻譯 ${autoDict.zh.size + autoDict.en.size} 個）</small></span></label>
+    ${autoTr && atStat === 'wait' ? `<div class="warnbox">⚠️ 翻譯服務暫時連不上（手機網路有時會被暫時限制），${Math.max(1, Math.round((atNext - Date.now()) / 1000))} 秒後自動重試。<button class="linkbtn" id="mlRetry">立即重試</button></div>` : ''}
+    ${['ko', 'kolatn'].includes(mapLang) ? '<div class="addr">目前是韓文模式，不會翻譯；要看中文請選「中文」或「中文＋韓文」。</div>' : ''}
     ${VECTOR_OK ? '' : '<div class="addr">⚠️ 這個瀏覽器不支援向量地圖，只能使用圖片地圖，無法切換地圖語言。</div>'}`, el => {
+      if ($('mlRetry')) $('mlRetry').onclick = () => { atNext = 0; atBackoff = 0; atStat = 'ok'; layers.forEach(x => { const m = x.l.getMaplibreMap?.(); if (m && m._hooked) scheduleAutoTr(m, 10); }); toast('重新翻譯中…'); openMapLang(); };
       $('mlAuto').onchange = e => { autoTr = e.target.checked; store.set('kmap_autotr', autoTr); setMapLang(mapLang); toast(autoTr ? '已開啟小地方自動翻譯' : '已關閉小地方自動翻譯'); };
       el.querySelectorAll('[data-ml]').forEach(b => b.onclick = () => {
         if (!VECTOR_OK) { toast('這個瀏覽器無法切換地圖語言'); return; }
