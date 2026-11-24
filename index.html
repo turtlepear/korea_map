@@ -6957,6 +6957,13 @@ ${x.photos ? `<div class="ph">${x.places.flatMap(p => photoKeys(p)).filter(k => 
 
 // ---------- 🌐 小地方自動翻譯（地圖停下來後，翻譯畫面上只有韓文的地名） ----------
 let atTimer = null, atBusy = false, atFailN = 0;
+// 路名結尾的「로」常被誤翻成「往…去」：去掉「前往」，沒有「路／街」就補上
+function fixTr(k, v, lang){
+  v = (v || '').trim().replace(/[。.]$/, '');
+  if (lang === 'zh') { v = v.replace(/^(前往|開往|往|到|去)\s*/, ''); if (/[로길]$/.test(k) && !/[路街道巷]$/.test(v)) v += /길$/.test(k) ? '街' : '路'; }
+  else { v = v.replace(/^(to|towards?)\s+/i, ''); if (/로$/.test(k) && !/(-?ro|road|street|avenue|gil)$/i.test(v)) v += '-ro'; }
+  return v;
+}
 const atFail = new Set();
 const AT_MAX = 3000;
 function scheduleAutoTr(m){ clearTimeout(atTimer); atTimer = setTimeout(() => autoTranslateVisible(m), 700); }
@@ -6988,7 +6995,7 @@ async function autoTranslateVisible(m){
     const arr = [...want], out = await batchTr(arr, lang === 'zh' ? 'zh-TW' : 'en');
     if (!out) { atFailN++; return; }
     atFailN = 0;
-    arr.forEach((k, i) => { const v = out[i]; if (v && v !== k && !/[가-힣]/.test(v)) d.set(k, v); else atFail.add(lang + k); });
+    arr.forEach((k, i) => { const v = out[i] && fixTr(k, out[i], lang); if (v && v !== k && !/[가-힣]/.test(v)) d.set(k, v); else atFail.add(lang + k); });
     while (d.size > AT_MAX) d.delete(d.keys().next().value);
     idb.set('labeldict-' + lang, [...d]);
     layers.forEach(x => { const mm = x.l.getMaplibreMap?.(); if (mm && mm._hooked) applyLabels(mm); });
@@ -6996,7 +7003,7 @@ async function autoTranslateVisible(m){
   if (want.size >= 60) scheduleAutoTr(m);
 }
 // 啟動時載入之前翻譯過的地名
-Promise.all(['zh', 'en'].map(async l => { const a = await idb.get('labeldict-' + l); if (Array.isArray(a)) a.forEach(([k, v]) => autoDict[l].set(k, v)); }))
+Promise.all(['zh', 'en'].map(async l => { const a = await idb.get('labeldict-' + l); if (Array.isArray(a)) a.forEach(([k, v]) => autoDict[l].set(k, fixTr(k, v, l))); }))
   .then(() => layers.forEach(x => { const m = x.l.getMaplibreMap?.(); if (m && m._hooked && (autoDict.zh.size || autoDict.en.size)) applyLabels(m); }))
   .catch(() => {});
 
