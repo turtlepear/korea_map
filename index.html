@@ -1002,6 +1002,16 @@ return maplibregl$1;
   .chips.mdrag { cursor:grabbing; } .chips.mdrag .chip { pointer-events:none; }
   .backbtn { display:inline-flex; align-items:center; gap:4px; border:1px solid var(--line); background:var(--card); color:var(--t); border-radius:16px; padding:5px 12px 5px 9px; font-size:14px; cursor:pointer; margin:0 0 6px; }
   .backbtn:active { background:var(--soft); }
+  .warnbox { background:#fef7e0; border:1px solid #f9e3a3; border-radius:10px; padding:8px 10px; margin:8px 0; font-size:13px; line-height:1.6; } body.dark .warnbox { background:#3d3218; border-color:#5c4a1c; }
+  .skr { cursor:pointer; } .skr b { font-size:15px; }
+  .skileg { background:var(--bg); border-radius:10px; box-shadow:0 1px 5px rgba(0,0,0,.3); padding:5px 8px; font-size:12px; display:flex; flex-wrap:wrap; gap:4px 10px; align-items:center; max-width:230px; color:var(--t); }
+  .skileg span { display:inline-flex; align-items:center; gap:4px; } .skileg i { display:inline-block; width:16px; height:4px; border-radius:2px; } .skileg i.lf { background:repeating-linear-gradient(90deg,#5f6368 0 5px,transparent 5px 9px); }
+  .skileg button { border:0; background:none; cursor:pointer; font-size:13px; color:var(--m); margin-left:auto; }
+  #flightBar { margin:2px 4px 0; background:var(--bg); border-radius:14px; box-shadow:0 1px 4px rgba(0,0,0,.25); padding:6px 12px; font-size:13px; cursor:pointer; color:var(--t); }
+  #flightBar.urgent { background:#fce8e6; color:#c5221f; } body.dark #flightBar.urgent { background:#4a1f1c; color:#f28b82; }
+  .aps .approw { display:flex; gap:10px; align-items:center; } .aps .approw > div:first-child { flex:1; } .aps .approw small { display:block; }
+  .btnlink { display:inline-block; text-align:center; font-size:12px; padding:4px 10px; border:1px solid var(--line); border-radius:14px; background:var(--card); color:var(--t); text-decoration:none; white-space:nowrap; }
+  .lr .near { font-weight:normal; }
   .chips::-webkit-scrollbar { display:none; }
   .chip { flex:none; background:var(--bg); border:0; border-radius:16px; padding:7px 12px; font-size:13px; box-shadow:0 1px 4px rgba(0,0,0,.2); cursor:pointer; white-space:nowrap; }
   .chip.on { background:var(--c); color:#fff; }
@@ -3866,13 +3876,22 @@ async function translateOnly(q){
 
 async function search(raw){
   addHistQuery(raw);
+  if (typeof sugT !== 'undefined') clearTimeout(sugT);
   const id = ++searchId;
   const box = $('results');
   box.style.display = 'block';
-  box.innerHTML = '<div class="trbar" id="trbar"><small>🔤 翻譯中…</small></div><div id="rlist"><div class="r"><small>搜尋中…</small></div></div>';
+  box.innerHTML = '<div class="trbar" id="trbar"><small>🔤 翻譯中…</small></div><div id="rlocal"></div><div id="rlist"><div class="r"><small>搜尋中…</small></div></div>';
 
   const isAddr = looksLikeAddress(raw);
   const q = isAddr ? (cleanAddr(raw) || raw) : raw;
+  // 本機資料（熱門景點、地鐵站、景點、收藏、滑雪場）馬上列出來，不必等網路
+  if (!isAddr) (localIdx ? Promise.resolve() : warmLocal()).then(() => {
+    if (id !== searchId || !$('rlocal')) return;
+    const arr = localMatches(raw, 5); if (!arr.length) return;
+    $('rlocal').innerHTML = `<div class="hh">⚡ 常用地點</div>${arr.map(localRow).join('')}<div class="hh">🔍 地圖搜尋結果</div>`;
+    bindLocal($('rlocal'), arr);
+  });
+  nominatimC(q);   // 先查原文，同時翻譯
   const { from, terms } = await getTerms(q);
   if (id !== searchId) return;
   renderTrBar(terms, from, isAddr && q !== raw ? `📮 已忽略樓層／房號：搜尋「${esc(q)}」` : '');
@@ -3888,10 +3907,10 @@ async function search(raw){
   };
 
   const run = async (query, label) => {
-    if (tries++) await sleep(1100);              // Nominatim：每秒最多 1 次
+    tries++;
     if (id !== searchId) return false;
     status.innerHTML = `<small>搜尋中…「${esc(query)}」</small>`;
-    const data = await nominatim(query);
+    const data = await nominatimC(query);   // 有快取就直接用；沒有就排隊（每秒最多 1 次）
     if (id !== searchId) return false;
     if (!data) { failed++; return true; }
     data.forEach(d => {
@@ -4568,10 +4587,11 @@ function openMenu(){
       ['offline','📥','離線地圖'], ['sync','🔄','收藏同步'], ['shareme','📍','分享我的位置'], ['hist','🕘','搜尋紀錄']])}
     ${G('🗣️ 語言', [['maplang','🌐','地圖語言', MAP_LANGS[mapLang].s], ['phrase','🗣️','韓文句卡'], ['convo','💬','對話翻譯'], ['ocr','📷','拍照翻譯']])}
     ${G('💰 花錢', [['expense','💰','旅費記帳'], ['tax','🧾','退稅計算'], ['shop','🛒','購物清單'], ['tools','🧰','匯率／車資／急難']])}
+    ${G('⛷️ 滑雪', [['ski','⛷️','滑雪場'], ['skimap','🎿','雪道地圖', skiOn ? '開' : ''], ['skilog','📈','滑雪紀錄'], ['skisz','📏','雪具尺寸']])}
     ${G('📔 紀念', [['diary','📔','旅行日記'], ['track','🥾','今日足跡', tracking ? '記錄中' : ''], ['review','🧾','旅程回顧']])}
-    ${G('🧳 其他', [['medi','🆘','緊急資訊卡'], ['check','✅','行前清單'], ['sizes','📏','尺寸換算'], ['dark', dark ? '☀️' : '🌙', dark ? '淺色模式' : '深色模式'], ['about','ℹ️','關於／資料來源']])}`,
+    ${G('🧳 其他', [['flight','✈️','回程倒數', flight ? '已設定' : ''], ['duty','🛃','入境免稅'], ['apps','📱','韓國 App'], ['medi','🆘','緊急資訊卡'], ['check','✅','行前清單'], ['sizes','📏','尺寸換算'], ['dark', dark ? '☀️' : '🌙', dark ? '淺色模式' : '深色模式'], ['about','ℹ️','關於／資料來源']])}`,
     el => el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
-      if (!['dark', 'subway', 'hist'].includes(b.dataset.a)) {
+      if (!['dark', 'subway', 'hist', 'skimap'].includes(b.dataset.a)) {
         menuNav = true;
         if (!history.state?.kmapSub) { try { history.pushState({ kmapSub:1 }, ''); } catch(e) {} }
       }
@@ -4580,6 +4600,9 @@ function openMenu(){
       dark: () => { setTheme(dark ? 'light' : 'dark'); openMenu(); },
       hist: () => { closeSheet(); $('q').focus(); showHistory(); }, about: openAbout,
       wx: () => openWeather(), shareme: shareMyLocation, maplang: openMapLang,
+      ski: openSki, skilog: openSkiLog, flight: openFlight, duty: openDuty, apps: openApps,
+      skimap: () => { if (skiOn) { hideSkiMap(); openMenu(); } else { closeSheet(); showSkiMap(null); if (map.getZoom() < 9) map.setView([37.5, 128.2], 9); toast('放大到滑雪場就能看到雪道'); } },
+      skisz: () => { openSizes(); setTimeout(() => $('skiSz')?.scrollIntoView({ block:'start' }), 60); },
       airport: openAirport, holi: openHolidays, diary: openDiary, track: openTracks, review: openReview, medi: openMedical,
       hotel: openHotel, phrase: openPhrases, convo: openConvo, ocr: openOcr, expense: openExpense, tax: openTax, shop: openShop, check: openChecklist, sizes: openSizes,
     })[b.dataset.a]();
@@ -5731,6 +5754,16 @@ const PHRASES = {
     ['我頭痛', '머리가 아파요', 'meoriga apayo'], ['我肚子痛', '배가 아파요', 'baega apayo'],
   ],
 };
+PHRASES['滑雪'] = [
+  ['我想租滑雪裝備', '스키 장비를 빌리고 싶어요', 'seuki jangbireul billigo sipeoyo'], ['我想租單板裝備', '보드 장비를 빌리고 싶어요', 'bodeu jangbireul billigo sipeoyo'],
+  ['請給我一日纜車券', '리프트 종일권 주세요', 'ripeuteu jongilgwon juseyo'], ['請給我下午券', '리프트 오후권 주세요', 'ripeuteu ohugwon juseyo'], ['請給我夜間券', '리프트 야간권 주세요', 'ripeuteu yagangwon juseyo'],
+  ['雪靴請給我 245', '부츠는 245로 주세요', 'bucheuneun ibaek-sasip-o-ro juseyo'], ['有大一號的嗎？', '한 치수 큰 거 있어요?', 'han chisu keun geo isseoyo?'], ['有小一號的嗎？', '한 치수 작은 거 있어요?', 'han chisu jageun geo isseoyo?'],
+  ['我是初學者', '저는 초보자예요', 'jeoneun chobojayeyo'], ['我想上初學者課程', '초보자 강습을 받고 싶어요', 'choboja gangseubeul batgo sipeoyo'], ['有會說中文的教練嗎？', '중국어 하는 강사 있어요?', 'junggugeo haneun gangsa isseoyo?'],
+  ['初級雪道在哪裡？', '초급 슬로프가 어디예요?', 'chogeup seullopeuga eodiyeyo?'], ['纜車搭乘處在哪裡？', '리프트 타는 곳이 어디예요?', 'ripeuteu taneun gosi eodiyeyo?'],
+  ['置物櫃在哪裡？', '락커는 어디에 있어요?', 'rakkeoneun eodie isseoyo?'], ['裝備要在哪裡歸還？', '장비는 어디에 반납해요?', 'jangbineun eodie bannaphaeyo?'],
+  ['接駁車幾點出發？', '셔틀버스는 몇 시에 출발해요?', 'syeoteulbeoseuneun myeot sie chulbalhaeyo?'], ['哪裡可以買手套或護目鏡？', '장갑이나 고글은 어디서 살 수 있어요?', 'janggabina gogeureun eodiseo sal su isseoyo?'],
+  ['我受傷了，請叫救護人員', '다쳤어요. 패트롤 불러 주세요', 'dachyeosseoyo. paeteurol bulleo juseyo'], ['醫務室在哪裡？', '의무실이 어디예요?', 'uimusiri eodiyeyo?'], ['我和朋友走散了', '친구를 잃어버렸어요', 'chingureul ireobeoryeosseoyo'],
+];
 let myPhrases = store.get('kmap_myphr', []);   // [中文, 韓文]
 let phraseCat = '基本';
 function openPhrases(){
@@ -6020,6 +6053,7 @@ function openHotel(){
 drawHotel();
 
 // ---------- ✅ 行前清單 ----------
+const CHECK_SKI = ['防水手套（最好帶兩雙）', '滑雪護目鏡', '毛帽或安全帽（安全帽可租）', '頸套或面罩', '排汗內衣（避免棉質）', '保暖中層（刷毛、羽絨背心）', '滑雪衣褲（也可以租）', '長的厚襪或滑雪襪', '暖暖包', '護唇膏、保濕乳液', '防曬乳（雪地反射很強）', '行動電源（低溫手機很快沒電）', '小背包或腰包', '接駁巴士、纜車券預約確認', '痠痛貼布'];
 const CHECK_DEFAULT = [
   ['證件', '護照（效期 6 個月以上）'],
   ['證件', 'K-ETA：台灣護照 2026/12/31 前入境免申請；2027 年後出發請到官網 k-eta.go.kr 確認'],
@@ -6034,7 +6068,7 @@ const CHECK_DEFAULT = [
   ['通訊電器', '行動電源（只能放隨身行李，不能托運）'],
   ['通訊電器', '充電線、充電頭'],
   ['App', 'Naver Map 或 Kakao Map'],
-  ['App', 'Kakao T（叫計程車）'],
+  ['App', 'K.Ride 或 Kakao T（叫計程車）'],
   ['App', '翻譯 App（例如 Papago）'],
   ['這個網頁', '用手機開這個網頁並「加入主畫面」'],
   ['這個網頁', '把要去的區域「📥 下載離線地圖」'],
@@ -6053,7 +6087,7 @@ function openChecklist(){
     ${groups.map(g => `<div class="group">${esc(g)}</div><div class="shl">${checks.filter(c => c.g === g).map(c =>
       `<label class="${c.done ? 'done' : ''}"><input type="checkbox" data-ck="${c.id}" ${c.done ? 'checked' : ''}><span>${esc(c.t)}</span><button class="linkbtn" data-cd="${c.id}">🗑</button></label>`).join('')}</div>`).join('')}
     <div class="fx"><label>新增項目<input id="ckNew" placeholder="例如：帶伴手禮給朋友"></label><button id="ckAdd">＋</button></div>
-    <div class="btns"><button id="ckReset">全部取消勾選</button><button id="ckDefault">恢復預設清單</button></div>
+    <div class="btns"><button id="ckReset">全部取消勾選</button><button id="ckDefault">恢復預設清單</button>${checks.some(c => c.g === '⛷️ 滑雪') ? '' : '<button id="ckSki">⛷️ 加入滑雪清單</button>'}</div>
     <div class="addr">入境規定可能變動，出發前請以官方網站為準。</div>`, el => {
       el.querySelectorAll('[data-ck]').forEach(c => c.onchange = () => { const x = checks.find(k => k.id === c.dataset.ck); if (x) { x.done = c.checked; saveChecks(); openChecklist(); } });
       el.querySelectorAll('[data-cd]').forEach(b => b.onclick = e => { e.preventDefault(); checks = checks.filter(k => k.id !== b.dataset.cd); saveChecks(); openChecklist(); });
@@ -6061,6 +6095,7 @@ function openChecklist(){
       $('ckAdd').onclick = add; $('ckNew').onkeydown = e => { if (e.key === 'Enter') add(); };
       $('ckReset').onclick = () => { checks.forEach(c => c.done = false); saveChecks(); openChecklist(); };
       $('ckDefault').onclick = () => { checks = CHECK_DEFAULT.map((c,i) => ({ id:'d' + i, g:c[0], t:c[1], done:false })); saveChecks(); openChecklist(); };
+      if ($('ckSki')) $('ckSki').onclick = () => { CHECK_SKI.forEach((t, i) => checks.push({ id:'s' + i, g:'⛷️ 滑雪', t, done:false })); saveChecks(); openChecklist(); toast('已加入滑雪清單'); };
     });
 }
 
@@ -6077,6 +6112,10 @@ function openSizes(){
     <div class="fare" id="szOut"></div>
     <div class="sizes"><table><tr><th>女鞋 韓國</th><th>美國</th><th>歐洲</th></tr>${SHOE_W.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table>
       <table><tr><th>男鞋 韓國</th><th>美國</th><th>歐洲</th></tr>${SHOE_M.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table></div>
+    <div class="group" id="skiSz">🎿 雪具（租借參考）</div>
+    <div class="fx"><label>身高（公分）<input type="number" inputmode="numeric" id="szH" placeholder="例如 165"></label><label>程度<select id="szLv" class="ipsel"><option value="0">初學</option><option value="1">中級</option><option value="2">高級</option></select></label></div>
+    <div class="addr">上面填腳長，雪靴尺寸會一起算出來。</div>
+    <div class="fare" id="szSki"></div>
     <div class="group">👕 衣服</div>
     <div class="sizes"><table><tr><th>男裝／中性 韓國</th><th>國際</th></tr>${TOP_M.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
       <table><tr><th>女裝 韓國</th><th>國際</th></tr>${TOP_W.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table></div>
@@ -6084,7 +6123,19 @@ function openSizes(){
     <div class="fx"><label>腰圍（英吋）<input type="number" inputmode="decimal" id="szWaist" placeholder="例如 30"></label><span>⇄</span><label>腰圍（公分）<input type="number" inputmode="decimal" id="szWaistCm" placeholder="例如 76"></label></div>
     <div class="addr">韓國褲子常標英吋（26～36）或公分。各品牌版型不同，對照表僅供參考，最好現場試穿（입어 봐도 돼요?）。</div>`, () => {
       $('szFoot').oninput = () => { const cm = +$('szFoot').value; if (!cm) { $('szOut').innerHTML = ''; return; }
-        const mm = Math.ceil(cm * 10 / 5) * 5; $('szOut').innerHTML = `建議韓國鞋碼 <b>${mm}</b>，想穿鬆一點可選 <b>${mm + 5}</b>`; };
+        const mm = Math.ceil(cm * 10 / 5) * 5; $('szOut').innerHTML = `建議韓國鞋碼 <b>${mm}</b>，想穿鬆一點可選 <b>${mm + 5}</b>`; skiSz(); };
+      const skiSz = () => {
+        const h = +$('szH').value, lv = +$('szLv').value, cm = +$('szFoot').value, out = [];
+        const boot = cm ? Math.round(cm * 2) / 2 : null;
+        if (boot) out.push(`🥾 雪靴：Mondopoint <b>${boot.toFixed(1)}</b>（店家常說 <b>${Math.round(boot * 10)}</b>）`);
+        if (h >= 100 && h <= 220) {
+          const sk = [[-20, -15], [-12, -5], [-5, 5]][lv], sb = [[-25, -18], [-20, -12], [-15, -8]][lv];
+          out.push(`🎿 雙板長度：約 <b>${h + sk[0]}～${h + sk[1]}</b> 公分`, `🏂 單板長度：約 <b>${h + sb[0]}～${h + sb[1]}</b> 公分（體重較重選長一點）`, `🦯 雪杖：約 <b>${Math.round(h * 0.7 / 5) * 5}</b> 公分`);
+        }
+        $('szSki').innerHTML = out.length ? out.join('<br>') + `<br><small>一般經驗值，實際以店員建議為準。</small><br><button class="linkbtn" id="szCard">🪧 用韓文給店員看</button>` : '';
+        if ($('szCard')) $('szCard').onclick = () => bigCard([boot ? `부츠 ${Math.round(boot * 10)}` : '', h ? `키 ${h}cm` : '', ['초보자예요', '중급이에요', '상급이에요'][lv]].filter(Boolean).join(' / ') + ' 장비 추천해 주세요', `雪靴 ${boot ? Math.round(boot * 10) : '-'}・身高 ${h || '-'} 公分・${['初學', '中級', '高級'][lv]}，請推薦裝備`, '');
+      };
+      $('szH').oninput = skiSz; $('szLv').onchange = skiSz;
       $('szWaist').oninput = () => { const v = +$('szWaist').value; $('szWaistCm').value = v ? Math.round(v * 2.54) : ''; };
       $('szWaistCm').oninput = () => { const v = +$('szWaistCm').value; $('szWaist').value = v ? (v / 2.54).toFixed(1) : ''; };
     });
@@ -6333,7 +6384,7 @@ let trackLine = null;
 function trackDist(pts){ let s = 0; for (let i = 1; i < pts.length; i++) s += map.distance([pts[i-1][0], pts[i-1][1]], [pts[i][0], pts[i][1]]); return s; }
 function onTrackPos(pos){
   if (!tracking || pos.coords.accuracy > 60) return;
-  const d = kstNowParts().date, arr = tracks[d] ||= [], p = [+pos.coords.latitude.toFixed(6), +pos.coords.longitude.toFixed(6), Date.now()];
+  const d = kstNowParts().date, arr = tracks[d] ||= [], p = [+pos.coords.latitude.toFixed(6), +pos.coords.longitude.toFixed(6), Date.now(), pos.coords.altitude != null && (pos.coords.altitudeAccuracy ?? 0) < 60 ? Math.round(pos.coords.altitude) : null, pos.coords.speed != null ? +pos.coords.speed.toFixed(1) : null];
   const last = arr[arr.length - 1];
   if (last && map.distance([last[0], last[1]], [p[0], p[1]]) < Math.max(15, pos.coords.accuracy * 0.6)) return;
   arr.push(p);
@@ -6355,6 +6406,7 @@ function openTracks(){
   openPanel(`<h2>🥾 今日足跡</h2>
     <div class="exsum"><div><small>今天走了</small><b>${fmtDist(trackDist(tracks[today] || []))}</b><span>${(tracks[today] || []).length} 個記錄點</span></div>
       <div><small>狀態</small><b>${tracking ? '🟢 記錄中' : '⚪ 未記錄'}</b><span>${tracking ? '網頁開著時持續記錄' : ''}</span></div></div>
+    ${skiTodayHtml()}
     <div class="btns"><button class="go wide" id="tkToggle">${tracking ? '⏸ 停止記錄' : '▶️ 開始記錄足跡'}</button></div>
     <div class="addr">⚠️ 網頁的限制：手機螢幕關掉或切到別的 App 時，瀏覽器會暫停定位，那段路就不會記到。記錄時建議把網頁開在前景。</div>
     ${keys.length ? `<div class="group">每天的足跡</div>${keys.map(k => `<div class="exi"><span>🥾</span><span class="en">${k.slice(5).replace('-','/')}（週${ZH_DAY[weekdayOf(k)]}）</span><span class="ea">${fmtDist(trackDist(tracks[k]))}</span><button class="linkbtn" data-tv="${k}">看</button><button class="linkbtn" data-td="${k}">🗑</button></div>`).join('')}` : ''}`, el => {
@@ -6813,7 +6865,8 @@ function reviewData(){
     const items = exp.items.filter(x => kstDate(x.t) === d), spend = items.reduce((s, x) => s + x.krw, 0);
     const byCat = {}; items.forEach(x => byCat[x.cat] = (byCat[x.cat] || 0) + x.krw);
     const photos = places.reduce((s, x) => s + photoKeys(x).length, 0);
-    return { d, places, tk, dist, spend, byCat, photos };
+    const sr = skiDayResort(tk), ski = sr ? skiStats(tk) : null;
+    return { d, places, tk, dist, spend, byCat, photos, ski, sr };
   });
   const sum = { days:list.length, places:diary.length, dist:list.reduce((s, x) => s + x.dist, 0), spend:list.reduce((s, x) => s + x.spend, 0), photos:list.reduce((s, x) => s + x.photos, 0) };
   const cat = {}; exp.items.forEach(x => cat[x.cat] = (cat[x.cat] || 0) + x.krw);
@@ -6852,7 +6905,7 @@ async function openReview(){
     ${R.list.map((x, n) => `<div class="rvday"><div class="rvh"><b>Day ${n + 1} · ${mdw(x.d)}</b>${W[x.d] ? `<span>${W[x.d].e} ${W[x.d].lo}°/${W[x.d].hi}°</span>` : ''}</div>
       ${miniSvg(x.tk, x.places)}
       ${x.places.length ? `<ol class="rvpl">${x.places.map(p => `<li><b>${esc(p.name)}</b> <small>${new Date(p.t).toLocaleTimeString('zh-TW', { timeZone:KST_TZ, hour:'2-digit', minute:'2-digit', hour12:false })}${photoKeys(p).length ? ' · 📷' + photoKeys(p).length : ''}</small>${p.note ? `<div>${esc(p.note)}</div>` : ''}</li>`).join('')}</ol>` : ''}
-      <div class="rvst">${x.dist ? `<span>🥾 ${kmTxt(x.dist)}</span>` : ''}${x.spend ? `<span>💰 ${won(x.spend)}${twd(x.spend) != null ? ' · ' + ntd(twd(x.spend)) : ''}</span>` : ''}${Object.entries(x.byCat).sort((a,b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `<span>${EXCAT[k][0]} ${won(v)}</span>`).join('')}</div>
+      <div class="rvst">${x.ski ? `<span>${skiStatLine(x.ski)} · ${esc(x.sr.zh)}</span>` : ''}${x.dist ? `<span>🥾 ${kmTxt(x.dist)}</span>` : ''}${x.spend ? `<span>💰 ${won(x.spend)}${twd(x.spend) != null ? ' · ' + ntd(twd(x.spend)) : ''}</span>` : ''}${Object.entries(x.byCat).sort((a,b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `<span>${EXCAT[k][0]} ${won(v)}</span>`).join('')}</div>
       ${x.photos ? `<div class="rvph">${x.places.flatMap(p => photoKeys(p).map(k => [k, p.id])).slice(0, 8).map(([k, id]) => `<img data-pk="${k}" data-gal="${id}" alt="">`).join('')}</div>` : ''}</div>`).join('')}
     <div class="btns" style="margin-top:10px"><button class="go" id="rvExport">📤 匯出回顧網頁</button><button id="rvText">📋 複製文字版</button></div>
     <div class="addr">網頁檔包含照片，可以傳給朋友或自己保存；文字版適合貼到 LINE。</div>`, async el => {
@@ -6880,7 +6933,7 @@ svg{width:100%;height:auto}ol{padding-left:22px}li{margin:6px 0}li small{color:#
 <div class="hi">💰 共花 <b>${won(s.spend)}</b>${twd(s.spend) != null ? `（約 ${ntd(twd(s.spend))}）` : ''}，平均每天 ${won(s.spend / s.days)}${s.topCat ? `<br>💸 花最多在 ${EXCAT[s.topCat[0]][0]} ${EXCAT[s.topCat[0]][1]}（${Math.round(s.topCat[1] / s.spend * 100)}%）` : ''}${s.walkDay?.dist ? `<br>🥾 走最多的一天：${mdw(s.walkDay.d)} ${kmTxt(s.walkDay.dist)}` : ''}</div>
 ${R.list.map((x, n) => `<div class="day"><div class="dh"><b>Day ${n + 1} · ${mdw(x.d)}</b><span>${W[x.d] ? `${W[x.d].e} ${W[x.d].lo}°/${W[x.d].hi}°` : ''}</span></div>${miniSvg(x.tk, x.places, 640, 260)}
 ${x.places.length ? `<ol>${x.places.map(p => `<li><b>${esc(p.name)}</b>${p.ko && p.ko !== p.name ? ` <small>${esc(p.ko)}</small>` : ''} <small>${new Date(p.t).toLocaleTimeString('zh-TW', { timeZone:KST_TZ, hour:'2-digit', minute:'2-digit', hour12:false })}</small>${p.note ? `<div>${esc(p.note)}</div>` : ''}</li>`).join('')}</ol>` : ''}
-<div class="st">${x.dist ? `<span>🥾 ${kmTxt(x.dist)}</span>` : ''}${x.spend ? `<span>💰 ${won(x.spend)}</span>` : ''}${Object.entries(x.byCat).sort((a,b) => b[1] - a[1]).map(([k, v]) => `<span>${EXCAT[k][0]} ${EXCAT[k][1]} ${won(v)}</span>`).join('')}</div>
+<div class="st">${x.ski ? `<span>${skiStatLine(x.ski)} · ${esc(x.sr.zh)}</span>` : ''}${x.dist ? `<span>🥾 ${kmTxt(x.dist)}</span>` : ''}${x.spend ? `<span>💰 ${won(x.spend)}</span>` : ''}${Object.entries(x.byCat).sort((a,b) => b[1] - a[1]).map(([k, v]) => `<span>${EXCAT[k][0]} ${EXCAT[k][1]} ${won(v)}</span>`).join('')}</div>
 ${x.photos ? `<div class="ph">${x.places.flatMap(p => photoKeys(p)).filter(k => imgs[k]).map(k => `<img src="${imgs[k]}" loading="lazy">`).join('')}</div>` : ''}</div>`).join('')}
 <p class="sub" style="font-size:12px">由「韓國旅遊地圖」產生 · 天氣資料 Open-Meteo.com</p></body></html>`;
   if (!downloadFile(`korea-review-${R.list[0].d}.html`, html, 'text/html')) toast('此瀏覽器不支援下載');
@@ -6958,6 +7011,506 @@ if (!VECTOR_OK) $('langBtn').style.display = 'none';
   row.addEventListener('click', e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
   requestAnimationFrame(sync); setTimeout(sync, 500);
 })();
+// ====================================================================
+//  第六批：搜尋加速、滑雪、回程倒數、入境免稅、韓國常用 App
+// ====================================================================
+
+// ---------- ⚡ 搜尋加速：繁簡對照（由資料裡出現過的字產生） ----------
+const T2S_T = '並亞併來倉個們傘備傳僅價儲兌兒內兩冊凍凱別刪則剛創劃劇動務勝勞勸匯區參員唸問啟喫單嗎嚴國圍園圓圖團堅報場塗塚墳壇壓壽夢夾奧娛婦媽學宮實寧寫寬寶將專尋對導層峯峴島嶺巖帳帶幣幫幾庫廁廂廈廟廠廢廣廳張強彎後徑從復愛慄態慮慶憲應懷戰戶捲掃掛換損撥擁擇據擠擴攝攤敎敗敵數斷於時暫曆曬書會東條棟楊業樂樓標樣樸樹橋機橫檔檢檻櫃欄權歐歷歸毀氣汙沒淵淺減準溫滾滿漁漢濕濟瀏灘灣災為烏無熱營爭爾牆狀獨獻現瑪環甕產産畫異當療癇癲發盃盤眾確碼磚禮稅種稱窯竅筆節範築篤簡紀約紅納純紙級細終結絕絡給統經綜綠網緊線緩縮總繒繼續纜羅羣義聖聯聽腦腳腸臟臨臺與興舉舊莊華萊萬蒼蓋蓮薦薩藝藥藪蘇蘭蘿處號蝦螢蠶術衛衝裏補裝裡製複褲見規視親覽觀觸計訊託記訣設許訴註詢試話該詳認誕語誠誤說誰調請論謝證識譯議護讀變讓豐豬貝貞貢貨貴買費貼貿資賢質購賽趙跡車軌軍軒較載輔輕輪輸轉辦農迴這連週進遊運過達遠適選遺還邊鄉鄭鄰醫醬釐針鈕銀銅錄錢錦錯鍵鍾鎮鐘鐵長門閉開閒間閣關陣陰陸陽階際隨險隱雙離難雲電霧靈靜韓響頁項順預領頭頻題額顏顔類顧顯風飯飲餅養餘館馬駐駒驗驛驟體鬆鬥鬱魚鮮鯨鳳鴉鵲鶴鷗鷹鷺鹽麗麥麵麼黃點齋龍龜', T2S_S = '并亚并来仓个们伞备传仅价储兑儿内两册冻凯别删则刚创划剧动务胜劳劝汇区参员念问启吃单吗严国围园圆图团坚报场涂冢坟坛压寿梦夹奥娱妇妈学宫实宁写宽宝将专寻对导层峰岘岛岭岩帐带币帮几库厕厢厦庙厂废广厅张强弯后径从复爱栗态虑庆宪应怀战户卷扫挂换损拨拥择据挤扩摄摊教败敌数断于时暂历晒书会东条栋杨业乐楼标样朴树桥机横档检槛柜栏权欧历归毁气污没渊浅减准温滚满渔汉湿济浏滩湾灾为乌无热营争尔墙状独献现玛环瓮产产画异当疗痫癫发杯盘众确码砖礼税种称窑窍笔节范筑笃简纪约红纳纯纸级细终结绝络给统经综绿网紧线缓缩总缯继续缆罗群义圣联听脑脚肠脏临台与兴举旧庄华莱万苍盖莲荐萨艺药薮苏兰萝处号虾萤蚕术卫冲里补装里制复裤见规视亲览观触计讯托记诀设许诉注询试话该详认诞语诚误说谁调请论谢证识译议护读变让丰猪贝贞贡货贵买费贴贸资贤质购赛赵迹车轨军轩较载辅轻轮输转办农回这连周进游运过达远适选遗还边乡郑邻医酱厘针钮银铜录钱锦错键钟镇钟铁长门闭开闲间阁关阵阴陆阳阶际随险隐双离难云电雾灵静韩响页项顺预领头频题额颜颜类顾显风饭饮饼养余馆马驻驹验驿骤体松斗郁鱼鲜鲸凤鸦鹊鹤鸥鹰鹭盐丽麦面么黄点斋龙龟';
+const T2S = (() => { const m = new Map(); for (let i = 0; i < T2S_T.length; i++) m.set(T2S_T[i], T2S_S[i]); return m; })();
+function normKey(s){
+  let o = '';
+  for (const c of (s || '').normalize('NFKC').toLowerCase()) o += T2S.get(c) || c;
+  return o.replace(/[\s\-_·・.,()（）「」'"’!！?？]/g, '').replace(/(역|站|station|站前)$/, '');
+}
+
+// ---------- ⛷️ 滑雪場（座標取自 OpenStreetMap；交通資訊每季不同，出發前請再確認） ----------
+const SKI = [
+  { id:'yongpyong', zh:'龍平渡假村', ko:'용평리조트', en:'Mona Yongpyong', lat:37.6272, lng:128.6771, area:'江原道 平昌', note:'韓國規模最大的滑雪場之一，約 28 條雪道', bus:'首爾有每天發車的滑雪接駁巴士（弘大入口、新村、明洞、東大門、綜合運動場等站上車），也有仁川機場線，需事先預約', time:'2.5～3.5 小時' },
+  { id:'alpensia', zh:'阿爾卑西亞', ko:'알펜시아 스키장', en:'Alpensia', lat:37.6528, lng:128.6743, area:'江原道 平昌', note:'雪道約 6 條，規模較小', bus:'和龍平同一條滑雪接駁路線，需事先預約', time:'約 3 小時' },
+  { id:'phoenix', zh:'鳳凰平昌', ko:'휘닉스 평창', en:'Phoenix Pyeongchang', lat:37.5782, lng:128.3178, area:'江原道 平昌', note:'約 21 條雪道', bus:'首爾有滑雪接駁巴士，需事先預約', time:'3～3.5 小時' },
+  { id:'high1', zh:'High1 渡假村', ko:'하이원 스키장', en:'High1', lat:37.1941, lng:128.8291, area:'江原道 旌善', note:'江原道旌善山區的大型滑雪場', bus:'首爾、仁川機場有接駁巴士（紫色巴士），需事先預約', time:'2.5～3.5 小時' },
+  { id:'vivaldi', zh:'維瓦爾第公園', ko:'비발디파크 스키월드', en:'Vivaldi Park', lat:37.6419, lng:127.6873, area:'江原道 洪川', note:'離首爾近，園區還有水上樂園、百貨公司等設施', bus:'首爾弘大入口、乙支路入口等地有接駁巴士，需事先預約', time:'約 1.5 小時' },
+  { id:'elysian', zh:'伊利希安江村', ko:'엘리시안 강촌', en:'Elysian Gangchon', lat:37.8175, lng:127.5878, area:'江原道 春川', note:'江原道離首爾最近的滑雪場，雪道 10 條', bus:'首爾弘大入口、東大門歷史文化公園、蠶室等地有接駁巴士（有會說中文的人員），需事先預約', time:'約 1.5 小時' },
+  { id:'konjiam', zh:'昆池岩渡假村', ko:'곤지암스키장', en:'Konjiam Resort', lat:37.3345, lng:127.2894, area:'京畿道 廣州', note:'離首爾站約 50 公里，是離首爾最近的滑雪場之一', bus:'', time:'開車約 1 小時' },
+  { id:'jisan', zh:'芝山森林渡假村', ko:'지산포레스트리조트', en:'Jisan Forest', lat:37.2138, lng:127.3431, area:'京畿道 利川', note:'京畿道利川，離首爾近', bus:'', time:'開車約 1 小時' },
+  { id:'wellihilli', zh:'威力山公園', ko:'웰리힐리파크', en:'Welli Hilli Park', lat:37.4853, lng:128.2468, area:'江原道 橫城', note:'江原道橫城的滑雪場', bus:'', time:'開車約 2 小時' },
+  { id:'oakvalley', zh:'橡樹谷', ko:'오크밸리', en:'Oak Valley', lat:37.4069, lng:127.8018, area:'江原道 原州', note:'營運狀況請先上官網確認', bus:'', time:'開車約 1.5 小時' },
+  { id:'o2', zh:'O2 渡假村', ko:'오투리조트', en:'O2 Resort', lat:37.1736, lng:128.9381, area:'江原道 太白', note:'營運狀況請先上官網確認', bus:'', time:'開車約 3.5 小時' },
+  { id:'bears', zh:'熊城渡假村', ko:'베어스타운리조트', en:'Bears Town', lat:37.7964, lng:127.2511, area:'京畿道 抱川', note:'營運狀況請先上官網確認', bus:'', time:'開車約 1 小時' },
+  { id:'muju', zh:'茂朱德裕山渡假村', ko:'무주덕유산리조트', en:'Muju Deogyusan', lat:35.8816, lng:127.7391, area:'全羅北道 茂朱', note:'韓國南部的大型滑雪場，離首爾約 230 公里', bus:'', time:'開車約 3 小時' },
+  { id:'eden', zh:'伊甸山谷', ko:'에덴밸리리조트', en:'Eden Valley', lat:35.4256, lng:128.9843, area:'慶尚南道 梁山', note:'慶尚南道梁山，離釜山近；營運狀況請先確認', bus:'', time:'從釜山開車約 1 小時' },
+];
+const PISTE_C = { novice:'#43a047', easy:'#2e7d32', intermediate:'#1e88e5', advanced:'#212121', expert:'#d32f2f', freeride:'#f57c00', '':'#9e9e9e' };
+const PISTE_N = { novice:'入門', easy:'初級', intermediate:'中級', advanced:'高級', expert:'專家', freeride:'野雪', '':'未標示' };
+let skiData = null, skiLoading = null;
+function loadSki(){
+  if (skiData) return Promise.resolve(skiData);
+  return skiLoading ||= (async () => {
+    try { const r = await fetchT('data/ski-kr.json', 30000); if (r.ok) { const d = await r.json(); if (d.pistes?.length) return skiData = d; } } catch(e) {}
+    skiLoading = null; return null;
+  })();
+}
+// 滑雪場的範圍：優先用資料裡的範圍，沒有就用中心點 ±2.5 公里
+function resortBox(r){
+  const d = skiData?.resorts?.filter(x => map.distance([x.lat, x.lng], [r.lat, r.lng]) < 3500 && x.bb) || [];
+  if (d.length) { const b = d.reduce((a, x) => [Math.min(a[0], x.bb[0]), Math.min(a[1], x.bb[1]), Math.max(a[2], x.bb[2]), Math.max(a[3], x.bb[3])], [90, 180, -90, -180]); return [b[0] - .003, b[1] - .004, b[2] + .003, b[3] + .004]; }
+  return [r.lat - .022, r.lng - .028, r.lat + .022, r.lng + .028];
+}
+const inBox = (b, lat, lng) => lat >= b[0] && lat <= b[2] && lng >= b[1] && lng <= b[3];
+// 某個滑雪場的雪道與纜車：有預先抓好的資料就用，沒有就即時查 Overpass
+const skiLive = {};
+async function resortLines(r){
+  await loadSki();
+  const b = resortBox(r);
+  if (skiData) return { pistes: skiData.pistes.filter(p => p[2].some(([a, c]) => inBox(b, a, c))), lifts: skiData.lifts.filter(p => p[2].some(([a, c]) => inBox(b, a, c))) };
+  if (skiLive[r.id]) return skiLive[r.id];
+  const bb = b.join(',');
+  const j = await overpass(`[out:json][timeout:60];way["piste:type"="downhill"](${bb});out tags geom;way["aerialway"](${bb});out tags geom;`, 90000);
+  const g = el => (el.geometry || []).map(p => [p.lat, p.lon]);
+  return skiLive[r.id] = {
+    pistes: j.elements.filter(e => e.tags?.['piste:type']).map(e => [e.tags['piste:difficulty'] || '', e.tags['piste:name'] || e.tags.name || '', g(e)]),
+    lifts: j.elements.filter(e => e.tags?.aerialway).map(e => [e.tags.aerialway, e.tags.name || '', g(e)]),
+  };
+}
+
+// ---------- 🎿 雪道地圖 ----------
+const skiLayer = L.layerGroup();
+const skiRenderer = L.canvas({ padding:0.5, tolerance:6 });
+let skiOn = false, skiLegend = null;
+async function showSkiMap(r){
+  skiOn = true; skiLayer.addTo(map);
+  if (!skiLegend) {
+    skiLegend = L.control({ position:'bottomleft' });
+    skiLegend.onAdd = () => { const d = L.DomUtil.create('div', 'skileg');
+      d.innerHTML = ['easy','intermediate','advanced','expert'].map(k => `<span><i style="background:${PISTE_C[k]}"></i>${PISTE_N[k]}</span>`).join('') + '<span><i class="lf"></i>纜車</span><button title="關閉雪道">✕</button>';
+      L.DomEvent.disableClickPropagation(d); d.querySelector('button').onclick = hideSkiMap; return d; };
+  }
+  skiLegend.addTo(map);
+  if (r) {
+    const b = resortBox(r); map.fitBounds([[b[0], b[1]], [b[2], b[3]]]);
+    toast('載入雪道中…');
+    let L2; try { L2 = await resortLines(r); } catch(e) { toast('⚠️ 雪道資料載入失敗，請稍後再試'); return; }
+    drawSkiLines(L2, r);
+  } else {
+    await loadSki(); if (skiData) drawSkiLines(skiData, null);
+  }
+}
+function drawSkiLines(d, r){
+  skiLayer.clearLayers();
+  for (const [lv0, nm, g] of d.pistes) {
+    if (g.length < 2) continue;
+    const lv = (lv0 || '').split(';')[0];
+    L.polyline(g, { renderer:skiRenderer, color:PISTE_C[lv] ?? PISTE_C[''], weight:4, opacity:.9 })
+      .bindTooltip(`${nm ? esc(nm) + ' · ' : ''}${PISTE_N[lv] ?? lv}雪道`, { sticky:true }).addTo(skiLayer);
+  }
+  for (const [tp, nm, g] of d.lifts) {
+    if (g.length < 2) continue;
+    L.polyline(g, { renderer:skiRenderer, color:'#5f6368', weight:2.5, dashArray:'6 5' })
+      .bindTooltip(`🚡 ${nm ? esc(nm) + ' · ' : ''}${LIFT_N[tp] || '纜車'}`, { sticky:true }).addTo(skiLayer);
+  }
+  if (r && !d.pistes.length) toast('這個滑雪場在地圖資料裡沒有雪道資訊');
+  else if (r) toast(`🎿 ${d.pistes.length} 條雪道、${d.lifts.length} 條纜車`);
+}
+const LIFT_N = { cable_car:'纜車', gondola:'吊廂', chair_lift:'吊椅', mixed_lift:'吊椅／吊廂', drag_lift:'拖牽', 't-bar':'T 型拖牽', 'j-bar':'J 型拖牽', platter:'拖牽', rope_tow:'拖繩', magic_carpet:'魔毯' };
+function hideSkiMap(){ skiOn = false; skiLayer.clearLayers(); map.removeLayer(skiLayer); if (skiLegend) skiLegend.remove(); }
+
+// ---------- ⛷️ 滑雪場一覽 ----------
+function skiFrom(){ return myPos ? { lat:myPos[0], lng:myPos[1], t:'離你' } : hotel ? { lat:hotel.lat, lng:hotel.lng, t:'離飯店' } : { lat:37.5547, lng:126.9707, t:'離首爾站' }; }
+async function openSki(){
+  const f = skiFrom();
+  const list = SKI.map(r => ({ ...r, d:map.distance([f.lat, f.lng], [r.lat, r.lng]) })).sort((a,b) => a.d - b.d);
+  openPanel(`<h2>⛷️ 滑雪場</h2>
+    <div class="addr">韓國雪季大約 12 月到 2 月，部分滑雪場開到 3 月；開放日依天氣和造雪狀況而定。距離是${f.t}的直線距離。</div>
+    ${skiTodayHtml()}
+    <div>${list.map(r => `<div class="exi skr" data-sk="${r.id}"><span>⛷️</span><span class="en"><b>${esc(r.zh)}</b> <small>${esc(r.ko)} · ${esc(r.area)}</small><small>${esc(r.note)}</small></span><span class="ea">${fmtDist(r.d)}</span></div>`).join('')}</div>
+    <div class="btns" style="margin-top:8px"><button id="skAll">🎿 在地圖上顯示所有雪道</button><button id="skLog">📈 滑雪紀錄</button></div>
+    <div class="addr">雪道與纜車資料來自 OpenStreetMap，可能和現場略有不同，以滑雪場公告為準。</div>`, el => {
+      el.querySelectorAll('[data-sk]').forEach(b => b.onclick = () => openResort(b.dataset.sk));
+      $('skAll').onclick = () => { closeSheet(); showSkiMap(null); map.setView([37.5, 128.2], 9); toast('放大到滑雪場就能看到雪道'); };
+      $('skLog').onclick = openSkiLog;
+    });
+}
+async function openResort(id){
+  const r = SKI.find(x => x.id === id); if (!r) return;
+  openPanel(`<h2>⛷️ ${esc(r.zh)}</h2>
+    <div class="addr">${esc(r.ko)} · ${esc(r.en)} · ${esc(r.area)}</div>
+    <div class="ts">${esc(r.note)}</div>
+    <div class="ts">🚌 從首爾：${esc(r.time)}${r.bus ? '。' + esc(r.bus) : ''}</div>
+    <div id="rsPiste" class="addr">雪道資訊載入中…</div>
+    <div class="btns"><button class="go" id="rsMap">🎿 雪道地圖</button><button id="rsWx">🌨️ 山上天氣</button></div>
+    <div class="btns"><button id="rsRoute">🧭 怎麼去</button><button id="rsPlace">📍 地點資訊</button><button id="rsCopy">📋 複製韓文名</button></div>
+    <div class="addr">接駁巴士班次和票價每季不同，多半要在 Klook、KKday、Trazy 等平台或滑雪場官網預約。</div>
+    <div class="btns"><button id="rsBack">← 回滑雪場列表</button></div>`, el => {
+      $('rsMap').onclick = () => { closeSheet(); showSkiMap(r); };
+      $('rsWx').onclick = () => openSkiWx(r.id);
+      $('rsRoute').onclick = () => openRoute({ lat:r.lat, lng:r.lng, name:r.zh, ko:r.ko });
+      $('rsPlace').onclick = () => showPlace({ lat:r.lat, lng:r.lng, name:r.zh, ko:r.ko, en:r.en });
+      $('rsCopy').onclick = () => copyText(r.ko);
+      $('rsBack').onclick = openSki;
+    });
+  try {
+    const d = await resortLines(r); const box = $('rsPiste'); if (!box) return;
+    const c = {}; d.pistes.forEach(p => { const k0 = (p[0] || '').split(';')[0], k = PISTE_N[k0] ? k0 : ''; c[k] = (c[k] || 0) + 1; });
+    box.innerHTML = d.pistes.length ? `🎿 地圖資料：${d.pistes.length} 條雪道（${Object.entries(c).sort((a,b) => Object.keys(PISTE_N).indexOf(a[0]) - Object.keys(PISTE_N).indexOf(b[0])).map(([k, n]) => `<span style="color:${PISTE_C[k]};font-weight:700">●</span>${PISTE_N[k]} ${n}`).join('、')}）、${d.lifts.length} 條纜車` : '地圖資料裡沒有這個滑雪場的雪道資訊';
+  } catch(e) { const box = $('rsPiste'); if (box) box.textContent = '雪道資訊暫時無法載入'; }
+}
+
+// ---------- 🌨️ 山上天氣（山頂／山腳分開看） ----------
+async function resortElev(r){
+  const key = 'skielev-' + r.id, c = await idb.get(key); if (c) return c;
+  let pts = [];
+  try { const d = await resortLines(r); pts = d.lifts.flatMap(l => [l[2][0], l[2][l[2].length - 1]]); } catch(e) {}
+  pts = [[r.lat, r.lng], ...pts].slice(0, 90);
+  try {
+    const j = await (await fetchT(`https://api.open-meteo.com/v1/elevation?latitude=${pts.map(p => p[0].toFixed(4)).join(',')}&longitude=${pts.map(p => p[1].toFixed(4)).join(',')}`, 10000)).json();
+    const e = (j.elevation || []).filter(x => x != null);
+    if (!e.length) return null;
+    const out = pts.length > 2 ? { top:Math.round(Math.max(...e)), base:Math.round(Math.min(...e)), est:false } : { top:Math.round(e[0] + 400), base:Math.round(e[0]), est:true };
+    if (out.top - out.base < 80) { out.top = out.base + 300; out.est = true; }
+    idb.set(key, out); return out;
+  } catch(e) { return null; }
+}
+async function openSkiWx(id){
+  const r = SKI.find(x => x.id === id); if (!r) return;
+  openPanel(`<h2>🌨️ ${esc(r.zh)} 山上天氣</h2><div class="addr">查詢山頂與山腳天氣中…</div>`);
+  const el = await resortElev(r);
+  if (!el) { openPanel(`<h2>🌨️ ${esc(r.zh)} 山上天氣</h2><div class="addr">⚠️ 天氣查詢失敗，請稍後再試</div><div class="btns"><button id="swBack">← 回${esc(r.zh)}</button></div>`, () => $('swBack').onclick = () => openResort(id)); return; }
+  let W;
+  try {
+    W = await (await fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${r.lat},${r.lat}&longitude=${r.lng},${r.lng}&elevation=${el.top},${el.base}&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,snowfall,snow_depth,weather_code,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum,wind_gusts_10m_max&timezone=Asia%2FSeoul&forecast_days=4`, 12000)).json();
+    if (!Array.isArray(W)) W = [W, W];
+  } catch(e) { W = null; }
+  if (!W?.[0]?.hourly) { openPanel(`<h2>🌨️ ${esc(r.zh)} 山上天氣</h2><div class="addr">⚠️ 天氣查詢失敗，請稍後再試</div><div class="btns"><button id="swBack">← 回${esc(r.zh)}</button></div>`, () => $('swBack').onclick = () => openResort(id)); return; }
+  const now = kstNowParts(), hk = `${now.date}T${String(Math.floor(now.mins / 60)).padStart(2, '0')}:00`;
+  const at = w => { const i = Math.max(0, w.hourly.time.indexOf(hk)); const h = k => w.hourly[k][i]; return { t:h('temperature_2m'), a:h('apparent_temperature'), w:h('wind_speed_10m'), g:h('wind_gusts_10m'), v:h('visibility'), code:h('weather_code'), sd:h('snow_depth'), i }; };
+  const T = at(W[0]), B = at(W[1]);
+  const next24 = w => { const i = Math.max(0, w.hourly.time.indexOf(hk)); return w.hourly.snowfall.slice(i, i + 24).reduce((s, x) => s + (x || 0), 0); };
+  const snow24 = next24(W[0]);
+  const warns = [];
+  if (Math.max(T.g, ...W[0].hourly.wind_gusts_10m.slice(T.i, T.i + 8)) >= 55) warns.push('💨 山頂陣風很強（55 km/h 以上），吊椅和纜車可能暫停或減速，先看滑雪場公告');
+  if (T.a <= -20) warns.push('🥶 山頂體感 -20°C 以下，臉、耳朵、手指容易凍傷：戴面罩、厚手套，每隔一陣子進室內暖身');
+  else if (T.a <= -10) warns.push('🧣 山頂體感很冷，記得面罩或頸套、保暖手套');
+  if (T.v != null && T.v < 1000) warns.push('🌫️ 山頂能見度不到 1 公里，滑慢一點、待在熟悉的雪道');
+  if (snow24 >= 3) warns.push(`❄️ 未來 24 小時山頂預計降雪約 ${snow24.toFixed(0)} 公分，可能有新雪`);
+  const col = (n, x, e) => `<div><small>${n}（約 ${e} 公尺）</small><b>${wmo(x.code)[0]} ${Math.round(x.t)}°</b><span>體感 ${Math.round(x.a)}° · 風 ${Math.round(x.w)}／陣風 ${Math.round(x.g)} km/h</span></div>`;
+  const D = W[0].daily;
+  openPanel(`<h2>🌨️ ${esc(r.zh)} 山上天氣</h2>
+    <div class="exsum">${col('⛰️ 山頂', T, el.top)}${col('🏠 山腳', B, el.base)}</div>
+    ${el.est ? '<div class="addr">山頂高度是估計值。</div>' : ''}
+    ${warns.length ? `<div class="warnbox">${warns.map(w => `<div>${w}</div>`).join('')}</div>` : '<div class="addr">目前沒有特別要注意的天氣。</div>'}
+    <div class="group">山頂未來 4 天</div>
+    ${D.time.map((d, i) => `<div class="exi"><span>${wmo(D.weather_code[i])[0]}</span><span class="en">${+d.slice(5, 7)}/${+d.slice(8)}（週${ZH_DAY[weekdayOf(d)]}）<small>陣風最大 ${Math.round(D.wind_gusts_10m_max[i])} km/h</small></span><span class="ea">${Math.round(D.temperature_2m_min[i])}°／${Math.round(D.temperature_2m_max[i])}°<small>${D.snowfall_sum[i] >= 0.1 ? '❄️ ' + D.snowfall_sum[i].toFixed(1) + ' 公分' : '不下雪'}</small></span></div>`).join('')}
+    ${T.sd != null ? `<div class="addr">模型估計山頂積雪約 ${Math.round(T.sd * 100)} 公分（僅供參考，韓國滑雪場多半靠人工造雪）。</div>` : ''}
+    <div class="addr">天氣資料：Open-Meteo（依高度修正）。</div>
+    <div class="btns"><button id="swBack">← 回${esc(r.zh)}</button></div>`, () => $('swBack').onclick = () => openResort(id));
+}
+
+// ---------- 📈 滑雪紀錄（用今日足跡的 GPS 高度算趟數、落差、最高速） ----------
+function nearResort(lat, lng){ return SKI.find(r => inBox(resortBox(r), lat, lng)) || null; }
+function skiDayResort(pts){
+  if (!pts?.length) return null;
+  const cnt = {}; for (const p of pts) { const r = nearResort(p[0], p[1]); if (r) cnt[r.id] = (cnt[r.id] || 0) + 1; }
+  const best = Object.entries(cnt).sort((a,b) => b[1] - a[1])[0];
+  return best && best[1] >= Math.max(10, pts.length * 0.3) ? SKI.find(r => r.id === best[0]) : null;
+}
+// 缺高度的點，向 Open-Meteo 查地形高度補上（每次最多 100 點）
+async function fillAlt(pts){
+  const miss = pts.map((p, i) => p[3] == null ? i : -1).filter(i => i >= 0);
+  if (miss.length < pts.length * 0.4) return false;
+  const step = Math.max(1, Math.ceil(miss.length / 400)), pick = miss.filter((_, k) => k % step === 0);
+  for (let s = 0; s < pick.length; s += 100) {
+    const part = pick.slice(s, s + 100);
+    try {
+      const j = await (await fetchT(`https://api.open-meteo.com/v1/elevation?latitude=${part.map(i => pts[i][0].toFixed(5)).join(',')}&longitude=${part.map(i => pts[i][1].toFixed(5)).join(',')}`, 12000)).json();
+      (j.elevation || []).forEach((e, k) => { if (e != null) { pts[part[k]][3] = Math.round(e); pts[part[k]][5] = 1; } });
+    } catch(e) { return false; }
+  }
+  return true;
+}
+function skiStats(pts){
+  const P = pts.filter(p => p[3] != null);
+  if (P.length < 8) return null;
+  const a = P.map((p, i) => { const w = P.slice(Math.max(0, i - 1), i + 2).map(x => x[3]).sort((x, y) => x - y); return w[Math.floor(w.length / 2)]; });
+  const T = 25, piv = [0]; let trend = 0, cand = 0;
+  for (let i = 1; i < a.length; i++) {
+    if (trend === 0) { if (a[i] - a[0] >= T) { trend = 1; cand = i; } else if (a[0] - a[i] >= T) { trend = -1; cand = i; } continue; }
+    if (trend === 1) { if (a[i] >= a[cand]) cand = i; else if (a[cand] - a[i] >= T) { piv.push(cand); trend = -1; cand = i; } }
+    else { if (a[i] <= a[cand]) cand = i; else if (a[i] - a[cand] >= T) { piv.push(cand); trend = 1; cand = i; } }
+  }
+  if (trend !== 0 && piv[piv.length - 1] !== cand) piv.push(cand);
+  let runs = 0, lifts = 0, vert = 0, dist = 0, top = -Infinity; const sp = [];
+  for (let k = 0; k + 1 < piv.length; k++) {
+    const i0 = piv[k], i1 = piv[k + 1], drop = a[i0] - a[i1];
+    if (drop >= 40) {
+      runs++; vert += drop;
+      for (let i = i0 + 1; i <= i1; i++) {
+        const d = map.distance([P[i - 1][0], P[i - 1][1]], [P[i][0], P[i][1]]), dt = (P[i][2] - P[i - 1][2]) / 1000;
+        dist += d;
+        if (dt >= 2) sp.push(d / dt);
+        if (P[i][4] != null) sp.push(P[i][4]);
+      }
+    } else if (-drop >= 40) lifts++;
+  }
+  a.forEach(x => top = Math.max(top, x));
+  const ok = sp.filter(v => v > 0 && v < 33).sort((x, y) => x - y);
+  const vmax = ok.length ? ok[Math.min(ok.length - 1, Math.floor(ok.length * 0.97))] * 3.6 : null;
+  return { runs, lifts, vert:Math.round(vert), dist, vmax:vmax && Math.round(vmax), top:Math.round(top), est:P.some(p => p[5]) };
+}
+function skiStatLine(s){ return s ? `⛷️ ${s.runs} 趟 · 落差 ${s.vert.toLocaleString('en-US')} 公尺${s.vmax ? ` · 最高約 ${s.vmax} km/h` : ''} · 滑行 ${kmTxt(s.dist)}` : ''; }
+function skiTodayHtml(){
+  const pts = tracks[kstNowParts().date]; const r = skiDayResort(pts); if (!r) return '';
+  const s = skiStats(pts);
+  return `<div class="budget"><div class="bt">📈 今天在${esc(r.zh)}：${s ? skiStatLine(s) : '高度資料不足，到「滑雪紀錄」補算'}</div></div>`;
+}
+async function openSkiLog(){
+  const days = Object.keys(tracks).sort().reverse().filter(d => skiDayResort(tracks[d]));
+  openPanel(`<h2>📈 滑雪紀錄</h2>
+    <div class="addr">開著「🥾 今日足跡」去滑雪，這裡會用 GPS 的位置和高度算出每天滑了幾趟、總落差、最高速度。${tracking ? '' : '<br>⚠️ 目前沒有在記錄足跡。'}</div>
+    ${tracking ? '' : '<div class="btns"><button class="go wide" id="slStart">▶️ 開始記錄足跡</button></div>'}
+    <div id="slList">${days.length ? '計算中…' : '<div class="addr">還沒有在滑雪場的足跡紀錄。</div>'}</div>
+    <div class="addr">手機 GPS 的高度誤差約數十公尺；缺高度時會改用地形高度補算（標示「估」）。速度取最高的幾筆中去掉異常值，僅供參考。網頁版在螢幕關掉時會暫停記錄。</div>`, el => {
+      if ($('slStart')) $('slStart').onclick = () => { setTracking(true); openSkiLog(); };
+    });
+  if (!days.length) return;
+  let changed = false;
+  for (const d of days) { if (await fillAlt(tracks[d])) changed = true; }
+  if (changed) store.set('kmap_tracks', tracks);
+  const box = $('slList'); if (!box) return;
+  box.innerHTML = days.map(d => { const r = skiDayResort(tracks[d]), s = skiStats(tracks[d]);
+    return `<div class="exi"><span>⛷️</span><span class="en">${+d.slice(5, 7)}/${+d.slice(8)}（週${ZH_DAY[weekdayOf(d)]}）${esc(r.zh)}<small>${s ? skiStatLine(s) + (s.est ? '（估）' : '') : '高度資料不足'}</small></span><span class="ea">${s ? s.runs + ' 趟' : '-'}<small>${s?.top > 0 ? '最高 ' + s.top + ' m' : ''}</small></span></div>`; }).join('');
+}
+
+// ---------- ✈️ 回程倒數 ----------
+let flight = store.get('kmap_flight', null);   // {t:'YYYY-MM-DDTHH:MM'（韓國時間）, ap, no, early(分鐘), travel(分鐘), from}
+const kstMs = s => Date.parse(s + ':00+09:00');
+function fmtLeft(ms){
+  if (ms <= 0) return '已經到了';
+  const m = Math.round(ms / 60000), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mm = m % 60;
+  return (d ? d + ' 天 ' : '') + (d || h ? h + ' 小時 ' : '') + mm + ' 分';
+}
+function fmtKst(ms){ return new Date(ms).toLocaleString('zh-TW', { timeZone:KST_TZ, month:'numeric', day:'numeric', weekday:'short', hour:'2-digit', minute:'2-digit', hour12:false }); }
+function flightPlan(){
+  if (!flight?.t) return null;
+  const dep = kstMs(flight.t), atAp = dep - flight.early * 60000, leave = atAp - (flight.travel || 90) * 60000;
+  return { dep, atAp, leave };
+}
+async function estTravel(from, ap){
+  const A = AIRPORTS[ap];
+  try {
+    const it = await transitLeg(from, A, new Date(Math.max(Date.now(), flightPlan()?.leave || Date.now())).toISOString());
+    if (it) return { min:Math.round((new Date(it.endTime) - new Date(it.startTime)) / 60000) + 15, how:'大眾運輸' };
+  } catch(e) {}
+  const r = await osrmLeg('car', from, A);
+  if (r) return { min:Math.round(r.duration / 60 * 1.25) + 20, how:'開車／計程車（含塞車緩衝）' };
+  return null;
+}
+function openFlight(){
+  const P = flightPlan(), now = Date.now();
+  const ap = flight?.ap || 'icn1';
+  openPanel(`<h2>✈️ 回程倒數</h2>
+    ${P ? `<div class="exsum"><div><small>最晚出發</small><b>${fmtKst(P.leave)}</b><span>${P.leave > now ? '還有 ' + fmtLeft(P.leave - now) : '⚠️ 已經過了建議出發時間'}</span></div>
+      <div><small>起飛</small><b>${fmtKst(P.dep)}</b><span>${esc(AIRPORTS[flight.ap].name)}${flight.no ? ' · ' + esc(flight.no) : ''}</span></div></div>
+      <div class="addr">起飛前 ${flight.early / 60} 小時到機場；交通約 ${flight.travel} 分鐘（${esc(flight.how || '估計')}，從${esc(flight.from || '飯店')}出發）。</div>` : '<div class="addr">輸入回程航班，會算出最晚幾點要出發去機場，並在地圖上方倒數。</div>'}
+    <div class="fx"><label>起飛時間（韓國時間）<input type="datetime-local" id="flT" value="${flight?.t || ''}"></label></div>
+    <div class="fx"><label>機場<select id="flAp" class="ipsel">${Object.entries(AIRPORTS).map(([k, a]) => `<option value="${k}" ${k === ap ? 'selected' : ''}>${a.name}</option>`).join('')}</select></label>
+      <label>航班（選填）<input id="flNo" value="${esc(flight?.no || '')}" placeholder="例如 BR169"></label></div>
+    <div class="fx"><label>提早到機場<select id="flEarly" class="ipsel">${[120, 150, 180].map(m => `<option value="${m}" ${(flight?.early || 180) === m ? 'selected' : ''}>起飛前 ${m / 60} 小時</option>`).join('')}</select></label></div>
+    <div class="btns"><button class="go" id="flSave">💾 儲存並計算</button>${flight ? '<button id="flIcs">📅 加入行事曆提醒</button><button id="flDel">🗑 刪除</button>' : ''}</div>
+    <div class="btns">${flight ? '<button id="flRoute">🧭 查去機場的路線</button>' : ''}<button id="flAir">🚄 機場交通指南</button></div>
+    <div class="addr">「加入行事曆」會下載一個 .ics 檔，打開後加到手機行事曆，在出發前 1 小時提醒你（網頁關著也會提醒）。韓國仁川機場國際線一般建議起飛前 2～3 小時到，旺季提早一點。</div>`, el => {
+      $('flSave').onclick = async () => {
+        const t = $('flT').value; if (!t) { toast('請輸入起飛時間'); return; }
+        const from = hotel ? { lat:hotel.lat, lng:hotel.lng, n:'飯店' } : myPos ? { lat:myPos[0], lng:myPos[1], n:'目前位置' } : null;
+        flight = { t, ap:$('flAp').value, no:$('flNo').value.trim(), early:+$('flEarly').value, travel:flight?.travel || 90, from:from?.n || '飯店（未設定，暫估 90 分鐘）', how:flight?.how };
+        store.set('kmap_flight', flight); toast('計算交通時間中…');
+        if (from) { const e = await estTravel(from, flight.ap); if (e) { flight.travel = e.min; flight.how = e.how; } }
+        store.set('kmap_flight', flight); drawFlightBar(); openFlight();
+      };
+      if ($('flDel')) $('flDel').onclick = () => { flight = null; store.set('kmap_flight', null); drawFlightBar(); openFlight(); };
+      if ($('flIcs')) $('flIcs').onclick = flightIcs;
+      if ($('flRoute')) $('flRoute').onclick = () => { const a = AIRPORTS[flight.ap]; openRoute({ lat:a.lat, lng:a.lng, name:a.name, ko:a.ko }); };
+      $('flAir').onclick = openAirport;
+    });
+}
+function flightIcs(){
+  const P = flightPlan(); if (!P) return;
+  const z = ms => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const a = AIRPORTS[flight.ap];
+  const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//korea_map//flight//ZH','BEGIN:VEVENT', `UID:kmap-${P.dep}@korea-map`, `DTSTAMP:${z(Date.now())}`,
+    `DTSTART:${z(P.leave)}`, `DTEND:${z(P.atAp)}`, `SUMMARY:出發去${a.name}${flight.no ? '（' + flight.no + '）' : ''}`,
+    `DESCRIPTION:起飛 ${fmtKst(P.dep)}（韓國時間）\\n最晚 ${fmtKst(P.leave)} 從${flight.from || '飯店'}出發`, `LOCATION:${a.ko}`,
+    'BEGIN:VALARM','TRIGGER:-PT60M','ACTION:DISPLAY','DESCRIPTION:一小時後要出發去機場','END:VALARM',
+    'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:現在要出發去機場了','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  if (!downloadFile(`flight-${flight.t.slice(0, 10)}.ics`, ics, 'text/calendar')) toast('此瀏覽器不支援下載');
+}
+function drawFlightBar(){
+  let bar = $('flightBar');
+  const P = flightPlan(), now = Date.now();
+  if (!P || P.dep < now - 3600e3 || P.leave - now > 2 * 86400e3) { if (bar) bar.remove(); return; }
+  if (!bar) { bar = document.createElement('div'); bar.id = 'flightBar'; document.querySelector('.top').appendChild(bar); bar.onclick = openFlight; }
+  const urgent = P.leave - now < 3 * 3600e3;
+  bar.className = urgent ? 'urgent' : '';
+  bar.innerHTML = P.leave > now ? `✈️ 回程：最晚 <b>${fmtKst(P.leave)}</b> 出發 · 還有 ${fmtLeft(P.leave - now)}` : `✈️ 該出發去機場了！起飛 ${fmtKst(P.dep)}`;
+}
+drawFlightBar(); setInterval(drawFlightBar, 60000);
+
+// ---------- 🛃 入境台灣免稅額度 ----------
+let duty = store.get('kmap_duty', { liq:0, cig:0 });
+function openDuty(){
+  const r = rateK2T();
+  const shopK = exp.items.filter(x => x.cat === 'shop').reduce((s, x) => s + x.krw, 0);
+  const shopT = r ? shopK * r : null, pct = shopT != null ? shopT / 35000 : 0;
+  const col = pct > 1 ? '#d93025' : pct > 0.8 ? '#e8710a' : '#188038';
+  openPanel(`<h2>🛃 入境台灣免稅額度</h2>
+    <div class="group">🛍️ 購物（記帳裡「購物」類）</div>
+    <div class="budget"><div class="bt">${won(shopK)}${shopT != null ? ` ≈ NT$${Math.round(shopT).toLocaleString('en-US')}` : ''} / 免稅額 NT$35,000 · ${Math.round(pct * 100)}%${pct > 1 ? ' · <b style="color:#d93025">超過了，入境要走紅線申報</b>' : ''}</div>
+      <div class="prog"><div style="width:${Math.min(100, pct * 100)}%;background:${col}"></div></div></div>
+    <div class="addr">免稅額依「完稅價格」計算，這裡用記帳金額換算，僅供參考。菸酒另外計算，不算在 3 萬 5 千元裡。</div>
+    <div class="group">🍶 菸酒</div>
+    <div class="fx"><label>酒（公升，年滿 18 歲）<input type="number" inputmode="decimal" step="0.1" id="dtLiq" value="${duty.liq || ''}" placeholder="例如 0.75"></label>
+      <label>捲菸（支，年滿 20 歲）<input type="number" inputmode="numeric" id="dtCig" value="${duty.cig || ''}" placeholder="一條 200 支"></label></div>
+    <div id="dtOut"></div>
+    <div class="warnbox"><div>🐷 <b>豬肉製品不要帶！</b>韓國是非洲豬瘟疫區：火腿、香腸、肉乾、含肉餡的點心、泡麵裡的肉塊調理包、飛機餐的肉品都不行。違規帶入初犯罰 <b>20 萬元</b>，再犯 100 萬元。帶了就在入境前丟進棄置箱。</div></div>
+    <div class="ts sm">其他要走紅線申報的情況：新臺幣現金超過 10 萬元、外幣現金超過等值 1 萬美元、黃金價值超過 2 萬美元、水產品及動植物類產品、有不隨身行李。</div>
+    <div class="addr">規定以財政部關務署公告為準：<a href="https://web.customs.gov.tw" target="_blank" rel="noopener">web.customs.gov.tw</a>（旅客通關）。</div>`, () => {
+      const upd = () => {
+        duty = { liq:+$('dtLiq').value || 0, cig:+$('dtCig').value || 0 }; store.set('kmap_duty', duty);
+        const m = [];
+        m.push(duty.liq > 1.5 ? `🍶 酒 ${duty.liq} 公升：超過免稅 1.5 公升，要走紅線申報（申報後總量 5 公升內可繳稅帶入）` : `🍶 酒 ${duty.liq || 0} 公升：在免稅 1.5 公升內 ✅`);
+        m.push(duty.cig > 200 ? `🚬 捲菸 ${duty.cig} 支：超過免稅 200 支（1 條），要走紅線申報` : `🚬 捲菸 ${duty.cig || 0} 支：在免稅 200 支內 ✅（雪茄 25 支或菸絲 1 磅擇一）`);
+        $('dtOut').innerHTML = m.map(x => `<div class="ts sm">${x}</div>`).join('') + '<div class="ts sm">⚠️ 國外買的加熱菸不能帶回台灣（只有台灣免稅店賣的核准品項可以）。</div>';
+      };
+      $('dtLiq').oninput = upd; $('dtCig').oninput = upd; upd();
+    });
+}
+
+// ---------- 📱 韓國常用 App ----------
+const APPS = [
+  { e:'🚕', n:'K.Ride', d:'Kakao 出的外國人叫車 App：不需要韓國手機號碼、可以綁國際信用卡，介面有繁體中文。', q:'K.Ride' },
+  { e:'🚖', n:'Kakao T', d:'韓國最多人用的叫車 App，可綁 Visa、Mastercard。', q:'Kakao T' },
+  { e:'🗺️', n:'Naver Map', d:'韓國的大眾運輸、步行路線最準，店家資訊也多。', q:'Naver Map', web:'https://map.naver.com' },
+  { e:'📍', n:'Kakao Map', d:'另一個韓國地圖，可看即時公車位置。', q:'KakaoMap', web:'https://map.kakao.com' },
+  { e:'🔤', n:'Papago', d:'Naver 的翻譯 App，韓文翻譯自然，可拍照翻譯菜單、招牌。', q:'Papago', web:'https://papago.naver.com' },
+  { e:'💬', n:'KakaoTalk', d:'韓國人最常用的通訊軟體，民宿、店家常用它聯絡。', q:'KakaoTalk' },
+];
+function appStoreUrl(q){
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/i.test(ua)) return `itms-apps://search.itunes.apple.com/WebObjects/MZSearch.woa/wa/search?media=software&term=${encodeURIComponent(q)}`;
+  if (/Android/i.test(ua)) return `https://play.google.com/store/search?q=${encodeURIComponent(q)}&c=apps`;
+  return `https://www.google.com/search?q=${encodeURIComponent(q + ' app')}`;
+}
+function openApps(){
+  openPanel(`<h2>📱 韓國常用 App</h2>
+    <div class="addr">在韓國，Google Map 的路線和店家資訊不完整，建議出發前先裝好這幾個。下面的按鈕會打開 App Store／Google Play 搜尋。</div>
+    <div class="aps">${APPS.map(a => `<div class="apo approw"><div><b>${a.e} ${a.n}</b><small>${a.d}</small></div><div class="rpb"><a class="btnlink" href="${appStoreUrl(a.q)}" target="_blank" rel="noopener">下載</a>${a.web ? `<a class="btnlink" href="${a.web}" target="_blank" rel="noopener">網頁版</a>` : ''}</div></div>`).join('')}</div>
+    <div class="addr">在地點資訊裡按「Kakao／Naver」可以直接用這兩個地圖打開同一個地點。</div>`);
+}
+
+// ---------- ⚡ 搜尋加速：本機即時比對 ----------
+let localIdx = null, localIdxN = 0;
+async function loadSubwayAll(){
+  const out = [];
+  await Promise.all(SUBWAY_REGIONS.map(async reg => {
+    let d = subway.loaded[reg.id];
+    if (!d) { try { const r = await fetchT(`data/subway-${reg.id}.json`, 20000); if (r.ok) d = subway.loaded[reg.id] = await r.json(); } catch(e) {} }
+    if (d?.stations) out.push(...d.stations);
+  }));
+  return out;
+}
+let localLoading = null;
+function warmLocal(){
+  return localLoading ||= Promise.all([loadPoi(), loadSubwayAll(), loadSki()]).then(([pd, st]) => {
+    const it = [], add = (name, ko, lat, lng, e, sub, extra, pri) => {
+      const keys = [...new Set([name, ko, extra?.en].filter(Boolean).map(normKey).filter(k => k.length >= 1))];
+      if (keys.length) it.push({ name, ko, lat, lng, e, sub, keys, pri, tags:extra?.tags || null, en:extra?.en || null });
+    };
+    Object.entries(SPOTS).forEach(([city, arr]) => arr.forEach(s => add(s[0], s[1], s[2], s[3], '⭐', '熱門景點 · ' + city, null, 5)));
+    SKI.forEach(r => add(r.zh, r.ko, r.lat, r.lng, '⛷️', '滑雪場 · ' + r.area, { en:r.en }, 5));
+    const seenSt = new Set();
+    const stName = (s, suf) => /[站역]$/.test(s) ? s : s + suf;
+    (st || []).forEach(s => { const k = normKey(s.ko) + Math.round(s.lat * 60) + Math.round(s.lng * 60); if (seenSt.has(k)) return; seenSt.add(k);
+      add(s.zh ? stName(s.zh, '站') : stName(s.ko, '역'), stName(s.ko, '역'), s.lat, s.lng, '🚇', (s.lines || []).map(l => l.l).join('、') || '地鐵站', { en:s.en ? s.en + ' Station' : null }, 4); });
+    const KN = { t:['📍','景點'], u:['🏛️','博物館'], g:['🖼️','美術館'], h:['🏯','古蹟'], p:['🌳','公園'], m:['🛒','市場'], l:['🛍️','購物中心'], d:['🏬','百貨公司'], c:['🎬','電影院'], v:['🔭','觀景點'] };
+    (pd?.items || []).forEach(x => add(x[6] || x[7], x[7], x[0], x[1], KN[x[8]]?.[0] || '📍', KN[x[8]]?.[1] || '', { tags:x[9] ? { opening_hours:x[9] } : null }, 'tuhl'.includes(x[8]) ? 3 : 2));
+    localIdx = it; localIdxN = it.length; return it;
+  });
+}
+function localMatches(q, n = 8){
+  const qk = normKey(q); if (!qk) return [];
+  if (/^(滑雪|滑雪场|滑雪場|ski|skiing|스키|스키장)$/.test(qk)) { const c = map.getCenter(); return SKI.map(r => ({ name:r.zh, ko:r.ko, lat:r.lat, lng:r.lng, e:'⛷️', sub:'滑雪場 · ' + r.area, en:r.en, d:map.distance(c, [r.lat, r.lng]) })).sort((a,b) => a.d - b.d).slice(0, n); }
+  const pool = [...(localIdx || [])];
+  favs.forEach(f => { const keys = [f.name, f.ko].filter(Boolean).map(normKey); pool.push({ name:f.name, ko:f.ko, lat:f.lat, lng:f.lng, e:'⭐', sub:'我的收藏', keys, pri:6 }); });
+  hist.p.forEach(h => { const keys = [h.name, h.ko].filter(Boolean).map(normKey); pool.push({ name:h.name, ko:h.ko, lat:h.lat, lng:h.lng, e:'🕘', sub:'最近看過', keys, pri:5 }); });
+  const c = map.getCenter(), out = [];
+  for (const x of pool) {
+    let s = 0;
+    for (const k of x.keys) {
+      if (k === qk) { s = Math.max(s, 1); break; }
+      if (k.startsWith(qk)) s = Math.max(s, 0.85 - Math.min(0.2, (k.length - qk.length) * 0.02));
+      else if (qk.length >= 2 && k.includes(qk)) s = Math.max(s, 0.7 - Math.min(0.2, (k.length - qk.length) * 0.02));
+      else if (qk.length >= 3 && qk.includes(k) && k.length >= 2) s = Math.max(s, 0.55);
+    }
+    if (s) out.push({ x, s: s + x.pri * 0.02 - Math.min(0.1, map.distance(c, [x.lat, x.lng]) / 3e6) });
+  }
+  out.sort((a, b) => b.s - a.s);
+  const seen = new Set(), res = [];
+  for (const o of out) { const k = o.x.e + normKey(o.x.name) + Math.round(o.x.lat * 60) + Math.round(o.x.lng * 60); if (seen.has(k)) continue; seen.add(k); res.push(o.x); if (res.length >= n) break; }
+  return res;
+}
+function localRow(x, i){
+  return `<div class="r res lr" data-li="${i}"><span class="near" style="background:#e6f4ea;color:#137333">${x.e} ${esc(x.sub)}</span><b>${esc(x.name)}${distTag(x.lat, x.lng)}${obHtml(x.tags?.opening_hours)}</b>${x.ko && x.ko !== x.name ? `<div class="sub">${esc(x.ko)}</div>` : ''}</div>`;
+}
+function bindLocal(box, arr){
+  box.querySelectorAll('[data-li]').forEach(el => el.onclick = () => {
+    const x = arr[+el.dataset.li]; $('results').style.display = 'none';
+    const pl = { lat:x.lat, lng:x.lng, name:x.name, ko:x.ko, en:x.en, tags:x.tags || {} }; addHistPlace(pl); showPlace(pl);
+  });
+}
+// 打字時馬上列出相符的常用地點
+let sugT = null;
+$('q').addEventListener('focus', () => warmLocal());
+$('q').addEventListener('input', () => {
+  clearTimeout(sugT);
+  const q = $('q').value.trim(); if (!q) return;
+  if (!/[ㄱ-힝一-鿿]/.test(q) && q.length < 2) return;
+  const sid = searchId;
+  sugT = setTimeout(async () => {
+    if (!localIdx) await warmLocal();
+    if ($('q').value.trim() !== q || searchId !== sid) return;   // 已經按下搜尋，就不要蓋掉搜尋結果
+    const arr = localMatches(q); const box = $('results');
+    if (!arr.length) { if (box.querySelector('.lsug')) box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.innerHTML = `<div class="hh lsug">⚡ 常用地點（按 Enter 或 🔍 搜尋更多）</div>${arr.map(localRow).join('')}`;
+    bindLocal(box, arr);
+  }, 120);
+});
+
+// ---------- ⚡ 搜尋加速：Nominatim 查詢快取（存在瀏覽器裡 7 天）與排隊 ----------
+const nomiMem = new Map(), nomiFly = new Map(); let nomiLast = 0;
+let nomiIdx = store.get('kmap_ncidx', []);   // [[key, time]]
+async function nominatimC(q){
+  const k = q.trim().toLowerCase();
+  if (nomiMem.has(k)) return nomiMem.get(k);
+  if (nomiFly.has(k)) return nomiFly.get(k);
+  const p = (async () => {
+    const hit = nomiIdx.find(x => x[0] === k);
+    if (hit && Date.now() - hit[1] < 7 * 864e5) { const d = await idb.get('nc:' + k); if (d) { nomiMem.set(k, d); return d; } }
+    const wait = nomiLast + 1100 - Date.now(); if (wait > 0) await sleep(wait);   // Nominatim：每秒最多 1 次
+    nomiLast = Date.now();
+    const d = await nominatim(q);
+    if (d) {
+      nomiMem.set(k, d); idb.set('nc:' + k, d);
+      nomiIdx = [[k, Date.now()], ...nomiIdx.filter(x => x[0] !== k)];
+      const drop = nomiIdx.splice(150); if (drop.length) idb.open().then(db => { const os = db.transaction('kv','readwrite').objectStore('kv'); drop.forEach(x => os.delete('nc:' + x[0])); }).catch(() => {});
+      store.set('kmap_ncidx', nomiIdx);
+    }
+    return d;
+  })();
+  nomiFly.set(k, p);
+  try { return await p; } finally { nomiFly.delete(k); }
+}
+
 $('phraseBtn').onclick = openPhrases;
 $('hotelBtn').onclick = openHotel;
 $('menuBtn').onclick = openMenu;
