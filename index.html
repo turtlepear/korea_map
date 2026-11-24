@@ -1222,6 +1222,7 @@ return maplibregl$1;
   .fab { position:absolute; right:12px; z-index:1000; width:46px; height:46px; border-radius:50%; border:0; background:var(--bg); box-shadow:0 2px 8px rgba(0,0,0,.3); font-size:20px; cursor:pointer; }
   #locBtn { bottom:28px; } #favBtn { bottom:84px; } #layerBtn { bottom:140px; } #spotBtn { bottom:196px; } #langBtn { bottom:143px; right:64px; width:40px; height:40px; font-size:12px; font-weight:700; color:var(--t); letter-spacing:-.5px; padding:0; }
   .mlo { display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:10px; margin:4px 0; border:1.5px solid var(--line); border-radius:12px; background:var(--card); color:var(--t); cursor:pointer; font-size:15px; } .mlo.on { border-color:#1a73e8; background:#e8f0fe; } body.dark .mlo.on { background:#1c2b45; }
+  .atr { display:flex; gap:10px; align-items:flex-start; padding:10px; margin:8px 0 4px; border:1px dashed var(--line); border-radius:12px; cursor:pointer; font-size:14px; } .atr input { margin-top:3px; width:18px; height:18px; } .atr small { display:block; color:var(--m); font-size:12px; margin-top:2px; }
   .mlo pre { margin:0; min-width:110px; font:600 13px/1.35 -apple-system,"PingFang TC","Noto Sans TC","Noto Sans KR",sans-serif; color:#1a73e8; white-space:pre; } .mlo small { display:block; color:var(--m); font-size:12px; }
   .sheet { position:absolute; left:0; right:0; bottom:0; z-index:1100; background:var(--bg); border-radius:16px 16px 0 0; box-shadow:0 -2px 12px rgba(0,0,0,.25); padding:8px 16px 18px; max-height:62vh; overflow:auto; transform:translateY(105%); transition:transform .25s; }
   @media (min-width: 700px) { .sheet { left:10px; right:auto; width:440px; bottom:10px; border-radius:16px; } }
@@ -3634,21 +3635,28 @@ const ZH = [G_("name:zh-Hant"), G_("name:zh"), G_("name:zh-Hans")], KO = [G_("na
 const bi = (a, b) => ["let", "a", ["coalesce", ...a, ""], "b", ["coalesce", ...b, ""],
   ["case", ["all", ["!=", ["var","a"], ""], ["!=", ["var","b"], ""], ["!=", ["var","a"], ["var","b"]]], ["concat", ["var","a"], "\n", ["var","b"]],
            ["!=", ["var","a"], ""], ["var","a"], ["var","b"]]];
+// 小地方（店家、小路、社區）的圖資常常只有韓文：把畫面上的韓文地名自動翻譯，存成對照表套回標籤
+const autoDict = { zh:new Map(), en:new Map() };   // 韓文名 → 翻譯
+let autoTr = store0('kmap_autotr', true);
+function dictExpr(lang, rest){
+  const d = autoDict[lang]; if (!autoTr || !d.size) return rest;
+  const a = ["match", ["to-string", ["get", "name"]]]; for (const [k, v] of d) a.push(k, v); a.push(rest); return a;
+}
 const MAP_LANGS = {
-  zhko:   { n:'中文＋韓文', s:'中韓', ex:'首爾站\n서울역', e: bi(ZH, KO) },
-  zh:     { n:'中文', s:'中', ex:'首爾站', note:'沒有中文名稱時顯示英文', e: ["coalesce", ...ZH, ...EN, G_("name"), ""] },
-  ko:     { n:'韓文', s:'韓', ex:'서울역', note:'和路牌、地鐵站標示一樣', e: ["coalesce", ...KO, ""] },
-  en:     { n:'英文', s:'EN', ex:'Seoul Station', e: ["coalesce", ...EN, G_("name"), ""] },
-  enko:   { n:'英文＋韓文', s:'EN韓', ex:'Seoul Station\n서울역', e: bi(EN, KO) },
-  kolatn: { n:'韓文＋羅馬拼音', s:'拼', ex:'서울역\nSeoullyeok', note:'看拼音就能唸出韓文地名', e: bi(KO, [G_("name:ko-Latn"), G_("name:latin")]) },
-  zhja:   { n:'中文＋日文', s:'中日', ex:'首爾站\nソウル駅', e: bi(ZH, [G_("name:ja"), G_("name")]) },
+  zhko:   { n:'中文＋韓文', s:'中韓', ex:'首爾站\n서울역', d:'zh', e: () => bi([...ZH, dictExpr('zh', "")], KO) },
+  zh:     { n:'中文', s:'中', ex:'首爾站', d:'zh', note:'沒有中文名稱時顯示自動翻譯或英文', e: () => ["coalesce", ...ZH, dictExpr('zh', ["coalesce", ...EN, G_("name"), ""])] },
+  ko:     { n:'韓文', s:'韓', ex:'서울역', note:'和路牌、地鐵站標示一樣', e: () => ["coalesce", ...KO, ""] },
+  en:     { n:'英文', s:'EN', ex:'Seoul Station', d:'en', e: () => ["coalesce", G_("name:en"), dictExpr('en', ["coalesce", G_("name_en"), G_("name:latin"), G_("name"), ""])] },
+  enko:   { n:'英文＋韓文', s:'EN韓', ex:'Seoul Station\n서울역', d:'en', e: () => bi([G_("name:en"), dictExpr('en', ["coalesce", G_("name_en"), G_("name:latin"), ""])], KO) },
+  kolatn: { n:'韓文＋羅馬拼音', s:'拼', ex:'서울역\nSeoullyeok', note:'看拼音就能唸出韓文地名', e: () => bi(KO, [G_("name:ko-Latn"), G_("name:latin")]) },
+  zhja:   { n:'中文＋日文', s:'中日', ex:'首爾站\nソウル駅', d:'zh', e: () => bi([...ZH, dictExpr('zh', "")], [G_("name:ja"), G_("name")]) },
 };
 let mapLang = store0('kmap_maplang', 'zhko'); if (!MAP_LANGS[mapLang]) mapLang = 'zhko';
 function store0(k, d){ try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e) { return d; } }
 function applyLabels(m){
   try {
     if (!m.getStyle()) return false;
-    const ex = MAP_LANGS[mapLang].e;
+    const ex = MAP_LANGS[mapLang].e();
     m.getStyle().layers.forEach(ly => {
       if (ly.type !== 'symbol') return;
       const tf = m.getLayoutProperty(ly.id, 'text-field');
@@ -3663,6 +3671,7 @@ function vector(style){
     const m = lyr.getMaplibreMap(); if (!m || m._hooked) return;
     m._hooked = true;
     m.on('styledata', () => { if (m._lang !== mapLang) applyLabels(m); });
+    m.on('idle', () => scheduleAutoTr(m));
     if (m._lang !== mapLang) applyLabels(m);
   });
   return lyr;
@@ -6945,11 +6954,57 @@ ${x.photos ? `<div class="ph">${x.places.flatMap(p => photoKeys(p)).filter(k => 
 }
 
 
+
+// ---------- 🌐 小地方自動翻譯（地圖停下來後，翻譯畫面上只有韓文的地名） ----------
+let atTimer = null, atBusy = false, atFailN = 0;
+const atFail = new Set();
+const AT_MAX = 3000;
+function scheduleAutoTr(m){ clearTimeout(atTimer); atTimer = setTimeout(() => autoTranslateVisible(m), 700); }
+async function batchTr(arr, tl){
+  const q = arr.join('\n');
+  try {
+    const j = await (await fetchT(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=${tl}&dt=t&q=${encodeURIComponent(q)}`, 12000)).json();
+    const out = j[0].map(x => x[0]).join('').split('\n').map(x => x.trim());
+    if (out.length === arr.length) return out;
+  } catch(e) {}
+  return null;
+}
+async function autoTranslateVisible(m){
+  const lang = autoTr ? MAP_LANGS[mapLang].d : null;
+  if (!lang || atBusy || atFailN >= 5) return;
+  let feats;
+  try { const ids = m.getStyle().layers.filter(l => l.type === 'symbol').map(l => l.id); feats = m.queryRenderedFeatures({ layers:ids }); } catch(e) { return; }
+  const d = autoDict[lang], want = new Set();
+  for (const f of feats) {
+    const p = f.properties || {}, n = p.name;
+    if (typeof n !== 'string' || n.length > 40 || !/[가-힣]/.test(n) || d.has(n) || atFail.has(lang + n)) continue;
+    if (lang === 'zh' && (p['name:zh-Hant'] || p['name:zh'] || p['name:zh-Hans'])) continue;
+    if (lang === 'en' && p['name:en']) continue;
+    want.add(n); if (want.size >= 60) break;
+  }
+  if (!want.size) return;
+  atBusy = true;
+  try {
+    const arr = [...want], out = await batchTr(arr, lang === 'zh' ? 'zh-TW' : 'en');
+    if (!out) { atFailN++; return; }
+    atFailN = 0;
+    arr.forEach((k, i) => { const v = out[i]; if (v && v !== k && !/[가-힣]/.test(v)) d.set(k, v); else atFail.add(lang + k); });
+    while (d.size > AT_MAX) d.delete(d.keys().next().value);
+    idb.set('labeldict-' + lang, [...d]);
+    layers.forEach(x => { const mm = x.l.getMaplibreMap?.(); if (mm && mm._hooked) applyLabels(mm); });
+  } finally { atBusy = false; }
+  if (want.size >= 60) scheduleAutoTr(m);
+}
+// 啟動時載入之前翻譯過的地名
+Promise.all(['zh', 'en'].map(async l => { const a = await idb.get('labeldict-' + l); if (Array.isArray(a)) a.forEach(([k, v]) => autoDict[l].set(k, v)); }))
+  .then(() => layers.forEach(x => { const m = x.l.getMaplibreMap?.(); if (m && m._hooked && (autoDict.zh.size || autoDict.en.size)) applyLabels(m); }))
+  .catch(() => {});
+
 // ---------- 🌐 地圖語言切換 ----------
 function setMapLang(l){
   if (!MAP_LANGS[l]) return;
   mapLang = l; store.set('kmap_maplang', l);
-  layers.forEach(x => { const m = x.l.getMaplibreMap?.(); if (m && m._hooked) { applyLabels(m); try { m.triggerRepaint(); } catch(e) {} } });
+  layers.forEach(x => { const m = x.l.getMaplibreMap?.(); if (m && m._hooked) { applyLabels(m); try { m.triggerRepaint(); } catch(e) {} scheduleAutoTr(m); } });
   $('langBtn').textContent = MAP_LANGS[l].s;
 }
 function openMapLang(){
@@ -6957,7 +7012,9 @@ function openMapLang(){
   openPanel(`<h2>🌐 地圖語言</h2>
     <div class="addr">切換地圖上地名、路名、站名的文字。${isVec ? '' : '<br>⚠️ 目前是「' + esc(layers[layerIdx].name) + '」，這種圖片地圖的文字無法切換，選了之後會自動換回標準地圖。'}</div>
     ${Object.entries(MAP_LANGS).map(([k, v]) => `<button class="mlo${k === mapLang ? ' on' : ''}" data-ml="${k}"><pre>${esc(v.ex)}</pre><div><b>${v.n}</b>${v.note ? `<small>${v.note}</small>` : ''}</div></button>`).join('')}
+    <label class="atr"><input type="checkbox" id="mlAuto" ${autoTr ? 'checked' : ''}> <span><b>自動翻譯小地方</b><small>店家、小路、社區等只有韓文名稱的地方，自動翻成中文或英文（Google 翻譯，可能不精準；已翻譯 ${autoDict.zh.size + autoDict.en.size} 個）</small></span></label>
     ${VECTOR_OK ? '' : '<div class="addr">⚠️ 這個瀏覽器不支援向量地圖，只能使用圖片地圖，無法切換地圖語言。</div>'}`, el => {
+      $('mlAuto').onchange = e => { autoTr = e.target.checked; store.set('kmap_autotr', autoTr); setMapLang(mapLang); toast(autoTr ? '已開啟小地方自動翻譯' : '已關閉小地方自動翻譯'); };
       el.querySelectorAll('[data-ml]').forEach(b => b.onclick = () => {
         if (!VECTOR_OK) { toast('這個瀏覽器無法切換地圖語言'); return; }
         setMapLang(b.dataset.ml);
