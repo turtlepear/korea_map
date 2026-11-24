@@ -3900,6 +3900,8 @@ async function translateOnly(q){
 async function search(raw){
   addHistQuery(raw);
   if (typeof sugT !== 'undefined') clearTimeout(sugT);
+  const cq = catQuery(raw);
+  if (cq) { ++searchId; return runCategory(cq.k, { brand:cq.brand }); }
   const id = ++searchId;
   const box = $('results');
   box.style.display = 'block';
@@ -7635,10 +7637,11 @@ $('q').addEventListener('input', () => {
   sugT = setTimeout(async () => {
     if (!localIdx) await warmLocal();
     if ($('q').value.trim() !== q || searchId !== sid) return;   // 已經按下搜尋，就不要蓋掉搜尋結果
-    const arr = localMatches(q); const box = $('results');
-    if (!arr.length) { if (box.querySelector('.lsug')) box.style.display = 'none'; return; }
+    const cq = catQuery(q), arr = cq ? [] : localMatches(q); const box = $('results');
+    if (!arr.length && !cq) { if (box.querySelector('.lsug')) box.style.display = 'none'; return; }
     box.style.display = 'block';
-    box.innerHTML = `<div class="hh lsug">⚡ 常用地點（按 Enter 或 🔍 搜尋更多）</div>${arr.map(localRow).join('')}`;
+    box.innerHTML = `<div class="hh lsug">⚡ 常用地點（按 Enter 或 🔍 搜尋更多）</div>${cq ? `<div class="r res lr" id="sugCat"><b>${CATS[cq.k].e} 找附近的${esc(cq.brand ? cq.brand.n : CATS[cq.k].zh)}</b><small>依距離列出，按 Enter 也可以</small></div>` : ''}${arr.map(localRow).join('')}`;
+    if (cq) $('sugCat').onclick = () => runCategory(cq.k, { brand:cq.brand });
     bindLocal(box, arr);
   }, 120);
 });
@@ -7974,6 +7977,143 @@ async function photonC(q){
     phMem.set(k, out); return out;
   } catch(e) { return null; }
 }
+
+// ====================================================================
+//  第十批：附近分類搜尋（加油站、便利商店、ATM…）變快
+//  Photon 依類別找附近（約 0.3～1 秒）先顯示；Overpass 同時查，回來後補上營業時間和漏掉的地點
+// ====================================================================
+const CATS = {
+  subway:   { e:'🚇', zh:'地鐵站',      tags:['railway:station','railway:halt','railway:subway_entrance'], r:[600, 2000], w:['地鐵站','地鐵','捷運','捷運站','지하철역','지하철','subway','metro'] },
+  cvs:      { e:'🏪', zh:'便利商店',    tags:['shop:convenience'], r:[300, 1000], w:['便利商店','便利店','超商','편의점','convenience store','convenience'] },
+  food:     { e:'🍜', zh:'餐廳',        tags:['amenity:restaurant','amenity:fast_food','amenity:food_court'], r:[300, 800], w:['餐廳','吃飯','飯館','식당','음식점','restaurant','restaurants'] },
+  cafe:     { e:'☕', zh:'咖啡廳',      tags:['amenity:cafe'], r:[300, 800], w:['咖啡廳','咖啡店','咖啡','카페','커피','cafe','coffee'] },
+  atm:      { e:'🏧', zh:'ATM／換錢',   tags:['amenity:atm','amenity:bank','amenity:bureau_de_change'], r:[500, 1500], w:['ATM','提款機','領錢','換錢','換錢所','換匯','銀行','환전','환전소','은행','현금인출기','bank','money exchange'] },
+  pharmacy: { e:'💊', zh:'藥局',        tags:['amenity:pharmacy','shop:chemist'], r:[500, 1500], w:['藥局','藥房','약국','pharmacy','drugstore'] },
+  toilet:   { e:'🚻', zh:'廁所',        tags:['amenity:toilets'], r:[500, 1500], w:['廁所','洗手間','化妝室','화장실','toilet','toilets','restroom'] },
+  parking:  { e:'🅿️', zh:'停車場',      tags:['amenity:parking'], r:[500, 1500], w:['停車場','주차장','parking'] },
+  bike:     { e:'🚲', zh:'公共自行車',  tags:['amenity:bicycle_rental'], r:[500, 1500], w:['腳踏車','自行車','單車','따릉이','bike','bicycle'] },
+  fuel:     { e:'⛽', zh:'加油站',      tags:['amenity:fuel'], r:[2000, 5000], w:['加油站','加油','油站','주유소','gas station','petrol station','fuel'] },
+  hospital: { e:'🏥', zh:'醫院診所',    tags:['amenity:hospital','amenity:clinic','amenity:doctors'], r:[800, 3000], w:['醫院','診所','看醫生','병원','의원','hospital','clinic'] },
+  dutyfree: { e:'🛍️', zh:'免稅店',      tags:['shop:duty_free'], r:[2000, 8000], w:['免稅店','免稅','면세점','duty free'] },
+  market:   { e:'🛒', zh:'超市',        tags:['shop:supermarket'], r:[500, 2000], w:['超市','大賣場','마트','슈퍼','supermarket','mart'] },
+  laundry:  { e:'🧺', zh:'自助洗衣',    tags:['shop:laundry','shop:dry_cleaning'], r:[500, 2000], w:['自助洗衣','洗衣店','洗衣','빨래방','세탁소','laundry'] },
+  post:     { e:'📮', zh:'郵局',        tags:['amenity:post_office'], r:[800, 3000], w:['郵局','우체국','post office'] },
+  police:   { e:'👮', zh:'警察局',      tags:['amenity:police'], r:[800, 3000], w:['警察局','派出所','警察','경찰서','파출소','police'] },
+  bus:      { e:'🚌', zh:'公車站',      tags:['highway:bus_stop'], r:[200, 600], w:['公車站','公車','巴士站','버스정류장','bus stop'] },
+  charge:   { e:'🔌', zh:'充電站',      tags:['amenity:charging_station'], r:[1000, 4000], w:['充電站','충전소','charging station'] },
+  beauty:   { e:'💄', zh:'美妝店',      tags:['shop:cosmetics','shop:beauty','shop:chemist'], r:[300, 1500], w:['美妝','美妝店','藥妝','化妝品','화장품','cosmetics'] },
+};
+// 品牌：先找附近同類店家，再挑出這個品牌
+const BRANDS = [
+  { re:/gs\s?25|지에스25/i, k:'cvs', n:'GS25', q:'GS25' }, { re:/^cu$|^cu\s|씨유/i, k:'cvs', n:'CU', q:'CU' },
+  { re:/7-?eleven|7-?11|세븐일레븐|小七|seven ?eleven/i, k:'cvs', n:'7-Eleven', q:'세븐일레븐' }, { re:/emart ?24|이마트24/i, k:'cvs', n:'emart24', q:'이마트24' },
+  { re:/olive ?young|올리브영|오리브영/i, k:'beauty', n:'Olive Young', q:'올리브영' }, { re:/daiso|다이소|大創|大创/i, k:'daiso', n:'大創 Daiso', q:'다이소' },
+  { re:/starbucks|스타벅스|星巴克/i, k:'cafe', n:'星巴克', q:'스타벅스' }, { re:/mega ?coffee|메가커피|메가mgc/i, k:'cafe', n:'MEGA COFFEE', q:'메가커피' },
+  { re:/mcdonald|맥도날드|麥當勞|麦当劳/i, k:'food', n:'麥當勞', q:'맥도날드' }, { re:/lotteria|롯데리아|樂天利/i, k:'food', n:'樂天利', q:'롯데리아' },
+  { re:/e-?mart(?!\s?24)|이마트(?!24)/i, k:'market', n:'emart', q:'이마트' }, { re:/homeplus|홈플러스/i, k:'market', n:'Homeplus', q:'홈플러스' },
+  { re:/lotte ?mart|롯데마트|樂天超市/i, k:'market', n:'樂天超市', q:'롯데마트' },
+];
+CATS.daiso = { e:'🧰', zh:'大創', tags:['shop:variety_store'], r:[500, 3000], w:[] };
+const CAT_WORD = new Map();
+Object.entries(CATS).forEach(([k, c]) => c.w.forEach(w => { const n = normKey(w); if (n.length >= 2 || /[가-힣一-鿿]/.test(n)) CAT_WORD.set(n, k); }));
+// 「附近的加油站」「最近的ATM」「근처 편의점」都算
+function catQuery(raw){
+  const s = raw.trim().replace(/^(附近的?|最近的?|周邊的?|找|nearby|near me|nearest|근처|가까운)\s*/i, '').replace(/\s*(在哪裡?|在哪|附近|nearby|near me|근처)$/i, '').trim();
+  const b = BRANDS.find(x => x.re.test(s) && s.replace(x.re, '').replace(/(店|門市|점|매장)$/, '').trim().length <= 1);
+  if (b) return { k:b.k, brand:b };
+  const k = CAT_WORD.get(normKey(s));
+  return k ? { k } : null;
+}
+const catCache = new Map();
+async function photonNear(k, c, r){
+  const cat = CATS[k];
+  const u = `https://photon.komoot.io/reverse?lat=${c.lat.toFixed(5)}&lon=${c.lng.toFixed(5)}&radius=${(r / 1000).toFixed(2)}&limit=50&${cat.tags.map(t => 'osm_tag=' + t).join('&')}`;
+  const j = await (await fetchT(u, 8000)).json();
+  const T = { N:'node', W:'way', R:'relation' };
+  return (j.features || []).filter(f => f.properties?.countrycode === 'KR').map(f => { const p = f.properties, g = f.geometry.coordinates;
+    return { id:(T[p.osm_type] || p.osm_type) + p.osm_id, lat:g[1], lng:g[0], name:p.name || null, ko:p.name || null, tags:{ [p.osm_key]:p.osm_value },
+      street:[p.street && p.street + (p.housenumber ? ' ' + p.housenumber : ''), p.district].filter(Boolean).join(' · ') }; });
+}
+async function overpassNear(k, c, r){
+  const q0 = NEARBY[k]?.q || CATS[k].tags.map(t => { const [a, b] = t.split(':'); return `nwr["${a}"="${b}"];`; }).join('');
+  const around = `(around:${Math.round(r)},${c.lat},${c.lng})`;
+  const data = await overpass(`[out:json][timeout:25];(${q0.split(';').filter(Boolean).map(s => s + around + ';').join('')});out center 80;`, 30000);
+  return (data.elements || []).map(el => { const t = el.tags || {}; const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon;
+    return lat == null ? null : { id:el.type + el.id, lat, lng, name:t['name:zh'] || t.name || null, ko:t['name:ko'] || t.name || null, en:t['name:en'] || null, tags:t, street:'' }; }).filter(Boolean);
+}
+let catRun = 0;
+async function runCategory(k, opt = {}){
+  const id = ++catRun, cat = CATS[k], brand = opt.brand || null;
+  setChip(NEARBY[k] ? k : null); nearbyLayer.clearLayers();
+  const ctr = map.getCenter(), c = { lat:ctr.lat, lng:ctr.lng };
+  const view = map.distance(map.getBounds().getNorthEast(), ctr);
+  const r = Math.round(Math.min(cat.r[1], Math.max(cat.r[0], view)) * (brand ? 2 : 1));
+  const label = brand ? brand.n : cat.zh;
+  const box = $('results'); box.style.display = 'block';
+  box.innerHTML = `<div class="hh">${cat.e} 附近的${esc(label)}</div><div id="catList"><div class="r"><small>搜尋中…</small></div></div>`;
+  const key = [k, brand?.n || '', c.lat.toFixed(3), c.lng.toFixed(3), r].join('|');
+  let items = [], byId = new Map(), pDone = false, oDone = false, pFail = false, oFail = false;
+  const keep = x => !brand || brand.re.test(x.name || '') || brand.re.test(x.ko || '') || brand.re.test(x.tags?.brand || '') || brand.re.test(x.tags?.['brand:en'] || '');
+  const merge = arr => {
+    for (const x of arr) {
+      if (!keep(x)) continue;
+      const same = byId.get(x.id) || items.find(y => (y.name || '') === (x.name || '') && map.distance([y.lat, y.lng], [x.lat, x.lng]) < 25);
+      if (same) { if (x.tags && Object.keys(x.tags).length > Object.keys(same.tags || {}).length) Object.assign(same, { tags:x.tags, en:x.en || same.en, ko:x.ko || same.ko }); continue; }
+      x.d = map.distance([c.lat, c.lng], [x.lat, x.lng]); items.push(x); byId.set(x.id, x);
+    }
+    items.sort((a, b) => a.d - b.d);
+  };
+  const draw = (final) => {
+    if (id !== catRun) return;
+    nearbyLayer.clearLayers();
+    items.forEach(x => L.marker([x.lat, x.lng], { icon:nearbyIcon(cat.e, x.tags?.opening_hours) }).addTo(nearbyLayer).on('click', () => openCatItem(x, cat)));
+    const list = $('catList'); if (!list) return;
+    if (!items.length) {
+      list.innerHTML = final ? `<div class="r"><small>${pFail && oFail ? '⚠️ 搜尋服務暫時連不上，請稍後再試' : `${fmtDist(r)} 內找不到${esc(label)}，試著移動或縮小地圖再搜一次`}</small></div>
+        <div class="btns" style="margin:6px 8px"><a class="kakao" href="https://map.kakao.com/link/search/${encodeURIComponent(brand?.q || cat.w.find(w => /[가-힣]/.test(w)) || label)}" target="_blank" rel="noopener">在 Kakao 地圖找</a></div>` : '<div class="r"><small>搜尋中…</small></div>';
+      return;
+    }
+    const nm = x => x.name ? (autoDict.zh.get(x.name) || x.name) : cat.zh;
+    const rows = items.slice(0, 30).map((x, i) => `<div class="r res cr" data-ci="${i}"><b>${cat.e} ${esc(nm(x))}<span class="dist">${fmtDist(x.d)} · 走路 ${Math.max(1, Math.round(x.d / 75))} 分</span>${obHtml(x.tags?.opening_hours)}</b>${x.name && nm(x) !== x.name ? `<div class="sub">${esc(x.name)}</div>` : ''}${x.street ? `<small>${esc(x.street)}</small>` : ''}</div>`).join('');
+    list.innerHTML = `<div class="r"><small>找到 ${items.length} 個，依距離排序${final ? '' : '（補充資料中…）'}</small></div>${rows}`;
+    list.querySelectorAll('[data-ci]').forEach(el => el.onclick = () => { const x = items[+el.dataset.ci]; box.style.display = 'none'; openCatItem(x, cat); });
+  };
+  const fit = () => {
+    if (id !== catRun || !items.length) return;
+    const near = items.slice(0, 5).map(x => [x.lat, x.lng]);
+    if (!near.every(p => map.getBounds().contains(p))) map.fitBounds(L.latLngBounds([[c.lat, c.lng], ...near]).pad(0.25), { maxZoom:17 });
+  };
+  const trNames = async () => {   // 店名翻成中文（和地圖上的小地方翻譯共用對照表）
+    const arr = [...new Set(items.slice(0, 30).map(x => x.name).filter(n => n && /[가-힣]/.test(n) && n.length <= 40 && !autoDict.zh.has(n) && !atFail.has('zh' + n)))].slice(0, 40);
+    if (!arr.length) return;
+    const res = new Map(); if (!(await trSplit(arr, 'zh-TW', res))) return;
+    let added = 0; for (const [kk, v] of res) if (v != null && addAutoTr('zh', kk, v)) added++;
+    if (added) { saveDictSoon('zh'); refreshLabelsSoon(); draw(pDone && oDone); }
+  };
+  const hit = catCache.get(key);
+  if (hit && Date.now() - hit.t < 10 * 60e3) { merge(hit.items); pDone = oDone = true; draw(true); fit(); trNames(); return; }
+  const pj = (brand ? photonNear(k, c, r).then(a => a.filter(keep).length ? a : photonC(brand.q).then(b => (b || []).map(d => ({ id:d.osm_type + d.osm_id, lat:+d.lat, lng:+d.lon, name:d.name, ko:d.name, tags:{}, street:d.display_name.split(', ').slice(1, 3).join(' · ') })).filter(x => map.distance([c.lat, c.lng], [x.lat, x.lng]) < 8000))) : photonNear(k, c, r))
+    .then(a => { pDone = true; if (id !== catRun) return; merge(a); draw(oDone); fit(); trNames(); })
+    .catch(() => { pDone = true; pFail = true; draw(oDone); });
+  const oj = overpassNear(k, c, r)
+    .then(a => { oDone = true; if (id !== catRun) return; merge(a); draw(pDone); if (pFail) fit(); trNames(); })
+    .catch(() => { oDone = true; oFail = true; draw(pDone); });
+  await Promise.allSettled([pj, oj]);
+  if (id !== catRun) return;
+  draw(true);
+  if (items.length) catCache.set(key, { t:Date.now(), items:items.map(x => ({ ...x })) });
+  const oc = items.map(x => x.tags?.opening_hours && openBadge(x.tags.opening_hours)).filter(Boolean);
+  if (opt.toast !== false) toast(items.length ? `找到 ${items.length} 個${label}${oc.length ? `（${oc.filter(b => b.k === 'open' || b.k === 'soon').length} 個營業中）` : ''}` : `附近找不到${label}`);
+}
+function openCatItem(x, cat){
+  const name = x.name ? (autoDict.zh.get(x.name) || x.name) : cat.zh;
+  showPlace({ lat:x.lat, lng:x.lng, name, ko:x.ko || null, en:x.en || null, zh:x.name && autoDict.zh.get(x.name) || null, tags:x.tags || {} });
+}
+// 快捷按鈕改用新的分類搜尋
+document.querySelectorAll('#nearby .chip[data-k]').forEach(chip => chip.onclick = () => {
+  if (chip.classList.contains('on')) { setChip(null); nearbyLayer.clearLayers(); catRun++; $('results').style.display = 'none'; return; }
+  runCategory(chip.dataset.k);
+});
 
 $('phraseBtn').onclick = openPhrases;
 $('hotelBtn').onclick = openHotel;
