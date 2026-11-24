@@ -3641,6 +3641,8 @@ const bi = (a, b) => ["let", "a", ["coalesce", ...a, ""], "b", ["coalesce", ...b
 // 小地方（店家、小路、社區）的圖資常常只有韓文：把畫面上的韓文地名自動翻譯，存成對照表套回標籤
 const autoDict = { zh:new Map(), en:new Map() };   // 韓文名 → 翻譯
 let autoTr = store0('kmap_autotr', true);
+let earlyPoi = store0('kmap_earlypoi', true);   // 提早顯示店名（不用放很大）
+const EARLY = { poi_r1:1, poi_r7:1.5, poi_r20:1.5, 'highway-name-minor':1, 'highway-name-path':1 };
 function dictExpr(lang, rest){
   const d = autoDict[lang]; if (!autoTr || !d.size) return rest;
   const a = ["match", ["to-string", ["get", "name"]]]; for (const [k, v] of d) a.push(k, v); a.push(rest); return a;
@@ -3660,8 +3662,14 @@ function applyLabels(m){
   try {
     if (!m.getStyle()) return false;
     const ex = MAP_LANGS[mapLang].e();
+    m._origZoom ||= {};
     m.getStyle().layers.forEach(ly => {
       if (ly.type !== 'symbol') return;
+      if (EARLY[ly.id] != null) {
+        const z0 = m._origZoom[ly.id] ??= (ly.minzoom ?? 0);
+        const want = earlyPoi ? Math.max(13, z0 - EARLY[ly.id]) : z0;
+        if ((ly.minzoom ?? 0) !== want) m.setLayerZoomRange(ly.id, want, ly.maxzoom ?? 24);
+      }
       const tf = m.getLayoutProperty(ly.id, 'text-field');
       if (tf && JSON.stringify(tf).includes('name')) m.setLayoutProperty(ly.id, 'text-field', ex);
     });
@@ -7031,6 +7039,26 @@ async function autoTranslateVisible(m){
     len += encodeURIComponent(n).length + 3; if (len > 6000) break;
     want.push(n); if (want.length >= 40) break;
   }
+  // 畫面範圍內、還沒顯示出來的店名和路名也先翻好（重要的先翻），放大時就直接是中文
+  const shown = want.length;
+  if (want.length < 40 && len <= 6000 && m.getZoom() >= 13) {
+    const bb = m.getBounds(), W = bb.getWest(), E = bb.getEast(), S = bb.getSouth(), N = bb.getNorth();
+    const inside = g => { const c = g.type === 'Point' ? g.coordinates : g.type === 'LineString' ? g.coordinates[Math.floor(g.coordinates.length / 2)] : g.type === 'MultiLineString' ? g.coordinates[0]?.[0] : g.type === 'MultiPoint' ? g.coordinates[0] : null;
+      return c && c[0] >= W && c[0] <= E && c[1] >= S && c[1] <= N; };
+    outer: for (const sl of ['poi', 'transportation_name', 'place']) {
+      let fs; try { fs = m.querySourceFeatures('openmaptiles', { sourceLayer:sl }); } catch(e) { continue; }
+      fs.sort((a, b) => (a.properties?.rank ?? 99) - (b.properties?.rank ?? 99));
+      for (const f of fs) {
+        const p = f.properties || {}, n = p.name;
+        if (typeof n !== 'string' || n.length > 40 || !/[\uAC00-\uD7A3]/.test(n) || d.has(n) || atFail.has(lang + n) || want.includes(n)) continue;
+        if (lang === 'zh' && (p['name:zh-Hant'] || p['name:zh'] || p['name:zh-Hans'])) continue;
+        if (lang === 'en' && p['name:en']) continue;
+        if (!inside(f.geometry)) continue;
+        len += encodeURIComponent(n).length + 3; if (len > 6000) break outer;
+        want.push(n); if (want.length >= 40) break outer;
+      }
+    }
+  }
   if (!want.length) { atStat = 'ok'; return; }
   atBusy = true;
   const tl = lang === 'zh' ? 'zh-TW' : 'en', res = new Map();
@@ -7042,7 +7070,7 @@ async function autoTranslateVisible(m){
   let added = 0;
   for (const [k, v] of res) if (v != null ? addAutoTr(lang, k, v) : (atFail.add(lang + k), false)) added++;
   if (added) { saveDictSoon(lang); refreshLabelsSoon(); }
-  if (ok) { atBackoff = 0; atStat = 'ok'; if (want.length >= 40 || len > 6000) scheduleAutoTr(m, 300); }
+  if (ok) { atBackoff = 0; atStat = 'ok'; if (want.length >= 40 || len > 6000) scheduleAutoTr(m, shown ? 300 : 1500); }   // 只剩預先翻譯時放慢，避免被限制
   else { atBackoff = Math.min(300e3, Math.max(15e3, atBackoff * 2)); atNext = Date.now() + atBackoff; atStat = 'wait'; scheduleAutoTr(m, atBackoff + 50); }
 }
 // 啟動時載入之前翻譯過的地名
@@ -7063,10 +7091,12 @@ function openMapLang(){
     <div class="addr">切換地圖上地名、路名、站名的文字。${isVec ? '' : '<br>⚠️ 目前是「' + esc(layers[layerIdx].name) + '」，這種圖片地圖的文字無法切換，選了之後會自動換回標準地圖。'}</div>
     ${Object.entries(MAP_LANGS).map(([k, v]) => `<button class="mlo${k === mapLang ? ' on' : ''}" data-ml="${k}"><pre>${esc(v.ex)}</pre><div><b>${v.n}</b>${v.note ? `<small>${v.note}</small>` : ''}</div></button>`).join('')}
     <label class="atr"><input type="checkbox" id="mlAuto" ${autoTr ? 'checked' : ''}> <span><b>自動翻譯小地方</b><small>店家、小路、社區等只有韓文名稱的地方，自動翻成中文或英文（Google 翻譯，可能不精準；已翻譯 ${autoDict.zh.size + autoDict.en.size} 個）</small></span></label>
+    <label class="atr"><input type="checkbox" id="mlEarly" ${earlyPoi ? 'checked' : ''}> <span><b>不用放很大就顯示店名</b><small>店名、小路名提早出現；文字太擠時地圖會自動隱藏重疊的</small></span></label>
     ${autoTr && atStat === 'wait' ? `<div class="warnbox">⚠️ 翻譯服務暫時連不上（手機網路有時會被暫時限制），${Math.max(1, Math.round((atNext - Date.now()) / 1000))} 秒後自動重試。<button class="linkbtn" id="mlRetry">立即重試</button></div>` : ''}
     ${['ko', 'kolatn'].includes(mapLang) ? '<div class="addr">目前是韓文模式，不會翻譯；要看中文請選「中文」或「中文＋韓文」。</div>' : ''}
     ${VECTOR_OK ? '' : '<div class="addr">⚠️ 這個瀏覽器不支援向量地圖，只能使用圖片地圖，無法切換地圖語言。</div>'}`, el => {
       if ($('mlRetry')) $('mlRetry').onclick = () => { atNext = 0; atBackoff = 0; atStat = 'ok'; layers.forEach(x => { const m = x.l.getMaplibreMap?.(); if (m && m._hooked) scheduleAutoTr(m, 10); }); toast('重新翻譯中…'); openMapLang(); };
+      $('mlEarly').onchange = e => { earlyPoi = e.target.checked; store.set('kmap_earlypoi', earlyPoi); setMapLang(mapLang); toast(earlyPoi ? '店名會提早顯示' : '店名恢復原本的顯示方式'); };
       $('mlAuto').onchange = e => { autoTr = e.target.checked; store.set('kmap_autotr', autoTr); setMapLang(mapLang); toast(autoTr ? '已開啟小地方自動翻譯' : '已關閉小地方自動翻譯'); };
       el.querySelectorAll('[data-ml]').forEach(b => b.onclick = () => {
         if (!VECTOR_OK) { toast('這個瀏覽器無法切換地圖語言'); return; }
