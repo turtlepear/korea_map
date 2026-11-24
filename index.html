@@ -4630,7 +4630,7 @@ function openMenu(){
     ${G('💰 花錢', [['expense','💰','旅費記帳'], ['tax','🧾','退稅計算'], ['shop','🛒','購物清單'], ['tools','🧰','匯率／車資／急難']])}
     ${G('⛷️ 滑雪', [['ski','⛷️','滑雪場'], ['skimap','🎿','雪道地圖', skiOn ? '開' : ''], ['skilog','📈','滑雪紀錄'], ['skisz','📏','雪具尺寸']])}
     ${G('📔 紀念', [['diary','📔','旅行日記'], ['track','🥾','今日足跡', tracking ? '記錄中' : ''], ['review','🧾','旅程回顧']])}
-    ${G('🧳 其他', [['flight','✈️','回程倒數', flight ? '已設定' : ''], ['duty','🛃','入境免稅'], ['apps','📱','韓國 App'], ['medi','🆘','緊急資訊卡'], ['check','✅','行前清單'], ['sizes','📏','尺寸換算'], ['dark', dark ? '☀️' : '🌙', dark ? '淺色模式' : '深色模式'], ['about','ℹ️','關於／資料來源']])}`,
+    ${G('🧳 其他', [['group','👥','群組共享', grp ? '已加入' : ''], ['flight','✈️','回程倒數', flight ? '已設定' : ''], ['duty','🛃','入境免稅'], ['apps','📱','韓國 App'], ['medi','🆘','緊急資訊卡'], ['check','✅','行前清單'], ['sizes','📏','尺寸換算'], ['dark', dark ? '☀️' : '🌙', dark ? '淺色模式' : '深色模式'], ['about','ℹ️','關於／資料來源']])}`,
     el => el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
       if (!['dark', 'subway', 'hist', 'skimap'].includes(b.dataset.a)) {
         menuNav = true;
@@ -4645,7 +4645,7 @@ function openMenu(){
       skimap: () => { if (skiOn) { hideSkiMap(); openMenu(); } else { closeSheet(); showSkiMap(null); if (map.getZoom() < 9) map.setView([37.5, 128.2], 9); toast('放大到滑雪場就能看到雪道'); } },
       skisz: () => { openSizes(); setTimeout(() => $('skiSz')?.scrollIntoView({ block:'start' }), 60); },
       airport: openAirport, holi: openHolidays, diary: openDiary, track: openTracks, review: openReview, medi: openMedical,
-      hotel: openHotel, phrase: openPhrases, convo: openConvo, ocr: openOcr, expense: openExpense, tax: openTax, shop: openShop, check: openChecklist, sizes: openSizes,
+      group: openGroup, hotel: openHotel, phrase: openPhrases, convo: openConvo, ocr: openOcr, expense: openExpense, tax: openTax, shop: openShop, check: openChecklist, sizes: openSizes,
     })[b.dataset.a]();
     }));
 }
@@ -8114,6 +8114,474 @@ document.querySelectorAll('#nearby .chip[data-k]').forEach(chip => chip.onclick 
   if (chip.classList.contains('on')) { setChip(null); nearbyLayer.clearLayers(); catRun++; $('results').style.display = 'none'; return; }
   runCategory(chip.dataset.k);
 });
+
+// ---------- 👥 群組共享（購物清單、行前清單、記帳、行程、收藏、飯店） ----------
+// 每位成員把自己的完整資料加密後寫到 textdb.online 自己的格子（沒有人會蓋掉別人），
+// 讀取時把所有成員的資料以「每個項目各自最後修改者為準」合併；ntfy.sh 只負責「有人改了」的通知。
+// 加密金鑰只在邀請連結的 # 後面，不會送到任何伺服器；緊急資訊卡永遠不會被共享。
+const GRP_DB = 'https://textdb.online';
+const GRP_NTFY = 'https://ntfy.sh';
+const GRP_FEAT = [
+  ['kmap_shop', '🛒', '購物清單'],
+  ['kmap_check', '✅', '行前清單'],
+  ['kmap_exp', '💰', '旅費記帳／分帳'],
+  ['kmap_trip', '📅', '行程規劃'],
+  ['kmap_favs', '⭐', '收藏地點'],
+  ['kmap_hotel', '🏨', '我的飯店'],
+];
+const GRP_SPEC = {
+  kmap_shop:  { kind:'arr', id: x => x.id, get: () => shop, set: v => { shop = v; }, open: () => openShop(), empty: () => [] },
+  kmap_check: { kind:'arr', id: x => x.id, get: () => checks, set: v => { checks = v; }, open: () => openChecklist(), empty: () => [] },
+  kmap_favs:  { kind:'arr', id: x => x.lat + ',' + x.lng, get: () => favs, set: v => { favs = v; try { drawFavs(); } catch(e) {} }, open: () => openFavs(), empty: () => [] },
+  kmap_exp:   { kind:'obj', arrF:['items', 'fxRec'], get: () => exp, set: v => { exp = Object.assign({ people:['我'], items:[] }, v); }, open: () => openExpense(), empty: () => ({ people:[grp?.nick || '我'], items:[] }) },
+  kmap_trip:  { kind:'whole', get: () => trip,
+    set: v => { trip = v && Array.isArray(v.days) && v.days.length ? v : { days:[{ start:'09:00', date:'', stops:[] }] }; if (tripDay >= trip.days.length) tripDay = 0; },
+    open: () => { const fb = map.fitBounds; map.fitBounds = function(){ return map; }; try { openTrip(); } finally { map.fitBounds = fb; } },
+    empty: () => ({ days:[{ start:'09:00', date:'', stops:[] }] }) },
+  kmap_hotel: { kind:'whole', get: () => hotel, set: v => { hotel = v || null; try { drawHotel(); } catch(e) {} }, open: () => openHotel(), empty: () => null },
+};
+const GRP_H2 = [['🛒 購物清單','kmap_shop'], ['✅ 行前清單','kmap_check'], ['💰 旅費記帳','kmap_exp'], ['📅 行程規劃','kmap_trip'], ['⭐ 我的收藏','kmap_favs'], ['🏨 一鍵回飯店','kmap_hotel'], ['🏨 回飯店','kmap_hotel']];
+
+const _grpSet = store.set.bind(store);
+let grp = store.get('kmap_grp', null);            // { gid, key, name, me, nick, keys:[], sig, wroteAt }
+let grpMeta = store.get('kmap_grp_meta', {});     // { 資料key: { 項目id: { t, a, h, d } } }
+let grpPeers = store.get('kmap_grp_peers', {});   // { 成員id: { n, at, gone } }
+const grpStat = { last:0, err:'', busy:false, again:false };
+let grpPanel = null, grpPendingRender = false, grpES = null, grpTimer = null, grpSoonT = null;
+
+const grpHex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2, '0')).join('');
+function grpHash(s){ s = s ?? 'u'; let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); } return (h >>> 0).toString(36) + '.' + s.length.toString(36); }
+const grpB64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const grpSaveGrp = () => _grpSet('kmap_grp', grp);
+const grpSaveMeta = () => _grpSet('kmap_grp_meta', grpMeta);
+const grpSavePeers = () => _grpSet('kmap_grp_peers', grpPeers);
+const grpK = (gid, s) => 'kmg' + gid + s;
+const grpLink = (g = grp) => shareBase() + '#grp=' + g.gid + '.' + g.key;
+const grpAgo = ts => { if (!ts) return ''; const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? '剛剛' : m < 60 ? `${m} 分鐘前` : m < 1440 ? `${Math.round(m / 60)} 小時前` : `${Math.round(m / 1440)} 天前`; };
+const grpHM = ts => new Date(ts).toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit', hour12:false });
+
+// ---- 加密（AES-GCM，金鑰只存在邀請連結裡） ----
+let grpCK = null, grpCKfor = '';
+async function grpCryptoKey(k){ if (grpCKfor !== k) { grpCK = await crypto.subtle.importKey('raw', unb64url(k), 'AES-GCM', false, ['encrypt', 'decrypt']); grpCKfor = k; } return grpCK; }
+async function grpZip(u8, zip){
+  const s = new Blob([u8]).stream().pipeThrough(zip ? new CompressionStream('deflate-raw') : new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+async function grpEnc(obj, k){
+  let u8 = new TextEncoder().encode(JSON.stringify(obj)), z = 0;
+  if (window.CompressionStream) { u8 = await grpZip(u8, true); z = 1; }
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv }, await grpCryptoKey(k), u8));
+  const out = new Uint8Array(13 + ct.length); out[0] = z; out.set(iv, 1); out.set(ct, 13);
+  return 'e' + grpB64(out);
+}
+async function grpDec(s, k){
+  if (!s || s[0] !== 'e') return null;
+  const u8 = unb64url(s.slice(1));
+  let pt = new Uint8Array(await crypto.subtle.decrypt({ name:'AES-GCM', iv:u8.subarray(1, 13) }, await grpCryptoKey(k), u8.subarray(13)));
+  if (u8[0] === 1) pt = await grpZip(pt, false);
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+// ---- 雲端儲存（textdb.online：免帳號、免金鑰；太長就分段存） ----
+const GRP_CHUNK = 24000;
+async function grpGet(k){
+  const r = await fetch(`${GRP_DB}/${k}?_=${Date.now().toString(36)}`, { cache:'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return (await r.text()).trim();
+}
+async function grpPut(k, v){
+  const r = await fetch(`${GRP_DB}/update/?key=${k}&value=${v}`, { cache:'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json().catch(() => null);
+  if (!j || j.status !== 1) throw new Error('write failed');
+}
+async function grpPutBig(k, v){
+  if (v.length <= GRP_CHUNK) return grpPut(k, v);
+  const n = Math.ceil(v.length / GRP_CHUNK), ver = Date.now().toString(36).slice(-5);
+  for (let i = 0; i < n; i++) await grpPut(k + 'p' + ver + i, v.slice(i * GRP_CHUNK, (i + 1) * GRP_CHUNK));
+  await grpPut(k, 'N' + n + '.' + ver);
+}
+async function grpGetBig(k){
+  const v = await grpGet(k);
+  const m = /^N(\d+)\.(\w+)$/.exec(v); if (!m) return v;
+  return (await Promise.all([...Array(+m[1])].map((_, i) => grpGet(k + 'p' + m[2] + i)))).join('');
+}
+
+// ---- 把資料拆成「項目」：每個項目各自記住最後修改的時間和人 ----
+function grpUnits(key, v){
+  const sp = GRP_SPEC[key], u = new Map();
+  if (sp.kind === 'whole') { u.set('_', v ?? null); return u; }
+  if (sp.kind === 'arr') { (Array.isArray(v) ? v : []).forEach(x => { if (x && typeof x === 'object' && sp.id(x) != null) u.set('i' + sp.id(x), x); }); return u; }
+  for (const [f, val] of Object.entries(v || {})) {
+    if (sp.arrF.includes(f)) (Array.isArray(val) ? val : []).forEach(x => { if (x && x.id != null) u.set('a' + f + '|' + x.id, x); });
+    else u.set('f' + f, val);
+  }
+  return u;
+}
+function grpBuild(key, units, prev){
+  const sp = GRP_SPEC[key], m = grpMeta[key] || {};
+  if (sp.kind === 'whole') return units.has('_') ? units.get('_') : sp.empty();
+  const ordered = (prevArr, pre, idOf) => {
+    const out = [], seen = new Set();
+    (Array.isArray(prevArr) ? prevArr : []).forEach(x => { if (!x) return; const uid = pre + idOf(x); if (units.has(uid) && !seen.has(uid)) { out.push(units.get(uid)); seen.add(uid); } });
+    [...units.keys()].filter(uid => uid.startsWith(pre) && !seen.has(uid))
+      .sort((a, b) => (m[a]?.t || 0) - (m[b]?.t || 0) || (a < b ? -1 : 1)).forEach(uid => out.push(units.get(uid)));
+    return out;
+  };
+  if (sp.kind === 'arr') return ordered(prev, 'i', sp.id);
+  const o = {};
+  for (const [uid, val] of units) if (uid[0] === 'f') o[uid.slice(1)] = val;
+  sp.arrF.forEach(f => { o[f] = ordered(prev?.[f], 'a' + f + '|', x => x.id); });
+  if (!Array.isArray(o.people)) o.people = [grp?.nick || '我'];
+  return o;
+}
+// 找出這支手機上的修改（新增／修改／刪除），蓋上時間戳記
+function grpDiff(key, v, t0){
+  if (!grp) return false;
+  const m = grpMeta[key] || (grpMeta[key] = {}), cur = grpUnits(key, v); let ch = false;
+  const stamp = (x, uid) => t0 == null ? Math.max(Date.now(), (x?.t || 0) + 1) : typeof t0 === 'function' ? t0(uid) : t0;
+  for (const [uid, val] of cur) {
+    const h = grpHash(JSON.stringify(val)), x = m[uid];
+    if (!x || x.d || x.h !== h) { m[uid] = { t:stamp(x, uid), a:grp.me, h, d:0 }; ch = true; }
+  }
+  for (const uid in m) if (!m[uid].d && !cur.has(uid)) { m[uid] = { t:stamp(m[uid], uid), a:grp.me, h:'', d:1 }; ch = true; }
+  // 太舊的刪除紀錄（45 天）就不用再記
+  const old = Date.now() - 45 * 864e5;
+  for (const uid in m) if (m[uid].d && m[uid].t > 1 && m[uid].t < old) delete m[uid];
+  return ch;
+}
+function grpDoc(){
+  const k = {};
+  for (const key of grp.keys) {
+    const m = grpMeta[key] || {}, cur = grpUnits(key, GRP_SPEC[key].get()), o = {};
+    for (const uid in m) { const x = m[uid]; if (x.d) o[uid] = [x.t, x.a, 1]; else if (cur.has(uid)) o[uid] = [x.t, x.a, 0, cur.get(uid)]; }
+    k[key] = o;
+  }
+  return { v:1, m:grp.me, n:grp.nick, at:Date.now(), p:Object.keys(grpPeers).filter(id => !grpPeers[id].gone), k };
+}
+
+// ---- 同步：讀全部成員 → 合併 → 寫回自己的 ----
+async function grpSync(why){
+  if (!grp) return;
+  if (grpStat.busy) { grpStat.again = true; return; }
+  grpStat.busy = true; grpBarUpdate();
+  const g = grp;
+  try {
+    for (const key of g.keys) grpDiff(key, GRP_SPEC[key].get());
+    const rawIdx = await grpGet(grpK(g.gid, 'i'));
+    let idx = null; try { idx = await grpDec(rawIdx, g.key); } catch(e) {}
+    if (grp !== g) return;
+    if (!idx || !idx.mem) idx = { name:g.name, mem:{} };
+    if (idx.name && idx.name !== g.name) { g.name = idx.name; }
+    let idxDirty = !rawIdx;
+    if (!idx.mem[g.me] || idx.mem[g.me].n !== g.nick) { idx.mem[g.me] = { n:g.nick, j:idx.mem[g.me]?.j || Date.now() }; idxDirty = true; }
+    for (const [id, x] of Object.entries(idx.mem)) if (id !== g.me) grpPeers[id] = { ...(grpPeers[id] || {}), n:x.n, gone:0 };
+    const ids = Object.keys(grpPeers).filter(id => id !== g.me && !grpPeers[id].gone);
+    const docs = await Promise.all(ids.map(async id => { try { const s = await grpGetBig(grpK(g.gid, 'm' + id)); return s ? await grpDec(s, g.key) : null; } catch(e) { return null; } }));
+    if (grp !== g) return;
+    const changed = new Map();
+    docs.forEach((d, i) => {
+      const id = ids[i];
+      if (!d || d.m !== id) return;
+      if (d.gone) { grpPeers[id] = { ...(grpPeers[id] || {}), gone:1 }; return; }
+      grpPeers[id] = { ...(grpPeers[id] || {}), n:d.n || grpPeers[id]?.n || '?', at:d.at, gone:0 };
+      (d.p || []).forEach(p => { if (p !== g.me && !grpPeers[p]) grpPeers[p] = { n:idx.mem[p]?.n || '?' }; });
+      for (const key of g.keys) {
+        const rk = d.k?.[key]; if (!rk || !GRP_SPEC[key]) continue;
+        const m = grpMeta[key] || (grpMeta[key] = {});
+        for (const [uid, r] of Object.entries(rk)) {
+          if (!Array.isArray(r) || typeof r[0] !== 'number') continue;
+          const x = m[uid];
+          if (x && (r[0] < x.t || (r[0] === x.t && String(r[1]) <= String(x.a)))) continue;
+          m[uid] = { t:r[0], a:r[1], d:r[2] ? 1 : 0, h:r[2] ? '' : grpHash(JSON.stringify(r[3])) };
+          if (!changed.has(key)) changed.set(key, new Map());
+          changed.get(key).set(uid, r[2] ? undefined : r[3]);
+        }
+      }
+    });
+    const applied = [];
+    for (const [key, ch] of changed) {
+      const sp = GRP_SPEC[key], prev = sp.get(), units = grpUnits(key, prev);
+      let real = false;
+      for (const [uid, val] of ch) {
+        if (val === undefined) { if (units.delete(uid)) real = true; }
+        else { if (JSON.stringify(units.get(uid)) !== JSON.stringify(val)) real = true; units.set(uid, val); }
+      }
+      if (!real) continue;
+      sp.set(grpBuild(key, units, prev));
+      try { localStorage.setItem(key, JSON.stringify(sp.get())); } catch(e) {}
+      grpDiff(key, sp.get());
+      applied.push(key);
+    }
+    if (idxDirty) await grpPut(grpK(g.gid, 'i'), await grpEnc(idx, g.key));
+    const doc = grpDoc(), sig = grpHash(JSON.stringify({ ...doc, at:0 }));
+    if (sig !== g.sig || Date.now() - (g.wroteAt || 0) > 5 * 60e3) {
+      await grpPutBig(grpK(g.gid, 'm' + g.me), await grpEnc(doc, g.key));
+      const real = sig !== g.sig; g.sig = sig; g.wroteAt = Date.now();
+      if (real && why !== 'join') grpPing();
+    }
+    grpStat.last = Date.now(); grpStat.err = '';
+    if (applied.length) grpAfterApply(applied);
+  } catch(e) {
+    grpStat.err = navigator.onLine === false ? '目前離線，連上網路後會自動同步' : '暫時連不上同步伺服器，稍後會再試';
+  } finally {
+    grpStat.busy = false;
+    if (grp) { grpSaveGrp(); grpSaveMeta(); grpSavePeers(); }
+    grpBarUpdate();
+    if ($('gpStatus')) $('gpStatus').innerHTML = grpStatusHtml();
+    if (grpStat.again) { grpStat.again = false; grpSoon(300); }
+  }
+}
+function grpSoon(ms){ clearTimeout(grpSoonT); grpSoonT = setTimeout(() => grpSync('soon'), ms); }
+function grpPing(){ if (grp) fetch(`${GRP_NTFY}/kmg${grp.gid}`, { method:'POST', body:grp.me }).catch(() => {}); }
+function grpStart(){
+  grpStop(); if (!grp) return;
+  grpTimer = setInterval(() => { if (document.visibilityState !== 'hidden') grpSync('poll'); }, 30000);
+  try {
+    grpES = new EventSource(`${GRP_NTFY}/kmg${grp.gid}/sse`);
+    grpES.onmessage = e => { try { const d = JSON.parse(e.data); if (d.event === 'message' && grp && d.message !== grp.me) grpSoon(600); } catch(_) {} };
+  } catch(e) { grpES = null; }
+}
+function grpStop(){ clearInterval(grpTimer); grpTimer = null; clearTimeout(grpSoonT); if (grpES) { try { grpES.close(); } catch(e) {} grpES = null; } }
+document.addEventListener('visibilitychange', () => { if (grp && document.visibilityState === 'visible') grpSoon(300); });
+window.addEventListener('online', () => { if (grp) grpSoon(500); });
+
+// 只要共享的資料被存檔，就記下修改並在 1 秒後上傳
+store.set = (k, v) => {
+  _grpSet(k, v);
+  if (grp && GRP_SPEC[k] && grp.keys.includes(k)) { if (grpDiff(k, v)) { grpSaveMeta(); grpSoon(1000); } }
+};
+
+// ---- 別人改了東西 → 更新畫面 ----
+function grpAfterApply(keys){
+  const open = $('sheet').classList.contains('open') && grpPanel && keys.includes(grpPanel);
+  if (open) {
+    const a = document.activeElement;
+    if (a && $('sheetBody').contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.value) grpPendingRender = true;
+    else grpRerender();
+  }
+  const names = keys.map(k => GRP_FEAT.find(f => f[0] === k)?.[2]).filter(Boolean);
+  if (names.length) toast('👥 旅伴更新了：' + names.join('、'));
+}
+function grpRerender(){
+  grpPendingRender = false;
+  const k = grpPanel; if (!k || !$('sheet').classList.contains('open')) return;
+  const sb = $('sheetBody'), sh = $('sheet'), st = sb.scrollTop, st2 = sh.scrollTop;
+  const keep = () => { sb.scrollTop = st; sh.scrollTop = st2; };
+  try { GRP_SPEC[k].open(); } catch(e) {}
+  requestAnimationFrame(keep); setTimeout(keep, 400);
+}
+$('sheetBody').addEventListener('focusout', () => { if (grpPendingRender) setTimeout(() => { const a = document.activeElement; if (grpPendingRender && !(a && $('sheetBody').contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) grpRerender(); }, 250); });
+
+// 共享中的面板上方顯示「👥 與○○共享中」，清單項目標上最後修改的人
+function grpStatusText(){ return grpStat.busy ? '同步中…' : grpStat.err ? '⚠️ ' + grpStat.err : grpStat.last ? `已同步 ${grpHM(grpStat.last)}` : '等待同步'; }
+function grpBarUpdate(){ const s = $('grpBarSt'); if (s) s.textContent = grpStatusText(); }
+const _grpOpenPanel = openPanel;
+openPanel = function(html, bind){
+  const h = (/<h2>([^<]*)<\/h2>/.exec(html) || [])[1] || '';
+  const key = (GRP_H2.find(x => h.startsWith(x[0])) || [])[1] || null;
+  grpPanel = key; grpPendingRender = false;
+  return _grpOpenPanel(html, el => { if (bind) bind(el); if (key) grpDecorate(key, el); });
+};
+function grpDecorate(key, el){
+  const h2 = el.querySelector('h2'); if (!h2) return;
+  if (!grp) {
+    if (key === 'kmap_hotel' || key === 'kmap_favs') return;
+    h2.insertAdjacentHTML('afterend', '<div class="grpbar off"><span>想和旅伴一起編輯？</span><button class="linkbtn" id="grpOpen">👥 建立群組</button></div>');
+  } else {
+    const on = grp.keys.includes(key);
+    h2.insertAdjacentHTML('afterend', on
+      ? `<div class="grpbar"><span>👥 與「${esc(grp.name)}」共享中 · <span id="grpBarSt">${grpStatusText()}</span></span><button class="linkbtn" id="grpNow">🔄 同步</button></div>`
+      : `<div class="grpbar off"><span>👥 這項目前只存在你的手機</span><button class="linkbtn" id="grpOpen">設定共享</button></div>`);
+    if (on) {
+      $('grpNow').onclick = () => grpSync('manual');
+      const m = grpMeta[key] || {};
+      const who = uid => { const x = m[uid]; return x && x.a !== grp.me && grpPeers[x.a]?.n ? grpPeers[x.a].n : ''; };
+      const tag = (sel, attr) => el.querySelectorAll(sel).forEach(c => { const n = who('i' + c.dataset[attr]); if (n) c.parentElement.querySelector('span')?.insertAdjacentHTML('beforeend', `<small class="gwho">👤 ${esc(n)}</small>`); });
+      if (key === 'kmap_shop') tag('[data-sc]', 'sc');
+      if (key === 'kmap_check') tag('[data-ck]', 'ck');
+    }
+  }
+  if ($('grpOpen')) $('grpOpen').onclick = () => { menuNav = true; openGroup(); };
+}
+
+// ---- 建立／加入／離開 ----
+function grpFeatHtml(sel){
+  return `<div class="shl gfeat">${GRP_FEAT.map(f => `<label><input type="checkbox" data-gf="${f[0]}" ${sel.includes(f[0]) ? 'checked' : ''}><span>${f[1]} ${f[2]}</span></label>`).join('')}</div>`;
+}
+const grpPickedFeat = el => [...el.querySelectorAll('[data-gf]')].filter(c => c.checked).map(c => c.dataset.gf);
+const GRP_PRIVACY = '<div class="addr">🔒 資料會先在你的手機上加密，再存到免費的雲端空間（textdb.online）；解密金鑰只在邀請連結裡，伺服器看不到內容。拿到連結的人都能查看和編輯，請只傳給旅伴。🆘 緊急資訊卡不會被共享。</div>';
+function grpInitLocal(keys, merge, creator){
+  if (!merge) {
+    const bak = {}; keys.forEach(k => { bak[k] = localStorage.getItem(k); });
+    _grpSet('kmap_grp_bak', { t:Date.now(), d:bak });
+    keys.forEach(k => { const sp = GRP_SPEC[k]; sp.set(sp.empty()); _grpSet(k, sp.get()); });
+  }
+  grpMeta = {};
+  // 加入前就有的資料用最早的時間：和群組重複的項目以群組為準，只有你有的清單項目會加進群組；
+  // 整份的資料（行程、飯店、分帳成員…）一律先用群組的，群組沒有才用你的
+  const t0 = creator ? 2 : uid => uid[0] === 'i' || uid[0] === 'a' ? 1 : 0;
+  keys.forEach(k => grpDiff(k, GRP_SPEC[k].get(), t0));
+}
+async function grpCreate(name, nick, keys){
+  const me = grpHex(4);
+  grp = { gid:grpHex(8), key:grpB64(crypto.getRandomValues(new Uint8Array(16))), name, me, nick, keys, sig:'', wroteAt:0 };
+  grpPeers = {}; grpInitLocal(keys, true, true); grpSaveGrp(); grpSavePeers(); grpSaveMeta();
+  grpStart(); await grpSync('join');
+}
+async function grpJoin(gid, key, name, nick, keys, merge){
+  if (grp) await grpLeave();
+  grp = { gid, key, name, me:grpHex(4), nick, keys, sig:'', wroteAt:0 };
+  grpPeers = {}; grpInitLocal(keys, merge); grpSaveGrp(); grpSavePeers(); grpSaveMeta();
+  grpStart(); await grpSync('join'); grpPing();
+}
+async function grpLeave(){
+  const g = grp; if (!g) return;
+  grpStop(); grp = null; grpMeta = {}; grpPeers = {};
+  localStorage.removeItem('kmap_grp'); localStorage.removeItem('kmap_grp_meta'); localStorage.removeItem('kmap_grp_peers');
+  try {
+    await grpPut(grpK(g.gid, 'm' + g.me), await grpEnc({ v:1, m:g.me, gone:1 }, g.key));
+    const idx = await grpDec(await grpGet(grpK(g.gid, 'i')), g.key).catch(() => null);
+    if (idx?.mem?.[g.me]) { delete idx.mem[g.me]; await grpPut(grpK(g.gid, 'i'), await grpEnc(idx, g.key)); }
+    fetch(`${GRP_NTFY}/kmg${g.gid}`, { method:'POST', body:g.me }).catch(() => {});
+  } catch(e) {}
+}
+function grpStatusHtml(){
+  return grpStat.busy ? '🔄 同步中…' : grpStat.err ? `⚠️ ${esc(grpStat.err)}` : grpStat.last ? `✅ 已同步（${grpHM(grpStat.last)}）· 有人修改會在幾秒內更新` : '🔄 準備同步…';
+}
+function openGroup(){
+  const nick = store.get('kmap_nick', '');
+  if (!grp) {
+    openPanel(`<h2>👥 群組共享</h2>
+      <div class="addr">和旅伴一起看、一起編輯購物清單、行程、記帳……大家手機上的內容會自動同步，不用註冊帳號。</div>
+      <div class="group">建立新群組</div>
+      <div class="fx"><label>群組名稱<input id="gpName" placeholder="例如：首爾五天四夜"></label></div>
+      <div class="fx"><label>你的暱稱<input id="gpNick" value="${esc(nick)}" placeholder="例如：小明"></label></div>
+      <div class="addr">要一起共享的項目：</div>
+      ${grpFeatHtml(GRP_FEAT.map(f => f[0]))}
+      <div class="btns"><button class="go wide" id="gpCreate">👥 建立群組並產生邀請連結</button></div>
+      <div class="group">加入朋友的群組</div>
+      <div class="addr">直接點朋友傳來的邀請連結或掃 QR Code 就能加入；也可以把連結貼在這裡。</div>
+      <div class="fx"><label>邀請連結<input id="gpLink" placeholder="https://…#grp=…"></label><button id="gpGo">加入</button></div>
+      ${GRP_PRIVACY}`, el => {
+        $('gpCreate').onclick = async () => {
+          const name = $('gpName').value.trim() || '韓國旅行', nk = $('gpNick').value.trim();
+          if (!nk) { toast('請先填你的暱稱'); $('gpNick').focus(); return; }
+          const keys = grpPickedFeat(el); if (!keys.length) return toast('至少選一個要共享的項目');
+          _grpSet('kmap_nick', nk);
+          $('gpCreate').disabled = true; $('gpCreate').textContent = '建立中…';
+          await grpCreate(name, nk, keys);
+          if (grpStat.err) toast(grpStat.err);
+          openGroup();
+        };
+        $('gpGo').onclick = () => { const m = /#grp=([0-9a-f]{16})\.([\w-]{22})/.exec($('gpLink').value.trim()); if (!m) return toast('邀請連結不完整'); openGroupJoin(m[1], m[2]); };
+      });
+    return;
+  }
+  const link = grpLink();
+  let qr = '';
+  if (window.qrcode && location.protocol !== 'file:') { try { const q = qrcode(0, 'M'); q.addData(link); q.make(); qr = q.createSvgTag({ cellSize:3, margin:2, scalable:true }); } catch(e) {} }
+  const mem = [[grp.me, { n:grp.nick + '（你）', at:Date.now() }], ...Object.entries(grpPeers).filter(([, x]) => !x.gone)];
+  openPanel(`<h2>👥 群組：${esc(grp.name)}</h2>
+    <div class="addr" id="gpStatus">${grpStatusHtml()}</div>
+    <div class="group">成員（${mem.length}）</div>
+    <div class="gmem">${mem.map(([id, x]) => `<span>👤 ${esc(x.n || '?')}${id !== grp.me && x.at ? `<small>${grpAgo(x.at)}</small>` : ''}</span>`).join('')}</div>
+    <div class="group">邀請旅伴</div>
+    ${qr ? `<div class="qr">${qr}</div><div class="addr" style="text-align:center">請旅伴用手機相機掃描，或把連結傳給他</div>` : ''}
+    <div class="btns"><button class="go" id="gpShare">📤 傳送邀請連結</button><button id="gpCopy">📋 複製連結</button></div>
+    <div class="group">要同步的項目</div>
+    <div class="addr">每個人可以自己決定；取消勾選後，這項就只留在你的手機。點名稱可以直接打開。</div>
+    <div class="shl gfeat">${GRP_FEAT.map(f => `<label><input type="checkbox" data-gf="${f[0]}" ${grp.keys.includes(f[0]) ? 'checked' : ''}><span>${f[1]} ${f[2]}</span><button class="linkbtn" data-go="${f[0]}">打開 ›</button></label>`).join('')}</div>
+    <div class="btns"><button id="gpNow">🔄 立即同步</button>${grp.keys.includes('kmap_exp') ? '<button id="gpPeople">💰 把成員加進分帳名單</button>' : ''}</div>
+    <div class="fx"><label>你的暱稱<input id="gpNick" value="${esc(grp.nick)}"></label><button id="gpNickSave">更改</button></div>
+    <div class="btns"><button class="wide" id="gpLeave">🚪 離開群組</button></div>
+    ${GRP_PRIVACY}`, el => {
+      $('gpShare').onclick = async () => {
+        const text = `一起用「韓國旅遊地圖」規劃「${grp.name}」！點連結加入群組：`;
+        if (navigator.share) { try { await navigator.share({ title:'加入旅行群組', text, url:link }); return; } catch(e) { if (e.name === 'AbortError') return; } }
+        copyText(text + link);
+      };
+      $('gpCopy').onclick = () => copyText(link);
+      $('gpNow').onclick = () => grpSync('manual');
+      el.querySelectorAll('[data-gf]').forEach(c => c.onchange = () => {
+        const k = c.dataset.gf;
+        grp.keys = GRP_FEAT.map(f => f[0]).filter(x => x === k ? c.checked : grp.keys.includes(x));
+        if (c.checked) grpDiff(k, GRP_SPEC[k].get());
+        grpSaveGrp(); grpSaveMeta(); grpSoon(200);
+        toast(c.checked ? '已開始共享' : '已停止共享，這項只留在你的手機');
+      });
+      el.querySelectorAll('[data-go]').forEach(b => b.onclick = e => { e.preventDefault(); menuNav = true; GRP_SPEC[b.dataset.go].open(); });
+      if ($('gpPeople')) $('gpPeople').onclick = () => {
+        const names = [grp.nick, ...Object.values(grpPeers).filter(x => !x.gone && x.n && x.n !== '?').map(x => x.n)];
+        const add = names.filter(n => !exp.people.includes(n));
+        if (!add.length) return toast('成員都已在分帳名單裡');
+        exp.people.push(...add); saveExp(); toast('已加入：' + add.join('、'));
+      };
+      $('gpNickSave').onclick = () => { const n = $('gpNick').value.trim(); if (!n) return; grp.nick = n; _grpSet('kmap_nick', n); grpSaveGrp(); grpSoon(100); toast('已更改暱稱'); };
+      $('gpLeave').onclick = async () => {
+        const b = $('gpLeave');
+        if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = '再按一次確認離開（你手機上的資料會保留）'; return; }
+        b.disabled = true; await grpLeave(); toast('已離開群組'); openGroup();
+      };
+      if (!grpStat.busy && Date.now() - grpStat.last > 10000) grpSync('open');
+    });
+}
+async function openGroupJoin(gid, key){
+  try { history.replaceState(history.state, '', shareBase()); } catch(e) {}
+  if (grp && grp.gid === gid) { openGroup(); return; }
+  const nick = store.get('kmap_nick', '');
+  openPanel(`<h2>👥 加入群組</h2>
+    <div class="best" id="gjInfo">讀取群組資料中…</div>
+    ${grp ? `<div class="addr">⚠️ 你目前在「${esc(grp.name)}」群組，加入新群組會離開原本的。</div>` : ''}
+    <div class="fx"><label>你的暱稱<input id="gjNick" value="${esc(nick)}" placeholder="例如：小華"></label></div>
+    <div class="addr">要一起共享的項目：</div>
+    ${grpFeatHtml(GRP_FEAT.map(f => f[0]))}
+    <div class="shl"><label><input type="checkbox" id="gjMerge" checked><span>把我手機上原本的資料也放進群組<small>取消勾選＝改用群組的資料（原本的會先備份）</small></span></label></div>
+    <div class="btns"><button class="go" id="gjOk">👥 加入</button><button id="gjNo">取消</button></div>
+    ${GRP_PRIVACY}`, el => {
+      let name = '旅行群組';
+      $('gjNo').onclick = () => closeSheet();
+      $('gjOk').onclick = async () => {
+        const nk = $('gjNick').value.trim(); if (!nk) { toast('請先填你的暱稱'); $('gjNick').focus(); return; }
+        const keys = grpPickedFeat(el); if (!keys.length) return toast('至少選一個要共享的項目');
+        _grpSet('kmap_nick', nk);
+        $('gjOk').disabled = true; $('gjOk').textContent = '加入中…';
+        await grpJoin(gid, key, name, nk, keys, $('gjMerge').checked);
+        toast(grpStat.err ? grpStat.err : `已加入「${grp.name}」`);
+        openGroup();
+      };
+      (async () => {
+        try {
+          const idx = await grpDec(await grpGet(grpK(gid, 'i')), key);
+          if (!idx) throw new Error('empty');
+          name = idx.name || name;
+          const mem = Object.values(idx.mem || {}).map(x => x.n);
+          if ($('gjInfo')) $('gjInfo').innerHTML = `「<b>${esc(name)}</b>」邀請你加入${mem.length ? `<br>成員：${mem.map(esc).join('、')}` : ''}`;
+        } catch(e) {
+          if ($('gjInfo')) $('gjInfo').textContent = navigator.onLine === false ? '⚠️ 目前離線，連上網路後再按加入' : '⚠️ 讀不到群組資料：連結可能不完整，或群組剛建立還沒同步。仍可按「加入」。';
+        }
+      })();
+    });
+}
+function checkGroupHash(){
+  const m = /^#grp=([0-9a-f]{16})\.([\w-]{22})$/.exec(location.hash);
+  if (m) openGroupJoin(m[1], m[2]);
+}
+(function(){
+  const st = document.createElement('style');
+  st.textContent = `.grpbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin:2px 0 10px;font-size:13px;color:var(--m)}
+.grpbar>span{flex:1;min-width:0}.grpbar.off{opacity:.9}
+.gwho{display:inline-block;margin-left:6px;font-size:11px;color:var(--m)}
+.gmem{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.gmem span{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:14px}
+.gmem small{margin-left:6px;color:var(--m);font-size:11px}
+.gfeat label .linkbtn{margin-left:auto}`;
+  document.head.appendChild(st);
+})();
+window.addEventListener('hashchange', checkGroupHash);
+if (grp) { grpStart(); grpSoon(1500); }
+setTimeout(checkGroupHash, 300);
 
 $('phraseBtn').onclick = openPhrases;
 $('hotelBtn').onclick = openHotel;
