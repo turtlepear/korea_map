@@ -8075,7 +8075,7 @@ async function runCategory(k, opt = {}){
     }
     const nm = x => x.name ? (autoDict.zh.get(x.name) || x.name) : cat.zh;
     const rows = items.slice(0, 30).map((x, i) => `<div class="r res cr" data-ci="${i}"><b>${cat.e} ${esc(nm(x))}<span class="dist">${fmtDist(x.d)} · 走路 ${Math.max(1, Math.round(x.d / 75))} 分</span>${obHtml(x.tags?.opening_hours)}</b>${x.name && nm(x) !== x.name ? `<div class="sub">${esc(x.name)}</div>` : ''}${x.street ? `<small>${esc(x.street)}</small>` : ''}</div>`).join('');
-    list.innerHTML = `<div class="r"><small>找到 ${items.length} 個，依距離排序${final ? '' : '（補充資料中…）'}</small></div>${rows}`;
+    list.innerHTML = `<div class="r"><small>找到 ${items.length} 個，依距離排序${final ? '' : '（營業時間等資料補充中…）'}</small></div>${rows}`;
     list.querySelectorAll('[data-ci]').forEach(el => el.onclick = () => { const x = items[+el.dataset.ci]; box.style.display = 'none'; openCatItem(x, cat); });
   };
   const fit = () => {
@@ -8095,7 +8095,7 @@ async function runCategory(k, opt = {}){
   const pj = (brand ? photonNear(k, c, r).then(a => a.filter(keep).length ? a : photonC(brand.q).then(b => (b || []).map(d => ({ id:d.osm_type + d.osm_id, lat:+d.lat, lng:+d.lon, name:d.name, ko:d.name, tags:{}, street:d.display_name.split(', ').slice(1, 3).join(' · ') })).filter(x => map.distance([c.lat, c.lng], [x.lat, x.lng]) < 8000))) : photonNear(k, c, r))
     .then(a => { pDone = true; if (id !== catRun) return; merge(a); draw(oDone); fit(); trNames(); })
     .catch(() => { pDone = true; pFail = true; draw(oDone); });
-  const oj = overpassNear(k, c, r)
+  const oj = Promise.race([overpassNear(k, c, r), new Promise((_, rej) => { const t0 = Date.now(), chk = () => (pFail && Date.now() - t0 < 45000) ? setTimeout(chk, 2000) : rej(new Error('slow')); setTimeout(chk, 20000); })])   // Overpass 常很慢：最多等 20 秒（Photon 也失敗時最多 45 秒）
     .then(a => { oDone = true; if (id !== catRun) return; merge(a); draw(pDone); if (pFail) fit(); trNames(); })
     .catch(() => { oDone = true; oFail = true; draw(pDone); });
   await Promise.allSettled([pj, oj]);
