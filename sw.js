@@ -2,7 +2,7 @@
 // 網頁本體：有網路時抓最新版，沒網路時用快取
 // 地圖圖磚：先用快取（離線地圖下載的就存在這裡）
 // 搜尋／路線／翻譯：先連網路，失敗時用上次的結果
-const VER = 'kmap-v9';
+const VER = 'kmap-v10';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const TILE_HOSTS = ['tiles.openfreemap.org', 'tile.openstreetmap.fr', 'tile.opentopomap.org', 'server.arcgisonline.com'];
 const API_HOSTS = ['nominatim.openstreetmap.org', 'routing.openstreetmap.de', 'api.transitous.org', 'translate.googleapis.com',

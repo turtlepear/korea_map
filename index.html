@@ -1012,6 +1012,9 @@ return maplibregl$1;
   .aps .approw { display:flex; gap:10px; align-items:center; } .aps .approw > div:first-child { flex:1; } .aps .approw small { display:block; }
   .btnlink { display:inline-block; text-align:center; font-size:12px; padding:4px 10px; border:1px solid var(--line); border-radius:14px; background:var(--card); color:var(--t); text-decoration:none; white-space:nowrap; }
   .lr .near { font-weight:normal; }
+  .vplat { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:6px 0; } .vplat .vp { padding:9px 6px; font-size:14px; border-radius:12px; }
+  .vtop { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; } .vtop .chip { font-size:13px; }
+  .chip.vchip { background:linear-gradient(135deg,#ff5f6d,#ffc371); color:#fff; font-weight:700; }
   .chips::-webkit-scrollbar { display:none; }
   .chip { flex:none; background:var(--bg); border:0; border-radius:16px; padding:7px 12px; font-size:13px; box-shadow:0 1px 4px rgba(0,0,0,.2); cursor:pointer; white-space:nowrap; }
   .chip.on { background:var(--c); color:#fff; }
@@ -4047,6 +4050,7 @@ function renderSheet(){
       <button id="taxiBtn">🚖 叫計程車</button>
       <button id="shareBtn">🔗 分享</button>
       <button id="diaryBtn">📔 打卡</button>
+      <button id="vidBtn">🎬 短影音</button>
       <button id="hotelSetBtn">${hotel && hotel.lat === p.lat && hotel.lng === p.lng ? '🏨 這是我的飯店 ✓' : '🏨 設為我的飯店'}</button>
     </div>
     <div class="addr" style="margin-top:10px">💡 Naver 導航需安裝 Naver Map App；Kakao 連結手機電腦都能開。</div>`;
@@ -4058,6 +4062,7 @@ function renderSheet(){
   $('shareBtn').onclick = () => sharePlace(p);
   $('hotelSetBtn').onclick = () => { setHotel(p); renderSheet(); };
   $('diaryBtn').onclick = () => checkinDialog({ ...p });
+  $('vidBtn').onclick = () => openPlaceVideos(p);
   bindFavCat(p); bindExitRows($('exitBox'));
   if ($('wxOpen')) $('wxOpen').onclick = () => openWeather(p.lat, p.lng, p.name);
   loadWeatherFor(p); loadExitsFor(p);
@@ -4583,7 +4588,7 @@ function openMenu(){
   const dark = document.body.classList.contains('dark');
   const G = (title, items) => `<div class="mg">${title}</div><div class="menu">${items.map(([a, e, t, badge]) => `<button data-a="${a}"><span>${e}</span>${t}${badge ? `<em>${badge}</em>` : ''}</button>`).join('')}</div>`;
   openPanel(`<h2>☰ 更多功能</h2>
-    ${G('🗺️ 地圖與行程', [['trip','📅','行程規劃'], ['hotel','🏨','回飯店'], ['airport','✈️','機場交通'], ['holi','🎌','韓國假日'], ['subway','🚇','地鐵路線圖', subway.on ? '開' : ''], ['wx','☁️','天氣／空氣'],
+    ${G('🗺️ 地圖與行程', [['videos','🎬','附近短影音'], ['trip','📅','行程規劃'], ['hotel','🏨','回飯店'], ['airport','✈️','機場交通'], ['holi','🎌','韓國假日'], ['subway','🚇','地鐵路線圖', subway.on ? '開' : ''], ['wx','☁️','天氣／空氣'],
       ['offline','📥','離線地圖'], ['sync','🔄','收藏同步'], ['shareme','📍','分享我的位置'], ['hist','🕘','搜尋紀錄']])}
     ${G('🗣️ 語言', [['maplang','🌐','地圖語言', MAP_LANGS[mapLang].s], ['phrase','🗣️','韓文句卡'], ['convo','💬','對話翻譯'], ['ocr','📷','拍照翻譯']])}
     ${G('💰 花錢', [['expense','💰','旅費記帳'], ['tax','🧾','退稅計算'], ['shop','🛒','購物清單'], ['tools','🧰','匯率／車資／急難']])}
@@ -4600,7 +4605,7 @@ function openMenu(){
       dark: () => { setTheme(dark ? 'light' : 'dark'); openMenu(); },
       hist: () => { closeSheet(); $('q').focus(); showHistory(); }, about: openAbout,
       wx: () => openWeather(), shareme: shareMyLocation, maplang: openMapLang,
-      ski: openSki, skilog: openSkiLog, flight: openFlight, duty: openDuty, apps: openApps,
+      videos: () => openVideos(), ski: openSki, skilog: openSkiLog, flight: openFlight, duty: openDuty, apps: openApps,
       skimap: () => { if (skiOn) { hideSkiMap(); openMenu(); } else { closeSheet(); showSkiMap(null); if (map.getZoom() < 9) map.setView([37.5, 128.2], 9); toast('放大到滑雪場就能看到雪道'); } },
       skisz: () => { openSizes(); setTimeout(() => $('skiSz')?.scrollIntoView({ block:'start' }), 60); },
       airport: openAirport, holi: openHolidays, diary: openDiary, track: openTracks, review: openReview, medi: openMedical,
@@ -7510,6 +7515,115 @@ async function nominatimC(q){
   nomiFly.set(k, p);
   try { return await p; } finally { nomiFly.delete(k); }
 }
+
+// ====================================================================
+//  第七批：附近美食／景點短影音
+//  （YouTube、Instagram、TikTok 都要 API key 才能搜尋影片，所以這裡用在地人常用的關鍵字，
+//    一鍵打開各平台的搜尋結果；手機上會直接開啟 App）
+// ====================================================================
+// 熱門商圈（在地人搜尋時用的叫法）：在附近 1.3 公里內就用這個名字
+const HOT_AREAS = [
+  ['弘大','홍대',37.5563,126.9236], ['延南洞','연남동',37.5660,126.9250], ['聖水','성수',37.5445,127.0560], ['梨泰院','이태원',37.5345,126.9946],
+  ['漢南洞','한남동',37.5370,127.0020], ['江南站','강남역',37.4979,127.0276], ['狎鷗亭羅德奧','압구정로데오',37.5273,127.0405], ['新沙洞林蔭道','가로수길',37.5205,127.0228],
+  ['益善洞','익선동',37.5743,126.9893], ['乙支路','을지로',37.5660,126.9910], ['望遠洞','망원동',37.5560,126.9100], ['北村','북촌',37.5826,126.9830],
+  ['仁寺洞','인사동',37.5740,126.9850], ['三清洞','삼청동',37.5850,126.9810], ['明洞','명동',37.5636,126.9827], ['東大門','동대문',37.5671,127.0095],
+  ['蠶室','잠실',37.5110,127.0980], ['汝矣島','여의도',37.5250,126.9250], ['新村','신촌',37.5552,126.9369], ['鍾路','종로',37.5704,126.9921],
+  ['海雲台','해운대',35.1587,129.1604], ['西面','서면',35.1577,129.0596], ['廣安里','광안리',35.1532,129.1187], ['南浦洞','남포동',35.0980,129.0300],
+  ['田浦咖啡街','전포카페거리',35.1550,129.0640], ['涯月','애월',33.4630,126.3100], ['西歸浦','서귀포',33.2530,126.5600],
+];
+const VTOPICS = [
+  { k:'food', e:'🍜', zh:'美食', ko:'맛집' }, { k:'cafe', e:'☕', zh:'咖啡廳', ko:'카페' }, { k:'dessert', e:'🍰', zh:'甜點', ko:'디저트' },
+  { k:'bar', e:'🍺', zh:'喝酒', ko:'술집' }, { k:'spot', e:'📸', zh:'景點', ko:'가볼만한곳' }, { k:'night', e:'🌃', zh:'夜景', ko:'야경' },
+  { k:'shop', e:'🛍️', zh:'購物', ko:'쇼핑' }, { k:'hot', e:'✨', zh:'必去', ko:'핫플' },
+];
+const VPLAT = [
+  { k:'yt', e:'▶️', n:'YouTube Shorts', url:q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q + ' #shorts')}` },
+  { k:'ig', e:'📸', n:'Instagram', url:q => `https://www.instagram.com/explore/tags/${encodeURIComponent(q.replace(/\s+/g, ''))}/` },
+  { k:'tt', e:'🎵', n:'TikTok', url:q => `https://www.tiktok.com/search?q=${encodeURIComponent(q)}` },
+  { k:'nv', e:'📝', n:'Naver', url:q => `https://m.search.naver.com/search.naver?query=${encodeURIComponent(q)}` },
+  { k:'xhs', e:'📕', n:'小紅書', zh:true, url:q => `https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(q)}` },
+];
+let vidLang = store.get('kmap_vidlang', 'ko'), vidTopic = 'food';
+const areaCache = new Map();
+async function areaAt(lat, lng){
+  let best = null, bd = 1300;
+  for (const a of HOT_AREAS) { const d = map.distance([lat, lng], [a[2], a[3]]); if (d < bd) { bd = d; best = a; } }
+  if (best) return { zh:best[0], ko:best[1] };
+  const key = lat.toFixed(3) + ',' + lng.toFixed(3); if (areaCache.has(key)) return areaCache.get(key);
+  let out = null;
+  try {
+    const d = await (await fetchT(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&namedetails=1&addressdetails=1&accept-language=ko`, 10000)).json();
+    const a = d.address || {}, nd = d.namedetails || {};
+    const clean = s => (s || '').replace(/\s*\d+가$/, '').replace(/(\d+)동$/, '동').replace(/\d+$/, '').trim();
+    const ko = clean(nd['name:ko'] || d.name || a.quarter || a.suburb || a.borough || a.city);
+    const zh = clean(nd['name:zh-Hant'] || nd['name:zh'] || '') || ko;
+    if (ko) out = { zh, ko, city:a.city || a.province || '' };
+  } catch(e) {}
+  out = out || { zh:'附近', ko:'근처' };
+  areaCache.set(key, out); return out;
+}
+function vidKw(area, t, lang){ return lang === 'zh' ? `${area.zh} ${t.zh}` : `${area.ko} ${t.ko}`; }
+function platBtns(kw, lang){
+  return `<div class="vplat">${VPLAT.filter(p => !p.zh || lang === 'zh').map(p => `<a class="btnlink vp" href="${p.url(kw)}" target="_blank" rel="noopener">${p.e} ${p.n}</a>`).join('')}</div>`;
+}
+const VNOTE = '<div class="addr">短影音由各平台提供，按下去會打開平台的搜尋結果（手機會開 App）。Instagram 用網頁看可能要先登入。熱門度以平台為準，這裡不保證店家好壞。</div>';
+async function openVideos(pt){
+  const c = pt || (myPos ? { lat:myPos[0], lng:myPos[1], me:true } : { lat:map.getCenter().lat, lng:map.getCenter().lng });
+  openPanel(`<h2>🎬 附近短影音推薦</h2><div class="addr">判斷所在區域中…</div>`);
+  const area = await areaAt(c.lat, c.lng);
+  await loadPoi();
+  const KN = { t:'📍', u:'🏛️', g:'🖼️', h:'🏯', l:'🛍️', m:'🛒', d:'🏬', v:'🔭' };
+  const near = (poiData?.items || []).filter(x => KN[x[8]] && Math.abs(x[0] - c.lat) < 0.02 && Math.abs(x[1] - c.lng) < 0.025)
+    .map(x => ({ name:x[6] || x[7], ko:x[7], lat:x[0], lng:x[1], e:KN[x[8]], d:map.distance([c.lat, c.lng], [x[0], x[1]]), tags:x[9] ? { opening_hours:x[9] } : {} }))
+    .filter(x => x.d < 1500).sort((a,b) => a.d - b.d).slice(0, 10);
+  const render = () => {
+    const t = VTOPICS.find(x => x.k === vidTopic), kw = vidKw(area, t, vidLang);
+    openPanel(`<h2>🎬 附近短影音推薦</h2>
+      <div class="addr">📍 ${c.me ? '你在' : '地圖中心在'}：<b>${esc(area.zh)}</b>${area.ko !== area.zh ? `（${esc(area.ko)}）` : ''}${pt ? '' : ' · <button class="linkbtn" id="vdCenter">改看地圖中心</button>'}</div>
+      <div class="modes"><button data-vl="ko" class="${vidLang === 'ko' ? 'on' : ''}">🇰🇷 在地人推薦（韓文）</button><button data-vl="zh" class="${vidLang === 'zh' ? 'on' : ''}">🇹🇼 旅客分享（中文）</button></div>
+      <div class="vtop">${VTOPICS.map(x => `<button data-vt="${x.k}" class="chip${x.k === vidTopic ? ' on' : ''}">${x.e} ${x.zh}</button>`).join('')}</div>
+      <div class="fx"><label>搜尋關鍵字（可以改）<input id="vdKw" value="${esc(kw)}"></label></div>
+      <div id="vdPlat">${platBtns(kw, vidLang)}</div>
+      ${vidLang === 'ko' ? '<div class="addr">💡 韓國人搜美食習慣打「地區＋맛집」，結果多是在地人的真實推薦；看不懂可以用「📷 拍照翻譯」。</div>' : ''}
+      ${near.length ? `<div class="group">附近的景點、商場（點 🎬 看這個地方的短影音）</div>
+        ${near.map((x, i) => `<div class="exi"><span>${x.e}</span><span class="en" data-vp="${i}" style="cursor:pointer"><b>${esc(x.name)}</b>${x.ko !== x.name ? `<small>${esc(x.ko)}</small>` : ''}</span><span class="ea">${fmtDist(x.d)}<small><button class="linkbtn" data-vv="${i}">🎬 短影音</button></small></span></div>`).join('')}` : ''}
+      ${VNOTE}`, el => {
+        el.querySelectorAll('[data-vl]').forEach(b => b.onclick = () => { vidLang = b.dataset.vl; store.set('kmap_vidlang', vidLang); render(); });
+        el.querySelectorAll('[data-vt]').forEach(b => b.onclick = () => { vidTopic = b.dataset.vt; render(); });
+        $('vdKw').oninput = () => { $('vdPlat').innerHTML = platBtns($('vdKw').value.trim() || kw, vidLang); };
+        if ($('vdCenter')) $('vdCenter').onclick = () => { const m = map.getCenter(); openVideos({ lat:m.lat, lng:m.lng }); };
+        el.querySelectorAll('[data-vp]').forEach(b => b.onclick = () => { const x = near[+b.dataset.vp]; showPlace({ lat:x.lat, lng:x.lng, name:x.name, ko:x.ko, tags:x.tags }); });
+        el.querySelectorAll('[data-vv]').forEach(b => b.onclick = () => { const x = near[+b.dataset.vv]; openPlaceVideos({ lat:x.lat, lng:x.lng, name:x.name, ko:x.ko, tags:x.tags }, () => openVideos(pt)); });
+      });
+  };
+  render();
+}
+// 單一地點的短影音
+const FOOD_RE = /^(restaurant|cafe|fast_food|bar|pub|food_court|ice_cream|biergarten)$/;
+function openPlaceVideos(p, back){
+  const food = FOOD_RE.test(p.tags?.amenity || '') || /식당|카페|커피|베이커리|국밥|치킨|고기|횟집|분식|餐廳|咖啡|食堂/.test(p.name + (p.ko || ''));
+  const base = p.ko || p.name, zhn = p.zh || p.name;
+  let lang = vidLang;
+  const render = () => {
+    const kw = lang === 'zh' ? zhn : base + (food ? '' : ' 가볼만한곳');
+    openPanel(`<h2>🎬 ${esc(p.name)} 短影音</h2>
+      <div class="modes"><button data-vl="ko" class="${lang === 'ko' ? 'on' : ''}">🇰🇷 韓文關鍵字</button><button data-vl="zh" class="${lang === 'zh' ? 'on' : ''}">🇹🇼 中文關鍵字</button></div>
+      <div class="fx"><label>搜尋關鍵字（可以改）<input id="vdKw" value="${esc(kw)}"></label></div>
+      <div id="vdPlat">${platBtns(kw, lang)}</div>
+      ${VNOTE}
+      <div class="btns"><button id="vdBack">← 回上一頁</button></div>`, () => {
+        document.querySelectorAll('[data-vl]').forEach(b => b.onclick = () => { lang = b.dataset.vl; render(); });
+        $('vdKw').oninput = () => { $('vdPlat').innerHTML = platBtns($('vdKw').value.trim() || kw, lang); };
+        $('vdBack').onclick = back || (() => showPlace(p, false));
+      });
+  };
+  render();
+}
+// 搜尋列下方的快捷按鈕
+(function(){
+  const b = document.createElement('button'); b.className = 'chip vchip'; b.textContent = '🎬 附近短影音';
+  b.onclick = () => openVideos(); $('nearby').prepend(b);
+})();
 
 $('phraseBtn').onclick = openPhrases;
 $('hotelBtn').onclick = openHotel;
